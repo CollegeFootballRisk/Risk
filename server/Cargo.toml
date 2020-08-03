@@ -1,0 +1,34 @@
+[package]
+name = "rust-risk"
+version = "0.0.1-rc20200620"
+authors = ["Jace Nelson <kenneden@tamu.edu>"]
+edition = "2018"
+
+[dependencies]
+rocket = {version = "0.4.5", features = ["private-cookies"] }
+dotenv = "0.15.0"
+serde = "1.0"
+serde_json = "1.0"
+rocket_contrib = "0.4.4"
+serde_derive = "1.0"
+diesel = { version = "1.4.4", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
+diesel_migrations = "1.4"
+env_logger = "0.6"
+lazy_static = "1.4"
+r2d2 = "0.8"
+urlencoding = "1.0.0"
+r2d2-diesel = "1.0.0"
+captcha = "*"
+base64 = "*"
+anyhow = "1.0"
+hyper = "0.10"
+hyper-sync-rustls = "=0.3.0-rc.17"
+chrono = "0.4.12"
+rocket_oauth2 = {path = "../../rocket_oauth2", features = ["hyper_sync_rustls_adapter"] }
+jsonwebtoken = "7.2.0"
+time = "*"
+rand = "0.7.3"
+
+[features]
+
+risk_security = []
