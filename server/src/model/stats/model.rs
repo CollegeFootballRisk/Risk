@@ -18,8 +18,8 @@ pub struct StatLeaderboard {
     pub territoryCount: i32,
     pub playerCount: i32,
     pub mercCount: i32,
-    pub starPower: i32,
-    pub efficiency: i32, //starpower/territoryCount
+    pub starPower: f64,
+    pub efficiency: f64, //starpower/territoryCount
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -27,7 +27,7 @@ pub struct CurrentStrength {
     pub team: String,
     pub players: i32,
     pub mercs: i32,
-    pub stars: i32,
+    pub stars: f64,
     pub territories: i32,
 }
 
@@ -38,8 +38,8 @@ pub struct StatHistory {
     pub day: i32,
     pub players: i32,
     pub territories: i32,
-    pub starPower: i32,
-    pub effectivePower: i32,
+    pub starPower: f64,
+    pub effectivePower: f64,
     pub starbreakdown: StarBreakdown,
 }
 
@@ -57,7 +57,7 @@ pub struct Heat {
     pub territory: String,
     pub winner: String,
     pub players: i64,
-    pub power: i64,
+    pub power: f64,
 }
 
 #[derive(Serialize, Deserialize, Queryable, Debug)]

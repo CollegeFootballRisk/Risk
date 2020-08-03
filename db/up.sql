@@ -452,7 +452,7 @@ CREATE VIEW public.moves AS
            FROM public.past_turns past_turns_1
           GROUP BY past_turns_1.user_id) foo
      JOIN public.past_turns ON ((past_turns.id = foo.id)))
-     FULL JOIN public.users ON ((foo.user_id = users.id)))
+     LEFT JOIN public.users ON ((foo.user_id = users.id)))
      LEFT JOIN public.teams ON ((users.current_team = teams.id)))
   ORDER BY users.uname;
 
@@ -570,7 +570,29 @@ CREATE VIEW public.odds AS
 ALTER TABLE public.odds OWNER TO postgres;
 
 
-CREATE VIEW public.odds AS select ones, twos, threes, fours, fives, (ones+twos+threes+fours+fives) as players, teampower, territory_power as territorypower, chance, team, territory_stats.season as season, territory_stats.day as day, territories.name as territory_name, teams.tname as team_name, teams.color_1 as color, teams.color_2 AS secondary_color, territory_ownership_without_neighbors.owner as tname, territory_ownership_without_neighbors.prev_owner as prev_owner, territory_ownership_without_neighbors.mvp as mvp from territory_stats inner join territories on territories.id = territory_stats.territory inner join teams on teams.id = territory_stats.team inner join territory_ownership_without_neighbors on (((territory_ownership_without_neighbors.name = territories.name) AND (territory_ownership_without_neighbors.season = territory_stats.season) AND (territory_ownership_without_neighbors.day = territory_stats.day)));
+CREATE VIEW public.odds AS 
+  select ones, 
+  twos, 
+  threes,
+   fours, 
+   fives,
+    (ones+twos+threes+fours+fives) as players,
+     teampower, territory_power as territorypower,
+      chance, team, territory_stats.season as season, 
+      territory_stats.day as day, territories.name as territory_name,
+       teams.tname as team_name, 
+       teams.color_1 as color, 
+       teams.color_2 AS secondary_color, 
+       territory_ownership_without_neighbors.owner as tname, 
+       territory_ownership_without_neighbors.prev_owner as prev_owner,
+        territory_ownership_without_neighbors.mvp as mvp 
+        from territory_stats 
+        inner join territories on territories.id = territory_stats.territory 
+        inner join teams on teams.id = territory_stats.team 
+        inner join territory_ownership_without_neighbors on 
+        (((territory_ownership_without_neighbors.name = territories.name) 
+        AND (territory_ownership_without_neighbors.season = territory_stats.season) 
+        AND (territory_ownership_without_neighbors.day = territory_stats.day + 1)));
 
 
 --
