@@ -93,6 +93,24 @@ mod schema {
     }
 
     table! {
+        territory_stats (id) {
+            team -> Int4,
+            season -> Int4,
+            day -> Int4,
+            ones -> Int4,
+            twos -> Int4,
+            threes -> Int4,
+            fours -> Int4,
+            fives -> Int4,
+            teampower -> Double,
+            chance -> Double,
+            id -> Int4,
+            territory -> Int4,
+            territory_power -> Double,
+        }
+    }
+
+    table! {
         territory_ownership (id) {
             id -> Int4,
             territory_id -> Int4,
@@ -106,7 +124,7 @@ mod schema {
         }
     }
 }
-use schema::{new_turns, past_turns, territory_ownership, turninfo, stats};
+use schema::{new_turns, past_turns, territory_ownership, turninfo, stats, territory_stats};
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
 #[table_name = "new_turns"]
@@ -227,6 +245,33 @@ pub struct Stats {
     pub threes: i32,
     pub fours: i32,
     pub fives: i32
+}
+
+
+#[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
+#[table_name = "territory_stats"]
+pub struct TerritoryStats { 
+    pub team: i32,
+    pub season: i32,
+    pub day: i32, 
+    pub ones: i32,
+    pub twos: i32,
+    pub threes: i32,
+    pub fours: i32,
+    pub fives: i32,
+    pub teampower: f64,
+    pub chance: f64,
+    pub territory: i32,
+    pub territory_power: f64
+}
+
+
+impl TerritoryStats {
+    fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
+        diesel::insert_into(territory_stats::table)
+        .values(stats)
+        .execute(conn)
+    }
 }
 
 impl Stats {
@@ -401,7 +446,7 @@ fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
     teams
 }
 
-fn determinevictor(lottery: f64, map: HashMap<i32, (i32, f64)>) -> i32 {
+fn determinevictor(lottery: f64, map: HashMap<i32, (i32, f64, i32, i32, i32, i32, i32)>) -> i32 {
     let mut victorsum = 0f64;
     //println!("Map: {:?}", map);
     let mut victor = 0;
@@ -427,12 +472,13 @@ fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
 fn process_territories<'a>(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
-) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>) {
+) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>, Vec<TerritoryStats>) {
     dbg!("process_territories");
     dbg!(territories.len());
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
     let mut mvps: Vec<PlayerMoves> = Vec::new();
     let mut stats: HashMap<i32, Stats> = HashMap::new();
+    let mut territory_stats: Vec<TerritoryStats> = Vec::new();
     for territory in territories {
         //dbg!(&territory.territory_id);
         let mut territory_players = players
@@ -461,6 +507,23 @@ fn process_territories<'a>(
                      territory.day,
                       territory.owner_id))
                 .territorycount += 1;
+
+                territory_stats.push(
+                    TerritoryStats{
+                        team: territory.owner_id.clone(),
+                        season: territory.season,
+                        day: territory.day, 
+                        ones: 0,
+                        twos: 0,
+                        threes: 0,
+                        fours: 0,
+                        fives: 0,
+                        teampower: 0.0,
+                        chance: 1.00,
+                        territory: territory.territory_id,
+                        territory_power: 0.00,
+                    }
+                );
                 continue;
             }
             1 => {
@@ -492,13 +555,29 @@ fn process_territories<'a>(
                      teams[0]))
                 .starpower += territory_players.iter().map(|mover| mover.power.round() as i32).sum::<i32>();
                 // add team stats
-                handleteamstats(&mut stats,territory_players);
+                handleteamstats(&mut stats,territory_players.clone());
+                territory_stats.push(
+                    TerritoryStats{
+                        team: territory.owner_id.clone(),
+                        season: territory.season,
+                        day: territory.day, 
+                        ones: territory_players.iter().filter(|player| player.stars == 1).count() as i32,
+                        twos: territory_players.iter().filter(|player| player.stars == 2).count() as i32,
+                        threes: territory_players.iter().filter(|player| player.stars == 3).count() as i32,
+                        fours: territory_players.iter().filter(|player| player.stars == 4).count() as i32,
+                        fives: territory_players.iter().filter(|player| player.stars == 5).count() as i32,
+                        teampower: territory_players.iter().map(|mover| mover.power.round() as f64).sum::<f64>(),
+                        chance: 1.00,
+                        territory: territory.territory_id,
+                        territory_power: territory_players.iter().map(|mover| mover.power.round() as f64).sum::<f64>(),
+                    }
+                );
                 continue;
             }
             _ => {
                 let mut map = HashMap::new();
                 for team in teams {
-                    map.insert(team, (0, 0f64));
+                    map.insert(team, (0, 0f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
                 }
 
                 for player in &territory_players {
@@ -508,6 +587,27 @@ fn process_territories<'a>(
                     } else {
                         map.get_mut(&player.team).unwrap().0 += player.stars;
                         map.get_mut(&player.team).unwrap().1 += player.power;
+                        //dbg!(player);
+                        match player.stars {
+                            1 => {
+                                map.get_mut(&player.team).unwrap().2 += 1;
+                            }
+                            2 => {
+                                map.get_mut(&player.team).unwrap().3 += 1;
+                            }
+                            3 => {
+                                map.get_mut(&player.team).unwrap().4 += 1;
+                            }
+                            4 => {
+                                map.get_mut(&player.team).unwrap().5 += 1;
+                            }
+                            5 => {
+                                map.get_mut(&player.team).unwrap().6 += 1;
+                            }
+                            _ => {
+                                dbg!("unknown stars");
+                            }
+                        }
                     }
                 }
 
@@ -515,7 +615,7 @@ fn process_territories<'a>(
                 //dbg!(totalpower);
                 let lottery = rand::thread_rng().gen_range(0f64, totalpower);
 
-                let victor = determinevictor(lottery, map);
+                let victor = determinevictor(lottery, map.clone());
 
                 //dbg!("Victor: {}",victor);
                 let territory_victors = territory_players
@@ -543,12 +643,31 @@ fn process_territories<'a>(
                      victor))
                 .territorycount += 1;
 
+                let total_power = territory_players.iter().map(|mover| mover.power.round() as f64).sum::<f64>();
                 handleteamstats(&mut stats, territory_players);
+                for (key, val) in map.iter(){
+                    territory_stats.push(
+                        TerritoryStats{
+                            team: *key,
+                            season: territory.season,
+                            day: territory.day, 
+                            ones: val.2,
+                            twos: val.3,
+                            threes: val.4,
+                            fours: val.5,
+                            fives: val.6,
+                            teampower: val.1,
+                            chance: val.1 / total_power,
+                            territory: territory.territory_id,
+                            territory_power: total_power
+                        }
+                    );
+                }
                 mvps.push(mvp);
             }
         }
     }
-    (new_owners, mvps, stats)
+    (new_owners, mvps, stats, territory_stats)
 }
 
 fn handleteamstats(stats: &mut HashMap<i32, Stats>,territory_players: Vec<PlayerMoves>) {
@@ -646,102 +765,109 @@ fn main() {
                             let min_value = move_ids.iter().min();
                             let max_value = move_ids.iter().max();
                             dbg!(min_value, max_value, players.len());
-                            let (owners, mvps, stats) = process_territories(territories, players);
+                            let (owners, mvps, stats, territory_stats) = process_territories(territories, players);
                             //dbg!(&owners,&mvps, &stats);
                             //dbg!(&stats);
-                            match Stats::insert(stats, &turninfoblock.id + 0, &conn) {
+                            match TerritoryStats::insert(territory_stats, &conn){
                                 Ok(result) => {
-                                    match TerritoryOwnersInsert::insert(owners, &conn) {
+                                    match Stats::insert(stats, &turninfoblock.id + 0, &conn) {
                                         Ok(result) => {
-                                            dbg!(result);
-                                            match PlayerMoves::mvps(mvps, &conn) {
+                                            match TerritoryOwnersInsert::insert(owners, &conn) {
                                                 Ok(result) => {
                                                     dbg!(result);
-                                                    match PlayerMoves::mergemoves(
-                                                        *min_value.unwrap_or(&0),
-                                                        *max_value.unwrap_or(&0),
-                                                        &conn,
-                                                    ) {
+                                                    match PlayerMoves::mvps(mvps, &conn) {
                                                         Ok(result) => {
                                                             dbg!(result);
-                                                            use diesel::sql_types::Bool;
-                                                            #[derive(QueryableByName)]
-                                                            struct Bar {
-                                                                #[sql_type = "Bool"]
-                                                                do_user_update: bool,
-                                                            };
-                                                            let query = format!(
-                                                                "SELECT do_user_update({},{})",
-                                                                &turninfoblock.day.unwrap().to_string(),
-                                                                &turninfoblock.season.unwrap().to_string()
-                                                            );
-                                                            let userupdate: Result<
-                                                                Vec<Bar>,
-                                                                diesel::result::Error,
-                                                            > = sql_query(query.to_string()).load(&conn);
-                                                            match userupdate {
-                                                                Ok(ok) => println!(
-                                                                    "Users updated successfully {}",
-                                                                    ok[0].do_user_update.to_string()
-                                                                ),
-                                                                Err(e) => println!(
-                                                                    "Failed to update users: {:?}",
-                                                                    e
-                                                                ),
-                                                            }
-                                                            turninfoblock.rollendtime =
-                                                                Some(Utc::now().naive_utc());
-                                                            turninfoblock.complete = Some(true);
-                                                            turninfoblock.active = Some(false);
-                                                            match TurnInfo::update_or_insert(
-                                                                &turninfoblock,
+                                                            match PlayerMoves::mergemoves(
+                                                                *min_value.unwrap_or(&0),
+                                                                *max_value.unwrap_or(&0),
                                                                 &conn,
                                                             ) {
-                                                                Ok(_ok) => {
-                                                                    println!("Update turninfo success.")
+                                                                Ok(result) => {
+                                                                    dbg!(result);
+                                                                    use diesel::sql_types::Bool;
+                                                                    #[derive(QueryableByName)]
+                                                                    struct Bar {
+                                                                        #[sql_type = "Bool"]
+                                                                        do_user_update: bool,
+                                                                    };
+                                                                    let query = format!(
+                                                                        "SELECT do_user_update({},{})",
+                                                                        &turninfoblock.day.unwrap().to_string(),
+                                                                        &turninfoblock.season.unwrap().to_string()
+                                                                    );
+                                                                    let userupdate: Result<
+                                                                        Vec<Bar>,
+                                                                        diesel::result::Error,
+                                                                    > = sql_query(query.to_string()).load(&conn);
+                                                                    match userupdate {
+                                                                        Ok(ok) => println!(
+                                                                            "Users updated successfully {}",
+                                                                            ok[0].do_user_update.to_string()
+                                                                        ),
+                                                                        Err(e) => println!(
+                                                                            "Failed to update users: {:?}",
+                                                                            e
+                                                                        ),
+                                                                    }
+                                                                    turninfoblock.rollendtime =
+                                                                        Some(Utc::now().naive_utc());
+                                                                    turninfoblock.complete = Some(true);
+                                                                    turninfoblock.active = Some(false);
+                                                                    match TurnInfo::update_or_insert(
+                                                                        &turninfoblock,
+                                                                        &conn,
+                                                                    ) {
+                                                                        Ok(_ok) => {
+                                                                            println!("Update turninfo success.")
+                                                                        }
+                                                                        Err(_e) => {
+                                                                            println!("Error updating turninfo.")
+                                                                        }
+                                                                    }
+                                                                    match TurnInfo::new(
+                                                                        turninfoblock.season.unwrap(),
+                                                                        turninfoblock.day.unwrap() + 1,
+                                                                        true,
+                                                                        false,
+                                                                        &conn,
+                                                                    ) {
+                                                                        Ok(_ok) => {
+                                                                            println!("Created new turn succeeded")
+                                                                        }
+                                                                        Err(e) => println!(
+                                                                            "Failed to make new turn {:?}",
+                                                                            e
+                                                                        ),
+                                                                    }
+                                                                    let f_in = OpenOptions::new()
+                                                                        .read(true)
+                                                                        .write(true)
+                                                                        .create(true)
+                                                                        .open("../.env");
+                                                                    let f_out = OpenOptions::new()
+                                                                        .create(true)
+                                                                        .write(true)
+                                                                        .open("../.env");
+                                                                    let mut buffer = String::new();
+                                                                    let mut f_in = f_in.unwrap();
+                                                                    f_in.read_to_string(&mut buffer);
+                                                                    dotenv::from_filename("../.env").ok();
+                                                                    let day = dotenv::var("day").unwrap();
+                                                                    let new_day = &day.parse::<i32>().unwrap() + 1;
+                                                                    buffer = buffer.replace(
+                                                                        &format!("day={}", day.to_string()),
+                                                                        &format!("day={}", new_day.to_string())[..],
+                                                                    );
+                                                                    f_out
+                                                                        .unwrap()
+                                                                        .write_all(buffer.as_bytes())
+                                                                        .expect("error");
                                                                 }
-                                                                Err(_e) => {
-                                                                    println!("Error updating turninfo.")
+                                                                Err(e) => {
+                                                                    dbg!(e);
                                                                 }
                                                             }
-                                                            match TurnInfo::new(
-                                                                turninfoblock.season.unwrap(),
-                                                                turninfoblock.day.unwrap() + 1,
-                                                                true,
-                                                                false,
-                                                                &conn,
-                                                            ) {
-                                                                Ok(_ok) => {
-                                                                    println!("Created new turn succeeded")
-                                                                }
-                                                                Err(e) => println!(
-                                                                    "Failed to make new turn {:?}",
-                                                                    e
-                                                                ),
-                                                            }
-                                                            let f_in = OpenOptions::new()
-                                                                .read(true)
-                                                                .write(true)
-                                                                .create(true)
-                                                                .open("../.env");
-                                                            let f_out = OpenOptions::new()
-                                                                .create(true)
-                                                                .write(true)
-                                                                .open("../.env");
-                                                            let mut buffer = String::new();
-                                                            let mut f_in = f_in.unwrap();
-                                                            f_in.read_to_string(&mut buffer);
-                                                            dotenv::from_filename("../.env").ok();
-                                                            let day = dotenv::var("day").unwrap();
-                                                            let new_day = &day.parse::<i32>().unwrap() + 1;
-                                                            buffer = buffer.replace(
-                                                                &format!("day={}", day.to_string()),
-                                                                &format!("day={}", new_day.to_string())[..],
-                                                            );
-                                                            f_out
-                                                                .unwrap()
-                                                                .write_all(buffer.as_bytes())
-                                                                .expect("error");
                                                         }
                                                         Err(e) => {
                                                             dbg!(e);
@@ -753,9 +879,7 @@ fn main() {
                                                 }
                                             }
                                         }
-                                        Err(e) => {
-                                            dbg!(e);
-                                        }
+                                        Err(e) => {dbg!(e);}
                                     }
                                 }
                                 Err(e) => {dbg!(e);}

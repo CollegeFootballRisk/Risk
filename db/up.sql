@@ -206,7 +206,7 @@ ALTER FUNCTION public.do_user_update(day integer, season integer) OWNER TO postg
 
 CREATE FUNCTION public.territorypower(integer, integer, integer) RETURNS bigint
     LANGUAGE sql IMMUTABLE STRICT
-    AS $_$SELECT sum(power) FROM past_turns WHERE season = $1 AND day = $2 AND territory = $3;$_$;
+    AS $_$SELECT sum(power) FROM past_turns WHERE season = $1 AND day = $2 AND territory = $3 limit 1;$_$;
 
 
 ALTER FUNCTION public.territorypower(integer, integer, integer) OWNER TO postgres;
@@ -568,6 +568,10 @@ CREATE VIEW public.odds AS
 
 
 ALTER TABLE public.odds OWNER TO postgres;
+
+
+CREATE VIEW public.odds AS select ones, twos, threes, fours, fives, (ones+twos+threes+fours+fives) as players, teampower, territory_power as territorypower, chance, team, territory_stats.season as season, territory_stats.day as day, territories.name as territory_name, teams.tname as team_name, teams.color_1 as color, teams.color_2 AS secondary_color, territory_ownership_without_neighbors.owner as tname, territory_ownership_without_neighbors.prev_owner as prev_owner, territory_ownership_without_neighbors.mvp as mvp from territory_stats inner join territories on territories.id = territory_stats.territory inner join teams on teams.id = territory_stats.team inner join territory_ownership_without_neighbors on (((territory_ownership_without_neighbors.name = territories.name) AND (territory_ownership_without_neighbors.season = territory_stats.season) AND (territory_ownership_without_neighbors.day = territory_stats.day)));
+
 
 --
 -- Name: past_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres

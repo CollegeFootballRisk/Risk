@@ -199,14 +199,14 @@ table! {
 
 table! {
     odds (territory_name) {
-        players -> BigInt,
-        ones -> Bigint,
-        twos -> Bigint,
-        threes -> Bigint,
-        fours -> Bigint,
-        fives -> Bigint,
-        teampower -> Bigint,
-        territorypower -> Bigint,
+        players -> Int4,
+        ones -> Int4,
+        twos -> Int4,
+        threes -> Int4,
+        fours -> Int4,
+        fives -> Int4,
+        teampower -> Double,
+        territorypower -> Double,
         chance -> Double,
         team -> Integer,
         season -> Integer,

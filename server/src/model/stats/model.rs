@@ -60,24 +60,25 @@ pub struct Heat {
     pub power: i64,
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, Queryable, Debug)]
 pub struct StarBreakdown64 {
-    pub ones: i64,
-    pub twos: i64,
-    pub threes: i64,
-    pub fours: i64,
-    pub fives: i64,
+    pub ones: i32,
+    pub twos: i32,
+    pub threes: i32,
+    pub fours: i32,
+    pub fives: i32,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct Odds {
     pub territory: String,
     pub owner: String,
     pub winner: String,
-    pub players: i64,
+    pub mvp: String,
+    pub players: i32,
     pub starBreakdown: StarBreakdown64,
-    pub teamPower: i64,
-    pub territoryPower: i64,
+    pub teamPower: f64,
+    pub territoryPower: f64,
     pub chance: f64,
 }
 
@@ -171,6 +172,7 @@ impl Odds {
                 odds::territory_name,
                 odds::prev_owner,
                 odds::tname,
+                odds::mvp,
                 odds::players,
                 (
                     odds::ones,
@@ -185,7 +187,7 @@ impl Odds {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::prev_owner.eq(team))
+            .filter(odds::team_name.eq(team))
             .load::<Odds>(conn)
     }
 }

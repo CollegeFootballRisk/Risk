@@ -86,6 +86,8 @@ pub fn odds(season: i32, day: i32, team: String, conn: DbConn) -> Result<Json<Ve
                 std::result::Result::Err(Status::BadRequest)
             }
         }
-        _ => std::result::Result::Err(Status::BadRequest),
+        Err(e) => {
+            dbg!(e);
+            std::result::Result::Err(Status::BadRequest)},
     }
 }

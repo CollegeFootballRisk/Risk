@@ -32,8 +32,8 @@ pub struct TeamInTurns {
     pub team: String,
     pub color: String,
     pub secondaryColor: String,
-    pub players: i64,
-    pub power: i64,
+    pub players: i32,
+    pub power: f64,
     pub chance: f64,
     pub breakdown: StarBreakdown64,
 }
