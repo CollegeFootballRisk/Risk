@@ -34,3 +34,7 @@ The programme should be able to start up successfully.
 >Error?
 >If cargo throws an error about schema, copy SchemaWithViews to schema like so:
 `cp src/SchemaWithViews.rs src/schema.rs`
+
+# Contributing
+![Ringmaster Flamegraph](/documentation/flamegraph.svg)
+Produced with [FlameGraph](https://github.com/flamegraph-rs/flamegraph).
