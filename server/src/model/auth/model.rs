@@ -13,8 +13,8 @@ pub struct Claims {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientInfo {
-   pub claims: Claims,
-   pub ip: String,
+    pub claims: Claims,
+    pub ip: String,
 }
 
 #[derive(Serialize, Deserialize)]

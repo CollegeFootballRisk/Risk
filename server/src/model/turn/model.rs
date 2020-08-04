@@ -26,7 +26,7 @@ pub struct PastTurn {
     pub day: Option<i32>,
     pub stars: Option<i32>,
     pub mvp: bool,
-    pub territory: String, //should be string
+    pub territory: String,    //should be string
     pub team: Option<String>, //should be string
 }
 

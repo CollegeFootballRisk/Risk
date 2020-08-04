@@ -25,20 +25,18 @@ pub fn leaderboard(
                 Ok(strength) => std::result::Result::Ok(Json(strength)),
                 _ => std::result::Result::Err(Status::BadRequest),
             }
-        }   
-        _ => {
-            match Latest::latest(&conn) {
-                Ok(current) => {
-                    dbg!(&current.day-1);
-                    let leaderboard = StatLeaderboard::load(current.season, current.day-1, &conn);
-                    match leaderboard {
-                        Ok(strength) => std::result::Result::Ok(Json(strength)),
-                        _ => std::result::Result::Err(Status::BadRequest),
-                    }
-                }
-                _ => std::result::Result::Err(Status::BadRequest),
-            }
         }
+        _ => match Latest::latest(&conn) {
+            Ok(current) => {
+                dbg!(&current.day - 1);
+                let leaderboard = StatLeaderboard::load(current.season, current.day - 1, &conn);
+                match leaderboard {
+                    Ok(strength) => std::result::Result::Ok(Json(strength)),
+                    _ => std::result::Result::Err(Status::BadRequest),
+                }
+            }
+            _ => std::result::Result::Err(Status::BadRequest),
+        },
     }
 }
 
@@ -88,6 +86,7 @@ pub fn odds(season: i32, day: i32, team: String, conn: DbConn) -> Result<Json<Ve
         }
         Err(e) => {
             dbg!(e);
-            std::result::Result::Err(Status::BadRequest)},
+            std::result::Result::Err(Status::BadRequest)
+        }
     }
 }

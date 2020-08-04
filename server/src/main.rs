@@ -17,7 +17,7 @@ mod catchers;
 mod db;
 mod schema;
 use rocket_oauth2::OAuth2;
-use std::{thread,time,fs};
+use std::{fs, thread, time};
 struct User {
     pub username: String,
 }
@@ -42,7 +42,7 @@ fn main() {
         start();
     });
     dbg!("test");
-    let ten_millis = time::Duration::from_millis(1000*15*60);
+    let ten_millis = time::Duration::from_millis(1000 * 15 * 60);
     let metadata = fs::metadata("../.env").unwrap();
     if let Ok(time) = metadata.modified() {
         let mut last_tv_sec = time;
@@ -59,7 +59,6 @@ fn main() {
         }
     }
 }
-
 
 fn start() {
     dotenv::from_filename("../.env").ok();

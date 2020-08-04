@@ -67,12 +67,16 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
 }
 
 impl PlayerWithTurnsAndAdditionalTeam {
-    pub fn load(name: Vec<String>, team_assigned: bool, conn: &PgConnection) -> PlayerWithTurnsAndAdditionalTeam {
+    pub fn load(
+        name: Vec<String>,
+        team_assigned: bool,
+        conn: &PgConnection,
+    ) -> PlayerWithTurnsAndAdditionalTeam {
         let me = PlayerWithTurns::load(name.clone(), false, &conn);
         use diesel::dsl::not;
-        let status_code: i32 = match team_assigned{
+        let status_code: i32 = match team_assigned {
             true => 0,
-            false => -1
+            false => -1,
         };
         let results = users::table
             .filter(users::uname.eq_any(name))
@@ -105,11 +109,15 @@ impl PlayerWithTurnsAndAdditionalTeam {
 }
 
 impl PlayerWithTurns {
-    pub fn load(name: Vec<String>, team_assigned: bool, conn: &PgConnection) -> Vec<PlayerWithTurns> {
+    pub fn load(
+        name: Vec<String>,
+        team_assigned: bool,
+        conn: &PgConnection,
+    ) -> Vec<PlayerWithTurns> {
         use diesel::dsl::not;
-        let status_code: i32 = match team_assigned{
+        let status_code: i32 = match team_assigned {
             true => 0,
-            false => -1
+            false => -1,
         };
         let results = users::table
             .filter(users::uname.eq_any(name))
@@ -155,7 +163,7 @@ impl PlayerWithTurns {
                     territories::name,
                     teams::tname,
                 ))
-                .order((past_turns::season.desc(),past_turns::day.desc()))
+                .order((past_turns::season.desc(), past_turns::day.desc()))
                 .load::<PastTurn>(conn)
                 .expect("Error loading user turns");
             let uwp = PlayerWithTurns {

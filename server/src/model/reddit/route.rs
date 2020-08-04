@@ -15,9 +15,9 @@ use std::io::Read;
 //extern crate time;
 //use time::Duration;
 extern crate chrono;
-use chrono::Duration;
 use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
+use chrono::Duration;
 
 #[get("/reddit")]
 pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {

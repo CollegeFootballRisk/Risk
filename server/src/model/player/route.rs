@@ -50,7 +50,7 @@ pub fn player_multifetch(
                 .split(',')
                 .map(|s| s.to_string())
                 .collect::<Vec<String>>(),
-                true,
+            true,
             &conn,
         ))),
         None => std::result::Result::Err(Status::NotFound),

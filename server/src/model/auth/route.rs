@@ -10,10 +10,13 @@ use std::net::SocketAddr;
 //use rocket::response::{Debug, Redirect};
 use rocket::State;
 //use rocket_oauth2::{OAuth2, TokenResponse};
+use crate::model::{
+    Claims, ClientInfo, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats, TeamInfo,
+    UpdateUser,
+};
 use crate::schema::*;
 #[cfg(feature = "risk_security")]
 use crate::security::*;
-use crate::model::{Claims, Latest, Ratings, Stats, UpdateUser, ClientInfo, PlayerWithTurnsAndAdditionalTeam, TeamInfo};
 use diesel::prelude::*;
 use diesel::result::Error;
 extern crate rand;
@@ -27,52 +30,72 @@ use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
 use std::io::Read; //, model::User};
 #[get("/join?<team>")]
-    pub fn join_team(team: i32, cookies:Cookies, conn: DbConn, key: State<String>) -> Result<Json<String>, Status> {
-        match cookies.get("jwt") {
-            Some(cookie) => {
-                match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
-                    Ok(c) => {
-                        //see if user already has team, and if user has current_team
-                        let users = PlayerWithTurnsAndAdditionalTeam::load(vec![c.0.user.clone()], false, &conn);
-                        if users.name.to_lowercase() == c.0.user.to_lowercase() {
-                            //see if user needs a new team, or a team in general
-                            match users.active_team.unwrap().name {
-                                None => {
-                                    //check team exists
-                                    match TeamInfo::load(&conn).iter().any(|e| e.id == team){
-                                        true => {
-                                            match users.team.unwrap().name {
-                                                Some(_e) =>  {
-                                                    //merc!
-                                                    match update_user(false, c.0.id, team, &conn) {
-                                                        Ok(_e) => std::result::Result::Ok(Json(String::from("Okay"))),
-                                                        Err(_e) => std::result::Result::Err(Status::InternalServerError)
-                                                    }
-                                                }
-                                                None => {
-                                                    //new kid on the block
-                                                    match update_user(true, c.0.id, team, &conn) {
-                                                        Ok(_e) => std::result::Result::Ok(Json(String::from("Okay"))),
-                                                        Err(_e) => std::result::Result::Err(Status::InternalServerError)
-                                                    }
+pub fn join_team(
+    team: i32,
+    cookies: Cookies,
+    conn: DbConn,
+    key: State<String>,
+) -> Result<Json<String>, Status> {
+    match cookies.get("jwt") {
+        Some(cookie) => {
+            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                Ok(c) => {
+                    //see if user already has team, and if user has current_team
+                    let users = PlayerWithTurnsAndAdditionalTeam::load(
+                        vec![c.0.user.clone()],
+                        false,
+                        &conn,
+                    );
+                    if users.name.to_lowercase() == c.0.user.to_lowercase() {
+                        //see if user needs a new team, or a team in general
+                        match users.active_team.unwrap().name {
+                            None => {
+                                //check team exists
+                                match TeamInfo::load(&conn).iter().any(|e| e.id == team) {
+                                    true => {
+                                        match users.team.unwrap().name {
+                                            Some(_e) => {
+                                                //merc!
+                                                match update_user(false, c.0.id, team, &conn) {
+                                                    Ok(_e) => std::result::Result::Ok(Json(
+                                                        String::from("Okay"),
+                                                    )),
+                                                    Err(_e) => std::result::Result::Err(
+                                                        Status::InternalServerError,
+                                                    ),
                                                 }
                                             }
-                                        },
-                                        false => std::result::Result::Err(Status::NotAcceptable)
+                                            None => {
+                                                //new kid on the block
+                                                match update_user(true, c.0.id, team, &conn) {
+                                                    Ok(_e) => std::result::Result::Ok(Json(
+                                                        String::from("Okay"),
+                                                    )),
+                                                    Err(_e) => std::result::Result::Err(
+                                                        Status::InternalServerError,
+                                                    ),
+                                                }
+                                            }
+                                        }
                                     }
-                                },
-                                Some(_e) =>  {dbg!(_e); std::result::Result::Err(Status::Conflict)}
+                                    false => std::result::Result::Err(Status::NotAcceptable),
+                                }
                             }
-                        } else {
-                            std::result::Result::Err(Status::Unauthorized)
+                            Some(_e) => {
+                                dbg!(_e);
+                                std::result::Result::Err(Status::Conflict)
+                            }
                         }
+                    } else {
+                        std::result::Result::Err(Status::Unauthorized)
                     }
-                    Err(_e) => std::result::Result::Err(Status::Unauthorized)
                 }
-            },
-            None => std::result::Result::Err(Status::Unauthorized)
+                Err(_e) => std::result::Result::Err(Status::Unauthorized),
+            }
         }
+        None => std::result::Result::Err(Status::Unauthorized),
     }
+}
 
 #[get("/move?<target>")]
 //#[cfg(feature = "risk_security")]
@@ -128,7 +151,7 @@ pub fn make_move(
                             };
                             let user_power: f32 = multiplier * user_weight as f32;
                             let mut merc: bool = false;
-                            if user.0 != user.8{
+                            if user.0 != user.8 {
                                 merc = true;
                             }
                             match insert_turn(
@@ -160,10 +183,16 @@ pub fn make_move(
                                         Err(_e) => std::result::Result::Err(Status::Found),
                                     }
                                 }
-                                Err(_e) => { dbg!(_e); std::result::Result::Err(Status::ImATeapot)},
+                                Err(_e) => {
+                                    dbg!(_e);
+                                    std::result::Result::Err(Status::ImATeapot)
+                                }
                             }
                         }
-                        Err(_e) => { dbg!(_e); std::result::Result::Err(Status::Gone)},
+                        Err(_e) => {
+                            dbg!(_e);
+                            std::result::Result::Err(Status::Gone)
+                        }
                     }
                 }
                 Err(_err) => std::result::Result::Err(Status::Unauthorized),
@@ -207,7 +236,7 @@ fn handle_territory_info(
             users::mvps,
             users::streak,
             users::awards,
-            users::current_team
+            users::current_team,
         ))
         .first::<(
             i32,
@@ -329,34 +358,27 @@ fn insert_turn(
             new_turns::stars.eq(user_ratings.overall),
             new_turns::team.eq(user.0),
             new_turns::alt_score.eq(0),
-            new_turns::merc.eq(merc)
+            new_turns::merc.eq(merc),
         ))
         .on_conflict((new_turns::user_id, new_turns::season, new_turns::day))
         .do_update()
-        .set((new_turns::territory.eq(target),
-        new_turns::power.eq(user_power),
-        new_turns::multiplier.eq(multiplier)))
+        .set((
+            new_turns::territory.eq(target),
+            new_turns::power.eq(user_power),
+            new_turns::multiplier.eq(multiplier),
+        ))
         .execute(conn)
 }
 
-fn  update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize>{
-    match new{
-        true => {
-            diesel::update(users::table)
+fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+    match new {
+        true => diesel::update(users::table)
             .filter(users::id.eq(user))
-            .set((
-                users::current_team.eq(team),
-                users::playing_for.eq(team)
-            ))
-            .execute(conn)
-        }
-        false => {
-            diesel::update(users::table)
-            .set(
-                users::playing_for.eq(team)
-            )
-            .execute(conn)
-        }
+            .set((users::current_team.eq(team), users::playing_for.eq(team)))
+            .execute(conn),
+        false => diesel::update(users::table)
+            .set(users::playing_for.eq(team))
+            .execute(conn),
     }
 }
 
