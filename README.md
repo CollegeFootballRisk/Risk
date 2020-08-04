@@ -17,9 +17,9 @@ You'll now need to configure the environmental variables. Use a text editor to e
 
 **server/.env**
 
-	 ```
-	 DATABASE_URL=postgresql://{user}@{host}/{database_name}
-	 ```
+```
+DATABASE_URL=postgresql://{user}@{host}/{database_name}
+```
 
 We can now create the database. Use postgres to [Create a Database](https://www.postgresql.org/docs/9.0/sql-createdatabase.html).
 
