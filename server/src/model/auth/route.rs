@@ -57,23 +57,31 @@ pub fn join_team(
                                             Some(_e) => {
                                                 //merc!
                                                 match update_user(false, c.0.id, team, &conn) {
-                                                    Ok(_e) => std::result::Result::Ok(Json(
-                                                        String::from("Okay"),
-                                                    )),
-                                                    Err(_e) => std::result::Result::Err(
-                                                        Status::InternalServerError,
-                                                    ),
+                                                    Ok(_e) => {
+                                                        std::result::Result::Ok(Json(String::from(
+                                                            "Okay",
+                                                        )))
+                                                    }
+                                                    Err(_e) => {
+                                                        std::result::Result::Err(
+                                                            Status::InternalServerError,
+                                                        )
+                                                    }
                                                 }
                                             }
                                             None => {
                                                 //new kid on the block
                                                 match update_user(true, c.0.id, team, &conn) {
-                                                    Ok(_e) => std::result::Result::Ok(Json(
-                                                        String::from("Okay"),
-                                                    )),
-                                                    Err(_e) => std::result::Result::Err(
-                                                        Status::InternalServerError,
-                                                    ),
+                                                    Ok(_e) => {
+                                                        std::result::Result::Ok(Json(String::from(
+                                                            "Okay",
+                                                        )))
+                                                    }
+                                                    Err(_e) => {
+                                                        std::result::Result::Err(
+                                                            Status::InternalServerError,
+                                                        )
+                                                    }
                                                 }
                                             }
                                         }
@@ -250,33 +258,30 @@ fn handle_territory_info(
             i32,
         )>(conn)
     {
-        Ok(team_id) => match get_adjacent_territory_owners(target, latest, &conn) {
-            Ok(adjacent_territory_owners) => {
-                match adjacent_territory_owners
-                    .iter()
-                    .position(|&x| x.0 == team_id.0)
-                {
-                    Some(_tuple_of_territory) => {
-                        let pos = adjacent_territory_owners
-                            .iter()
-                            .position(|&x| x.1 == target);
-                        if team_id.0 != 0 {
-                            if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                Ok((team_id, 1.5))
+        Ok(team_id) => {
+            match get_adjacent_territory_owners(target, latest, &conn) {
+                Ok(adjacent_territory_owners) => {
+                    match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
+                        Some(_tuple_of_territory) => {
+                            let pos = adjacent_territory_owners.iter().position(|&x| x.1 == target);
+                            if team_id.0 != 0 {
+                                if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
+                                    Ok((team_id, 1.5))
+                                } else {
+                                    Ok((team_id, 1.0))
+                                }
                             } else {
-                                Ok((team_id, 1.0))
+                                let mut rng = thread_rng();
+                                let n: i32 = rng.gen_range(4, 6);
+                                Ok((team_id, (n / 4) as f32))
                             }
-                        } else {
-                            let mut rng = thread_rng();
-                            let n: i32 = rng.gen_range(4, 6);
-                            Ok((team_id, (n / 4) as f32))
                         }
+                        None => Err("You don't own that territory or an adjacent one".to_string()),
                     }
-                    None => Err("You don't own that territory or an adjacent one".to_string()),
                 }
+                Err(_er) => Err("You don't own that territory or an adjacent one".to_string()),
             }
-            Err(_er) => Err("You don't own that territory or an adjacent one".to_string()),
-        },
+        }
         Err(_e) => Err("You don't own that territory or an adjacent one".to_string()),
     }
 }
@@ -294,10 +299,7 @@ fn get_adjacent_territory_owners(
             territory_ownership::table
                 .on(territory_ownership::territory_id.eq(territory_adjacency::adjacent_id)),
         )
-        .select((
-            territory_ownership::owner_id,
-            territory_ownership::territory_id,
-        ))
+        .select((territory_ownership::owner_id, territory_ownership::territory_id))
         .load::<(i32, i32)>(conn)
 }
 
@@ -310,16 +312,18 @@ fn get_cfb_points(name: String) -> i64 {
 
     let mut body = String::new();
     match res.read_to_string(&mut body) {
-        Ok(_ok) => match serde_json::from_str(&body[0..]) {
-            Ok(v) => {
-                let v: serde_json::Value = v;
-                match v["ratings"]["overall"].as_i64() {
-                    Some(number) => number,
-                    None => 1,
+        Ok(_ok) => {
+            match serde_json::from_str(&body[0..]) {
+                Ok(v) => {
+                    let v: serde_json::Value = v;
+                    match v["ratings"]["overall"].as_i64() {
+                        Some(number) => number,
+                        None => 1,
+                    }
                 }
+                _ => 1,
             }
-            _ => 1,
-        },
+        }
         Err(_e) => 1,
     }
 }
@@ -372,13 +376,13 @@ fn insert_turn(
 
 fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
-        true => diesel::update(users::table)
-            .filter(users::id.eq(user))
-            .set((users::current_team.eq(team), users::playing_for.eq(team)))
-            .execute(conn),
-        false => diesel::update(users::table)
-            .set(users::playing_for.eq(team))
-            .execute(conn),
+        true => {
+            diesel::update(users::table)
+                .filter(users::id.eq(user))
+                .set((users::current_team.eq(team), users::playing_for.eq(team)))
+                .execute(conn)
+        }
+        false => diesel::update(users::table).set(users::playing_for.eq(team)).execute(conn),
     }
 }
 

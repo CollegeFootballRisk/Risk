@@ -26,17 +26,19 @@ pub fn leaderboard(
                 _ => std::result::Result::Err(Status::BadRequest),
             }
         }
-        _ => match Latest::latest(&conn) {
-            Ok(current) => {
-                dbg!(&current.day - 1);
-                let leaderboard = StatLeaderboard::load(current.season, current.day - 1, &conn);
-                match leaderboard {
-                    Ok(strength) => std::result::Result::Ok(Json(strength)),
-                    _ => std::result::Result::Err(Status::BadRequest),
+        _ => {
+            match Latest::latest(&conn) {
+                Ok(current) => {
+                    dbg!(&current.day - 1);
+                    let leaderboard = StatLeaderboard::load(current.season, current.day - 1, &conn);
+                    match leaderboard {
+                        Ok(strength) => std::result::Result::Ok(Json(strength)),
+                        _ => std::result::Result::Err(Status::BadRequest),
+                    }
                 }
+                _ => std::result::Result::Err(Status::BadRequest),
             }
-            _ => std::result::Result::Err(Status::BadRequest),
-        },
+        }
     }
 }
 
@@ -48,11 +50,8 @@ pub fn heat(
 ) -> Result<Json<Vec<Heat>>, Status> {
     match Latest::latest(&conn) {
         Ok(current) => {
-            let heat = Heat::load(
-                season.unwrap_or(current.season),
-                day.unwrap_or(current.day - 1),
-                &conn,
-            );
+            let heat =
+                Heat::load(season.unwrap_or(current.season), day.unwrap_or(current.day - 1), &conn);
             if heat.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(heat))
             } else {

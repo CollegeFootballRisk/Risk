@@ -82,11 +82,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
             .filter(users::uname.eq_any(name))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .select((
-                teams::tname.nullable(),
-                teams::color_1.nullable(),
-                teams::color_2.nullable(),
-            ))
+            .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
             .first::<Team>(conn)
             .expect("Error loading users");
 
@@ -134,11 +130,7 @@ impl PlayerWithTurns {
                     users::streak,
                     users::awards,
                 ),
-                (
-                    teams::tname.nullable(),
-                    teams::color_1.nullable(),
-                    teams::color_2.nullable(),
-                ),
+                (teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()),
             ))
             .load::<(User, Team)>(conn)
             .expect("Error loading users");

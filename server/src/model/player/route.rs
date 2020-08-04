@@ -45,14 +45,13 @@ pub fn player_multifetch(
     conn: DbConn,
 ) -> Result<Json<Vec<PlayerWithTurns>>, Status> {
     match players {
-        Some(player) => std::result::Result::Ok(Json(PlayerWithTurns::load(
-            player
-                .split(',')
-                .map(|s| s.to_string())
-                .collect::<Vec<String>>(),
-            true,
-            &conn,
-        ))),
+        Some(player) => {
+            std::result::Result::Ok(Json(PlayerWithTurns::load(
+                player.split(',').map(|s| s.to_string()).collect::<Vec<String>>(),
+                true,
+                &conn,
+            )))
+        }
         None => std::result::Result::Err(Status::NotFound),
     }
 }
