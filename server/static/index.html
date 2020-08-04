@@ -407,11 +407,11 @@
       display: none;
     }
 
-    #hamitems {
+    .hamitems {
       display: flex;
     }
 
-    #hamitems a {
+    .hamitems a {
       width: 20%;
       padding: 10px;
       color: white;
@@ -419,7 +419,7 @@
       text-align: center;
     }
 
-    #hamitems a:hover {
+    .hamitems a:hover {
       background: #401408;
     }
 
@@ -437,7 +437,7 @@
         background: #a02620;
       }
 
-      #hamitems a {
+      .hamitems a {
         box-sizing: border-box;
         display: block;
         width: 100%;
@@ -445,11 +445,11 @@
         background: rgba(250, 0, 0, 0.8);
       }
 
-      #hamitems {
+      .hamitems {
         display: none;
       }
 
-      #hamnav input:checked~#hamitems {
+      .hamnav input:checked~.hamitems {
         display: block;
       }
 
@@ -540,7 +540,7 @@
       display: flex;
       justify-content: center;
       width: 300px - --border-width*2;
-      padding: 0px;
+      padding: 0px;gi
       margin-top: auto;
       margin-bottom: 0px;
     }
@@ -584,12 +584,12 @@
       <nav id="hamnav">
         <label for="hamburger">&#9776;</label>
         <input type="checkbox" id="hamburger" />
-        <div id="hamitems">
+        <div class="hamitems">
           <a href="index.html">Home</a>
-          <a href="about.html">Leaderboard</a>
-          <a href="tech.html">Odds</a>
-          <a href="games.html">Info</a>
-          <a href="reviews.html">API</a>
+          <a href="leaderboard.html">Leaderboard</a>
+          <a href="odds.html">Odds</a>
+          <a href="info.html">Info</a>
+          <a href="https://github.com/mautamu/Risk/blob/stable/documentation/API.md">API</a>
         </div>
       </nav>
     </div>
@@ -600,7 +600,11 @@
       </a>
     </div>
     <div class="col">
-      <a class="navbar-brand rj" href="/">LOGO</a>
+      <div class="hamitems" style="float:right;">
+        <a class="navbar-brand rj" href="/login/reddit">
+          <img src="reddit-logo.png" class="brand-image"></img>
+        </a>
+      </div>
     </div>
   </nav>
   <div class="central-console">

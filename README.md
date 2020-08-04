@@ -5,9 +5,7 @@ A Risk game similar to CollegeFootballRisk, written in Rust
 - [Deviations from College Football Risk's API](/documentation/DEVIATIONS.md)
 
 # Installation
-This programme requires Rust nightly. It can be installed with the following:
-
-```bash curl -s https://static.rust-lang.org/rustup.sh | sh -s -- --channel=nightly```
+This programme requires Rust nightly. It can be installed with [rustup](https://github.com/rust-lang/rustup#choosing-where-to-install).
 
 Once nightly is installed, you can clone the following repository:
 
