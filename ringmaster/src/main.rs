@@ -5,6 +5,7 @@ extern crate diesel;
 extern crate serde_derive;
 extern crate dotenv;
 extern crate rand;
+extern crate rand_chacha;
 pub mod schema;
 pub mod structs;
 
@@ -13,6 +14,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::sql_query;
 use rand::prelude::*;
+use rand_chacha::ChaCha12Rng;
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::io::Read;
@@ -240,7 +242,7 @@ fn process_territories(
 
                 let totalpower: f64 = map.values().map(|x| (x.1)).sum();
                 //dbg!(totalpower);
-                let lottery = rand::thread_rng().gen_range(0f64, totalpower);
+                let lottery = ChaCha12Rng::from_entropy().gen_range(0f64, totalpower);
 
                 let victor = determinevictor(lottery, map.clone());
 
