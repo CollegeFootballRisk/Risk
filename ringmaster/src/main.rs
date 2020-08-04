@@ -32,10 +32,7 @@ pub fn establish_connection() -> PgConnection {
 }
 
 fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
-    let mut teams = territory_players
-        .iter()
-        .map(|x| x.team)
-        .collect::<Vec<i32>>();
+    let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
     teams.sort();
     teams.dedup();
     teams
@@ -67,12 +64,7 @@ fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
-) -> (
-    Vec<TerritoryOwnersInsert>,
-    Vec<PlayerMoves>,
-    HashMap<i32, Stats>,
-    Vec<TerritoryStats>,
-) {
+) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>, Vec<TerritoryStats>) {
     dbg!("process_territories");
     dbg!(territories.len());
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
@@ -160,36 +152,24 @@ fn process_territories(
                             teams[0],
                         )
                     })
-                    .starpower += territory_players
-                    .iter()
-                    .map(|mover| mover.power.round() as i32)
-                    .sum::<i32>();
+                    .starpower +=
+                    territory_players.iter().map(|mover| mover.power.round() as i32).sum::<i32>();
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
                     team: territory.owner_id,
                     season: territory.season,
                     day: territory.day,
-                    ones: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 1)
-                        .count() as i32,
-                    twos: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 2)
-                        .count() as i32,
-                    threes: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 3)
-                        .count() as i32,
-                    fours: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 4)
-                        .count() as i32,
-                    fives: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 5)
-                        .count() as i32,
+                    ones: territory_players.iter().filter(|player| player.stars == 1).count()
+                        as i32,
+                    twos: territory_players.iter().filter(|player| player.stars == 2).count()
+                        as i32,
+                    threes: territory_players.iter().filter(|player| player.stars == 3).count()
+                        as i32,
+                    fours: territory_players.iter().filter(|player| player.stars == 4).count()
+                        as i32,
+                    fives: territory_players.iter().filter(|player| player.stars == 5).count()
+                        as i32,
                     teampower: territory_players
                         .iter()
                         .map(|mover| mover.power.round() as f64)
@@ -275,10 +255,8 @@ fn process_territories(
                     })
                     .territorycount += 1;
 
-                let total_power = territory_players
-                    .iter()
-                    .map(|mover| mover.power.round() as f64)
-                    .sum::<f64>();
+                let total_power =
+                    territory_players.iter().map(|mover| mover.power.round() as f64).sum::<f64>();
                 handleteamstats(&mut stats, territory_players);
                 for (key, val) in map.iter() {
                     territory_stats.push(TerritoryStats {
@@ -448,11 +426,8 @@ fn main() {
         let mut turninfoblock = turninfodata.unwrap();
         turninfoblock.rollstarttime = Some(Utc::now().naive_utc());
         dbg!(&turninfoblock.season, &turninfoblock.day);
-        let players = PlayerMoves::load(
-            &turninfoblock.season.unwrap(),
-            &turninfoblock.day.unwrap(),
-            &conn,
-        );
+        let players =
+            PlayerMoves::load(&turninfoblock.season.unwrap(), &turninfoblock.day.unwrap(), &conn);
         let territories = TerritoryOwners::load(
             &turninfoblock.season.unwrap(),
             &turninfoblock.day.unwrap(),
