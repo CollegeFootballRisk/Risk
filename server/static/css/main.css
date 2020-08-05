@@ -20,6 +20,10 @@ body {
 a {
     cursor: url('../images/cur117.cur'), auto !important;
     color: var(--theme-fg);
+    background: var(--theme-bg);
+    padding: 5px;
+    border-radius: 5px;
+    text-decoration: none;
 }
 
 .navbar {
@@ -776,6 +780,7 @@ leaderboard a:active {
 .dataTable-table th a {
     text-decoration: none;
     color: inherit;
+    background: none !important;
 }
 
 .dataTable-sorter {
