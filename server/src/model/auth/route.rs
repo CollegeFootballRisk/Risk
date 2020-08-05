@@ -214,7 +214,7 @@ pub fn make_move(
                         }
                         Err(_e) => {
                             dbg!(_e);
-                            std::result::Result::Err(Status::Gone)
+                            std::result::Result::Err(Status::ImATeapot)
                         }
                     }
                 }

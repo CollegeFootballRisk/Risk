@@ -1,7 +1,10 @@
 :root {
     --theme-bg: rgba(0, 0, 255, 1);
+    --theme-bg-05: rgba(146, 146, 255, 0.5);
     --theme-icon-bg: rgba(0, 0, 0, 0.5);
     --theme-fg: rgba(255, 255, 255, 1);
+    --theme-accent-1: rgba(0, 200, 0, 1);
+    --theme-accent-2: rgba(200, 0, 0, 1);
 }
 
 body {
@@ -16,6 +19,7 @@ body {
 
 a {
     cursor: url('../images/cur117.cur'), auto !important;
+    color: var(--theme-fg);
 }
 
 .navbar {
@@ -481,6 +485,10 @@ a {
     flex-direction: column;
 }
 
+.fdr {
+    flex-direction: row;
+}
+
 .break {
     flex-basis: 100%;
     height: 0;
@@ -545,7 +553,7 @@ a {
     justify-content: center;
     width: 300px - --border-width*2;
     padding: 0px;
-    gi margin-top: auto;
+    margin-top: auto;
     margin-bottom: 0px;
 }
 
@@ -565,6 +573,33 @@ a {
 .gradient-buttons button {
     background: unset;
     border: none;
+}
+
+.action-list {
+    flex-basis: 50%;
+    padding-left: 20px;
+}
+
+.action-list button {
+    border: 0px;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 8px;
+    color: var(--theme-fg);
+}
+
+.action-list button:hover,
+.action-list button:focus {
+    box-shadow: 0 0px 15px 0 var(--theme-bg);
+    background: var(--theme-bg-05) !important;
+}
+
+#attack-list button {
+    background: var(--theme-accent-1);
+}
+
+#defend-list button {
+    background: var(--theme-accent-2);
 }
 
 .gradient-buttons li:hover {
@@ -592,11 +627,9 @@ leaderboard a:active {
     top: 8px;
 }
 
-.selected {
-    td {
-        background-color: #ccc;
-        color: #fff;
-    }
+.selected td {
+    background-color: #ccc;
+    color: #fff;
 }
 
 
@@ -798,7 +831,6 @@ leaderboard a:active {
 .redditlogin a {
     text-decoration: none;
     color: var(--theme-fg);
-    cursor: url('../images/cur117.cur'), auto !important;
 }
 
 .redditlogin {
@@ -820,4 +852,5 @@ leaderboard a:active {
     margin-right: 22px;
     margin-left: 20px;
     vertical-align: middle;
+    cursor: url('../images/cur117.cur'), auto !important;
 }
