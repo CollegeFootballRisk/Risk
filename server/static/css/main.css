@@ -431,9 +431,16 @@ a {
         padding: 10px;
         margin-top: -10px;
     }
+    body {
+        padding-top: 4em;
+    }
+    .brand-tag {
+        display: none;
+    }
     .row {
         display: unset;
         flex-wrap: wrap;
+        min-width: 90%;
     }
     .dataTable-table>tbody>tr>td {
         font-size: 10;
