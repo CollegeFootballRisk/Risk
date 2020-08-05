@@ -99,6 +99,6 @@ fn start() {
             auth::route::join_team,
         ])
         .mount("/login", routes![reddit::route::reddit_login,])
-        .mount("/", StaticFiles::from("/srv/rust/Risk/server/static"))
+        .mount("/", StaticFiles::from("static"))
         .launch();
 }
