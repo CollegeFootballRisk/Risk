@@ -5,7 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="alternate icon" href="images/favicon.ico">
     <link rel="mask-icon" href="images/favico-tab.svg" color="#500000">
-    <script src="https://unpkg.com/cheetah-grid@0.22"></script>
+    <script src="js/datatables.js"></script>
     <title>Rust Risk</title>
     <link rel="stylesheet" href="/css/main.css" name="www-onepick">
     <!--<script src="//d3js.org/d3.v3.min.js"></script>
@@ -120,8 +120,13 @@
                 <div class="row row-container">
                     <div class="col3 cold">
                         <div class="flex">
-                            <div class="content jc">
-                                <div id="leaderboard" style="height: 500px; border: solid 1px #ddd; background: none; margin-right: 20px;">
+                            <div class="content fd jc">
+                                <center>
+                                    <h2>Leaderboard</h2>
+                                </center>
+                                <div id="leaderboard">
+                                    <table id="leaderboard-table">
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -238,10 +243,10 @@
                     xhttp.onreadystatechange = function() {
                         if (this.readyState == 4 && this.status == 200) {
                             callback(this);
-                            //console.log(this);
                             // return JSON.parse(this.response);
-                        } else {
+                        } else if (this.readyState == 4 && this.status != 200) {
                             globalError = true;
+                            errorcallback();
                             //updateLoaderVisibility();
                             //document.getElementsById("loadicon").classList.add("blink");
                         }
@@ -301,78 +306,114 @@
                 };
 
                 function drawLeaderboard(season, day) {
-                    document.getElementById('leaderboard').style.width = 985;
-                    doAjaxGetRequest('/api/stats/leaderboard', 'leaderboard request', function(data) {
+                    doAjaxGetRequest('/api/stats/leaderboard', 'leaderboard request', function(leaderboard_data) {
                         //console.log(data);
-                        records = JSON.parse(data.response);
-                        const grid = new cheetahGrid.ListGrid({
-                            parentElement: document.querySelector('#leaderboard'),
-                            records,
-                            theme: userTheme,
-                            header: [{
-                                field: 'rank',
-                                caption: 'Rank',
-                                width: 75,
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, {
-                                field: 'name',
-                                caption: 'Name',
-                                width: 300,
-                                sort: true,
-                                icon: {
-                                    src: 'logo',
-                                    width: 30,
-                                },
-                            }, {
-                                field: 'territoryCount',
-                                caption: 'Territories',
-                                width: 120,
-                                columnType: 'number',
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, {
-                                field: 'playerCount',
-                                caption: 'Players',
-                                width: 120,
-                                columnType: 'number',
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, {
-                                field: 'mercCount',
-                                caption: 'Mercernaries',
-                                width: 120,
-                                columnType: 'number',
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, {
-                                field: 'starPower',
-                                caption: 'Star Power',
-                                width: 120,
-                                columnType: 'number',
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, {
-                                field: 'efficiency',
-                                caption: 'Efficiency',
-                                width: 120,
-                                columnType: 'number',
-                                style: {
-                                    textAlign: 'center',
-                                },
-                                sort: true,
-                            }, ],
+                        let leaderboardObject = JSON.parse(leaderboard_data.response);
+                        let display_headings = ["rank", "name", "territoryCount", "playerCount", "mercCount", "starPower", "efficiency"];
+
+                        var obj = {
+                            // Quickly get the headings
+                            headings: ["Rank", "Name", "Territories", "Players", "Mercernaries", "Stars", "Efficiency"],
+
+                            // data array
+                            data: []
+                        };
+
+                        // Loop over the objects to get the values
+                        for (var i = 0; i < leaderboardObject.length; i++) {
+
+                            obj.data[i] = [];
+
+                            for (var p in leaderboardObject[i]) {
+                                if (leaderboardObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
+                                    if (p == 'name') {
+                                        obj.data[i].push("<img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
+                                    } else {
+                                        obj.data[i].push(leaderboardObject[i][p]);
+                                    }
+                                }
+                            }
+                        }
+
+                        var datatable = new DataTable("#leaderboard-table", {
+                            data: obj,
+                            columns: obj.columns,
+                            searchable: false,
+                            perPageSelect: false,
+                            footer: false,
+                            labels: {
+                                info: "",
+                            }
                         });
+                        /* records = JSON.parse(data.response);
+                         const grid = new cheetahGrid.ListGrid({
+                             parentElement: document.querySelector('#leaderboard'),
+                             records,
+                             theme: userTheme,
+                             header: [{
+                                 field: 'rank',
+                                 caption: 'Rank',
+                                 width: 75,
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, {
+                                 field: 'name',
+                                 caption: 'Name',
+                                 width: 300,
+                                 sort: true,
+                                 icon: {
+                                     src: 'logo',
+                                     width: 30,
+                                 },
+                             }, {
+                                 field: 'territoryCount',
+                                 caption: 'Territories',
+                                 width: 120,
+                                 columnType: 'number',
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, {
+                                 field: 'playerCount',
+                                 caption: 'Players',
+                                 width: 120,
+                                 columnType: 'number',
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, {
+                                 field: 'mercCount',
+                                 caption: 'Mercernaries',
+                                 width: 120,
+                                 columnType: 'number',
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, {
+                                 field: 'starPower',
+                                 caption: 'Star Power',
+                                 width: 120,
+                                 columnType: 'number',
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, {
+                                 field: 'efficiency',
+                                 caption: 'Efficiency',
+                                 width: 120,
+                                 columnType: 'number',
+                                 style: {
+                                     textAlign: 'center',
+                                 },
+                                 sort: true,
+                             }, ],
+                         });*/
                     });
                 }
 
@@ -424,16 +465,19 @@
                                     .replace(/{{team_logo}}/g, window.teamsObject[index].logo);
                                 document.getElementById("playerCard").innerHTML = listHtml;
                             });
+                        }, function() {
+                            //display reddit login info
+                            document.getElementById("playerCard").classList.add("redditlogin");
+                            document.getElementById("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
                         });
                     } catch {
                         console.log("Error setting up user card");
                     }
                 }
                 const loadUser = (new Promise(getTeamInfo))
-                    .then(getUserInfo, console.log)
                     .then(drawMap)
-                    .then(setupMapHover)
-                    .then();
+                    .then(getUserInfo, console.log)
+                    .finally(setupMapHover);
 
                 function setupMapHover(status) {
                     document.addEventListener('mouseover', function(event) {
