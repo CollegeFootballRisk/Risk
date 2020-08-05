@@ -63,6 +63,7 @@ pub fn reddit_callback(
                 Ok(_n) => {
                     match User::load(user_info.name.clone(), "reddit".to_string(), &conn) {
                         Ok(user) => {
+                            dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
                             let timestamp: usize = 604800 + datetime.timestamp() as usize;
                             let new_claims = Claims {
@@ -75,7 +76,7 @@ pub fn reddit_callback(
                             cookies.add(
                                 Cookie::build("username", user_info.name)
                                     .same_site(SameSite::Lax)
-                                    .domain("localhost")
+                                    .domain(dotenv::var("uri").unwrap_or(String::new()))
                                     .path("/")
                                     .max_age(Duration::hours(168))
                                     .finish(),
@@ -85,7 +86,7 @@ pub fn reddit_callback(
                                     cookies.add(
                                         Cookie::build("jwt", s)
                                             .same_site(SameSite::Lax)
-                                            .domain("localhost")
+                                            .domain(dotenv::var("uri").unwrap_or(String::new()))
                                             .path("/")
                                             .max_age(Duration::hours(168))
                                             .finish(),
