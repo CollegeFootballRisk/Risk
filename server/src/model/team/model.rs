@@ -61,6 +61,18 @@ impl TeamInfo {
     }
 }
 
+impl TeamWithColors {
+    pub fn blank()-> TeamWithColors{
+        TeamWithColors{
+            name: None,
+            colors: Colors {
+                primary: None, 
+                secondary: None
+            }
+        }
+    }
+}
+
 impl TeamPlayerMoves {
     pub fn load(
         season_seek: i32,

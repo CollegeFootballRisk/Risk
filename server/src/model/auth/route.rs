@@ -12,7 +12,7 @@ use rocket::State;
 //use rocket_oauth2::{OAuth2, TokenResponse};
 use crate::model::{
     Claims, ClientInfo, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats, TeamInfo,
-    UpdateUser,
+    UpdateUser, CurrentStrength, TeamWithColors
 };
 use crate::schema::*;
 #[cfg(feature = "risk_security")]
@@ -48,41 +48,56 @@ pub fn join_team(
                     );
                     if users.name.to_lowercase() == c.0.user.to_lowercase() {
                         //see if user needs a new team, or a team in general
-                        match users.active_team.unwrap().name {
+                        match users.active_team.unwrap_or(TeamWithColors::blank()).name {
                             None => {
                                 //check team exists
                                 match TeamInfo::load(&conn).iter().any(|e| e.id == team) {
                                     true => {
-                                        match users.team.unwrap().name {
-                                            Some(_e) => {
-                                                //merc!
-                                                match update_user(false, c.0.id, team, &conn) {
-                                                    Ok(_e) => {
-                                                        std::result::Result::Ok(Json(String::from(
-                                                            "Okay",
-                                                        )))
+                                        // check that team has territories
+                                        match CurrentStrength::load_id(team, &conn) {
+                                            Ok(strength) => {
+                                                if strength.territories > 0 {
+                                                    match users.team.unwrap_or(TeamWithColors::blank()).name {
+                                                        Some(_e) => {
+                                                            //merc!
+                                                            match update_user(false, c.0.id, team, &conn) {
+                                                                Ok(_e) => {
+                                                                    std::result::Result::Ok(Json(String::from(
+                                                                        "Okay",
+                                                                    )))
+                                                                }
+                                                                Err(_e) => {
+                                                                    std::result::Result::Err(
+                                                                        Status::InternalServerError,
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                        None => {
+                                                            //new kid on the block
+                                                            match update_user(true, c.0.id, team, &conn) {
+                                                                Ok(_e) => {
+                                                                    std::result::Result::Ok(Json(String::from(
+                                                                        "Okay",
+                                                                    )))
+                                                                }
+                                                                Err(_e) => {
+                                                                    std::result::Result::Err(
+                                                                        Status::InternalServerError,
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
                                                     }
-                                                    Err(_e) => {
-                                                        std::result::Result::Err(
-                                                            Status::InternalServerError,
-                                                        )
-                                                    }
+                                                }
+                                                else {
+                                                    std::result::Result::Err(
+                                                        Status::Forbidden,
+                                                    )
                                                 }
                                             }
-                                            None => {
-                                                //new kid on the block
-                                                match update_user(true, c.0.id, team, &conn) {
-                                                    Ok(_e) => {
-                                                        std::result::Result::Ok(Json(String::from(
-                                                            "Okay",
-                                                        )))
-                                                    }
-                                                    Err(_e) => {
-                                                        std::result::Result::Err(
-                                                            Status::InternalServerError,
-                                                        )
-                                                    }
-                                                }
+                                            Err(_e) => {
+                                                std::result::Result::Err(Status::NotAcceptable)
                                             }
                                         }
                                     }

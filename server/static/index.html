@@ -14,6 +14,22 @@
 </head>
 
 <body>
+    <div id="error-notif" class="gradient-border" style="display: none;">
+        <center><b id="error-notif-title">Please complete the captcha:</b><br /><br />
+            <div id="error-notif-body">
+                <img src="https://www.technotification.com/wp-content/uploads/2014/12/captcha_various-protection-modes-_screenshot-gif.gif" />
+                <br /> Captcha: <input type="text" style="width:50%; margin: 10px;" placeholder="CODE"></input>
+            </div>
+        </center>
+        <ul class="gradient-buttons">
+            <li id="error-notif-button-1-container">
+                <button id="error-notif-button-1" href="">Okay</button>
+            </li>
+            <li id="error-notif-button-2-container">
+                <button id="error-notif-button-2" href="">Yikes</button>
+            </li>
+        </ul>
+    </div>
     <nav class="navbar">
         <div class="col">
             <nav id="hamnav">
@@ -231,6 +247,32 @@
                 </center>
             </script>
             <script>
+                function errorNotif(title, body, button1, button2) {
+                    document.getElementById('error-notif').style.display = "block";
+                    document.getElementById('error-notif-title').innerHTML = title || "General Error";
+                    document.getElementById('error-notif-body').innerHTML = body || "Hmm, no error was specified. Try notifying <a href=\"https://github.com/mautamu/risk\">u/Mautamu</a> if this issue persists.";
+                    document.getElementById('error-notif-button-1').innerHTML = button1.text || "";
+                    document.getElementById('error-notif-button-1-container').style.display = button1.display || "block";
+                    document.getElementById('error-notif-button-1').onclick = function() {
+                        if (typeof button1.action() != null) {
+                            button1.action();
+                        }
+                        errorOver();
+                    };
+                    document.getElementById('error-notif-button-2').innerHTML = button2.text || "";
+                    document.getElementById('error-notif-button-2-container').style.display = button2.display || "block";
+                    document.getElementById('error-notif-button-2').onclick = function() {
+                        if (typeof button1.action() != null) {
+                            button2.action();
+                        }
+                        errorOver();
+                    };
+                }
+
+                function errorOver() {
+
+                }
+
                 function togglehamitems() {
                     document.getElementById()
                 }
@@ -246,7 +288,7 @@
                             // return JSON.parse(this.response);
                         } else if (this.readyState == 4 && this.status != 200) {
                             globalError = true;
-                            errorcallback();
+                            errorcallback(this);
                             //updateLoaderVisibility();
                             //document.getElementsById("loadicon").classList.add("blink");
                         }
@@ -345,75 +387,6 @@
                                 info: "",
                             }
                         });
-                        /* records = JSON.parse(data.response);
-                         const grid = new cheetahGrid.ListGrid({
-                             parentElement: document.querySelector('#leaderboard'),
-                             records,
-                             theme: userTheme,
-                             header: [{
-                                 field: 'rank',
-                                 caption: 'Rank',
-                                 width: 75,
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, {
-                                 field: 'name',
-                                 caption: 'Name',
-                                 width: 300,
-                                 sort: true,
-                                 icon: {
-                                     src: 'logo',
-                                     width: 30,
-                                 },
-                             }, {
-                                 field: 'territoryCount',
-                                 caption: 'Territories',
-                                 width: 120,
-                                 columnType: 'number',
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, {
-                                 field: 'playerCount',
-                                 caption: 'Players',
-                                 width: 120,
-                                 columnType: 'number',
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, {
-                                 field: 'mercCount',
-                                 caption: 'Mercernaries',
-                                 width: 120,
-                                 columnType: 'number',
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, {
-                                 field: 'starPower',
-                                 caption: 'Star Power',
-                                 width: 120,
-                                 columnType: 'number',
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, {
-                                 field: 'efficiency',
-                                 caption: 'Efficiency',
-                                 width: 120,
-                                 columnType: 'number',
-                                 style: {
-                                     textAlign: 'center',
-                                 },
-                                 sort: true,
-                             }, ],
-                         });*/
                     });
                 }
 
@@ -427,49 +400,112 @@
                 function getUserInfo(resolve, reject) {
                     try {
                         doAjaxGetRequest('/api/me', 'UserLoader', function(userObject) {
-                            window.userObject = JSON.parse(userObject.response);
-                            doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(window.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(teamObject) {
-                                teamObject = JSON.parse(teamObject.response);
-                                userObject = window.userObject;
-                                var template = document.getElementById("templatePlayerCard");
+                                window.userObject = JSON.parse(userObject.response);
+                                //see if user has a team, if not, prompt them and halt
+                                if (window.userObject.active_team.name == null) {
+                                    //select a new team 4 the season! whoohoo!
+                                    if (window.userObject.team == null) {
+                                        //select a team in general!! whoohoo!
+                                        select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
+                                        teamsObject.forEach(function(team) {
+                                            select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                                        });
+                                        select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
+                                        errorNotif('Select a Team', select_team, {
+                                            text: "Join",
+                                            action: function() {
+                                                doAjaxGetRequest(encodeURI('/auth/join?team='.concat(document.getElementById("team").value)), 'TeamSelector', function(status) {
+                                                    if (status.status == 200) {
+                                                        location.reload();
+                                                    }
+                                                }, function(status) {
+                                                    if (status.status == 409) {
+                                                        //user has team, 
+                                                    } else if (status.status == 403) {
+                                                        //team has no territories!
+                                                        document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
+                                                    } else {
 
-                                var templateHtml = template.innerHTML;
+                                                    }
+                                                });
+                                            }
+                                        }, {
+                                            display: "none",
+                                        });
+                                    } else {
+                                        //oh no! your team has been e l i m i n a t e d 
+                                        //oh no! your team has been e l i m i n a t e d 
+                                        select_team = "<p>Oh no! Your team has been <b>eliminated. Select a new one to play as:</b> </p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
+                                        teamsObject.forEach(function(team) {
+                                            select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                                        });
+                                        select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
+                                        errorNotif('Select a Team', select_team, {
+                                            text: "Join",
+                                            action: function() {
+                                                doAjaxGetRequest(encodeURI('/auth/join?team='.concat(document.getElementById("team").value)), 'TeamSelector', function(status) {
+                                                    if (status.status == 200) {
+                                                        location.reload();
+                                                    }
+                                                }, function(status) {
+                                                    if (status.status == 409) {
+                                                        //user has team, 
+                                                    } else if (status.status == 403) {
+                                                        //team has no territories!
+                                                        document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
+                                                    } else {
 
-                                var listHtml = "";
-                                var index = 0;
-                                for (i in window.teamsObject) {
-                                    if (window.teamsObject[i].name == teamObject.team) {
-                                        index = i;
+                                                    }
+                                                });
+                                            }
+                                        });
                                     }
-                                }
+                                } else {
+                                    doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(window.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(teamObject) {
+                                        teamObject = JSON.parse(teamObject.response);
+                                        userObject = window.userObject;
+                                        var template = document.getElementById("templatePlayerCard");
 
-                                listHtml += templateHtml
-                                    .replace(/{{user_name}}/g, userObject.name)
-                                    .replace(/{{user_team_color}}/, userObject.team.colors.primary)
-                                    .replace(/{{overall}}/g, "✯".repeat(userObject.ratings.overall))
-                                    .replace(/{{total_turns_stars}}/g, "✯".repeat(userObject.ratings.totalTurns))
-                                    .replace(/{{round_turns_stars}}/g, "✯".repeat(userObject.ratings.gameTurns))
-                                    .replace(/{{mvps_stars}}/g, "✯".repeat(userObject.ratings.mvps))
-                                    .replace(/{{streak_stars}}/g, "✯".repeat(userObject.ratings.streak))
-                                    .replace(/{{cfb_stars_stars}}/g, "✯".repeat(userObject.ratings.awards))
-                                    .replace(/{{total_turns}}/g, userObject.stats.totalTurns)
-                                    .replace(/{{round_turns}}/g, userObject.stats.gameTurns)
-                                    .replace(/{{mvps}}/g, userObject.stats.mvps)
-                                    .replace(/{{streak}}/g, userObject.stats.streak)
-                                    .replace(/{{cfb_stars}}/g, userObject.stats.awards)
-                                    .replace(/{{team}}/g, teamObject.team)
-                                    .replace(/{{team_players_yesterday}}/g, teamObject.players)
-                                    .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs)
-                                    .replace(/{{team_star_power_yesterday}}/g, teamObject.stars)
-                                    .replace(/{{team_territories_yesterday}}/g, teamObject.territories)
-                                    .replace(/{{team_logo}}/g, window.teamsObject[index].logo);
-                                document.getElementById("playerCard").innerHTML = listHtml;
+                                        var templateHtml = template.innerHTML;
+
+                                        var listHtml = "";
+                                        var index = 0;
+                                        for (i in window.teamsObject) {
+                                            if (window.teamsObject[i].name == teamObject.team) {
+                                                index = i;
+                                            }
+                                        }
+                                        listHtml += templateHtml
+                                            .replace(/{{user_name}}/g, userObject.name)
+                                            .replace(/{{user_team_color}}/, userObject.team.colors.primary)
+                                            .replace(/{{overall}}/g, "✯".repeat(userObject.ratings.overall))
+                                            .replace(/{{total_turns_stars}}/g, "✯".repeat(userObject.ratings.totalTurns))
+                                            .replace(/{{round_turns_stars}}/g, "✯".repeat(userObject.ratings.gameTurns))
+                                            .replace(/{{mvps_stars}}/g, "✯".repeat(userObject.ratings.mvps))
+                                            .replace(/{{streak_stars}}/g, "✯".repeat(userObject.ratings.streak))
+                                            .replace(/{{cfb_stars_stars}}/g, "✯".repeat(userObject.ratings.awards))
+                                            .replace(/{{total_turns}}/g, userObject.stats.totalTurns)
+                                            .replace(/{{round_turns}}/g, userObject.stats.gameTurns)
+                                            .replace(/{{mvps}}/g, userObject.stats.mvps)
+                                            .replace(/{{streak}}/g, userObject.stats.streak)
+                                            .replace(/{{cfb_stars}}/g, userObject.stats.awards)
+                                            .replace(/{{team}}/g, teamObject.team || "")
+                                            .replace(/{{team_players_yesterday}}/g, teamObject.players || "0")
+                                            .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
+                                            .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")
+                                            .replace(/{{team_territories_yesterday}}/g, teamObject.territories || "0")
+                                            .replace(/{{team_logo}}/g, window.teamsObject[index].logo || "0");
+                                        document.getElementById("playerCard").innerHTML = listHtml;
+                                    });
+
+
+                                }
+                            },
+                            function() {
+                                //display reddit login info
+                                document.getElementById("playerCard").classList.add("redditlogin");
+                                document.getElementById("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
                             });
-                        }, function() {
-                            //display reddit login info
-                            document.getElementById("playerCard").classList.add("redditlogin");
-                            document.getElementById("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
-                        });
                     } catch {
                         console.log("Error setting up user card");
                     }
@@ -531,21 +567,6 @@
                     });
                 }
             </script>
-
-            <div class="gradient-border" style="display: none;">
-                <center><b>Please complete the captcha:</b><br /><br />
-                    <img src="https://www.technotification.com/wp-content/uploads/2014/12/captcha_various-protection-modes-_screenshot-gif.gif" />
-                    <br /> Captcha: <input type="text" style="width:50%; margin: 10px;" placeholder="CODE"></input>
-                </center>
-                <ul class="gradient-buttons">
-                    <li>
-                        <a href="">Okay</a>
-                    </li>
-                    <li>
-                        <a href="">Yikes</a>
-                    </li>
-                </ul>
-            </div>
 </body>
 
 </html>

@@ -138,6 +138,20 @@ impl CurrentStrength {
             .order(statistics::day.desc())
             .first::<CurrentStrength>(conn)
     }
+    pub fn load_id(team: i32, conn: &PgConnection) -> Result<CurrentStrength, Error> {
+        statistics::table
+            .select((
+                statistics::tname,
+                statistics::playercount,
+                statistics::merccount,
+                statistics::starpower,
+                statistics::territorycount,
+            ))
+            .filter(statistics::team.eq(team))
+            .order(statistics::season.desc())
+            .order(statistics::day.desc())
+            .first::<CurrentStrength>(conn)
+    }
 }
 
 impl StatLeaderboard {

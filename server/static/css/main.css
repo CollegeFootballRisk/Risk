@@ -505,8 +505,8 @@ a {
     position: fixed;
     display: flex;
     flex-direction: column;
-    min-height: 200px;
-    max-height: 500px;
+    /*min-height: 200px;
+    max-height: 500px;*/
     width: 500px;
     margin: 0 auto;
     font-family: sans-serif;
@@ -555,7 +555,6 @@ a {
     padding-left: 15px;
     padding-right: 15px;
     border-radius: 5px;
-    padding-top: 10px;
     margin: 5px;
     min-width: 10px;
     background: rgba(255, 255, 255, 1);
@@ -563,9 +562,9 @@ a {
     font-size: 1rem;
 }
 
-.gradient-buttons a {
-    color: black;
-    text-decoration: none;
+.gradient-buttons button {
+    background: unset;
+    border: none;
 }
 
 .gradient-buttons li:hover {

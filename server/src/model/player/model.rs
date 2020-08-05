@@ -72,7 +72,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
         team_assigned: bool,
         conn: &PgConnection,
     ) -> PlayerWithTurnsAndAdditionalTeam {
-        let me = PlayerWithTurns::load(name.clone(), false, &conn);
+        let me = PlayerWithTurns::load(name.clone(), true, &conn);
         use diesel::dsl::not;
         let status_code: i32 = match team_assigned {
             true => 0,
@@ -83,23 +83,36 @@ impl PlayerWithTurnsAndAdditionalTeam {
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
             .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
-            .first::<Team>(conn)
-            .expect("Error loading users");
-
-        PlayerWithTurnsAndAdditionalTeam {
-            name: me[0].name.clone(),
-            team: me[0].team.clone(),
-            active_team: Some(TeamWithColors {
-                name: results.name,
-                colors: Colors {
-                    primary: results.color_1,
-                    secondary: results.color_2,
-                },
-            }),
-            platform: me[0].platform.clone(),
-            ratings: me[0].ratings.clone(),
-            stats: me[0].stats.clone(),
-            turns: me[0].turns.clone(),
+            .first::<Team>(conn);
+        match results {
+            Ok(results) => {
+                PlayerWithTurnsAndAdditionalTeam {
+                    name: me[0].name.clone(),
+                    team: me[0].team.clone(),
+                    active_team: Some(TeamWithColors {
+                        name: results.name,
+                        colors: Colors {
+                            primary: results.color_1,
+                            secondary: results.color_2,
+                        },
+                    }),
+                    platform: me[0].platform.clone(),
+                    ratings: me[0].ratings.clone(),
+                    stats: me[0].stats.clone(),
+                    turns: me[0].turns.clone(),
+                }
+            }
+            Err(_e) => {
+                PlayerWithTurnsAndAdditionalTeam {
+                    name: me[0].name.clone(),
+                    team: None,
+                    active_team: None,
+                    platform: me[0].platform.clone(),
+                    ratings: me[0].ratings.clone(),
+                    stats: me[0].stats.clone(),
+                    turns: me[0].turns.clone(),
+                }
+            }
         }
     }
 }
