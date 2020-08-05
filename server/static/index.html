@@ -2,580 +2,15 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <link rel="alternate icon" href="/favicon.ico">
-  <link rel="mask-icon" href="/favico-tab.svg" color="#500000">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="alternate icon" href="images/favicon.ico">
+  <link rel="mask-icon" href="images/favico-tab.svg" color="#500000">
   <script src="https://unpkg.com/cheetah-grid@0.22"></script>
   <title>Rust Risk</title>
-  <style>
-    body {
-      background: url('bg.jpg');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      padding: 0;
-      margin: 0;
-      font-family: helvetica, arial, sans-serif;
-    }
-
-    .navbar {
-      background: rgba(250, 0, 0, 0.95);
-      width: 100%;
-      height: 3.5rem;
-      position: fixed;
-      top: 0px;
-      left: 0px;
-      display: flex;
-      z-index: 1000;
-    }
-
-    .navbar-logo {
-      color: rgba(255, 255, 255, 0.5);
-      text-decoration: none;
-      font-family: Avenir, Helvetica, Arial, sans-serif;
-      position: fixed;
-      font-size: 24px;
-      top: 14px;
-    }
-
-    .brand-tag {
-      height: 45px;
-      margin-left: auto;
-      margin-right: auto;
-      margin-top: -10px;
-    }
-
-    .brand-image {
-      height: 45px;
-      width: 45px;
-      margin-right: 5px;
-      position: fixed;
-      top: 0px;
-      margin-top: 6px;
-    }
-
-    .row {
-      display: flex;
-      flex-wrap: wrap;
-    }
-
-    .central-console {
-      width: 90%;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .row-container {
-      margin-top: 4rem;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .col {
-      /* flex: 1 0 31.333%;
-      max-width: 33.333333%;
-      width: 33%;*/
-      flex-basis: 31%;
-      padding: 10px;
-    }
-
-    .flx {
-      display: flex;
-    }
-
-    .content {
-      margin: 20px;
-      display: flex;
-    }
-
-    .col2 {
-      /*flex: 0 0 66%;
-      max-width: 67%;
-      min-width: 700px;*/
-      padding: 10px;
-      max-width: 67%;
-      display: flex;
-      flex-basis: 63.5%;
-    }
-
-    .col3 {
-      padding: 10px;
-      max-width: 95.5%;
-      flex-basis: 95.5%;
-    }
-
-    .flex {
-      border-style: inset;
-      border-color: red;
-      border-width: 1px;
-      box-shadow: 0px 0px 10px red inset;
-      border-radius: 2px;
-      min-height: 100px;
-      color: white;
-      background: rgba(0, 0, 0, 0.3);
-      width: 100%;
-    }
-
-    .loader {
-      color: white;
-      justify-content: center;
-      padding-left: 50%;
-      padding-right: 50%;
-      padding-top: 6px;
-      display: flex;
-    }
-
-    .blink {
-      animation: blink-animation 1s steps(2, start) infinite;
-      -webkit-animation: blink-animation 1s steps(2, start) infinite;
-    }
-
-    @keyframes blink-animation {
-      to {
-        visibility: hidden;
-      }
-    }
-
-    @-webkit-keyframes blink-animation {
-      to {
-        visibility: hidden;
-      }
-    }
-
-    .lds-dual-ring {
-      display: inline-block;
-      width: 20px;
-      height: 20px;
-    }
-
-    .lds-dual-ring::after {
-      content: " ";
-      display: block;
-      width: 32px;
-      height: 32px;
-      margin: 0px;
-      border-radius: 50%;
-      border: 6px solid #fff;
-      border-color: #fff transparent #fff transparent;
-      animation: lds-dual-ring 1.2s linear infinite;
-    }
-
-    @keyframes lds-dual-ring {
-      0% {
-        transform: rotate(0deg);
-      }
-
-      100% {
-        transform: rotate(360deg);
-      }
-    }
-
-    .rj {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .lj {
-      display: flex;
-      justify-content: left;
-    }
-
-    #gear1,
-    #gear2,
-    #gear3 {
-      color: #888;
-      display: block;
-      float: left;
-      position: absolute;
-    }
-
-    #gear1 {
-      top: 45px;
-    }
-
-    #gear2 {
-      left: 60px;
-    }
-
-    #gear3 {
-      top: 45px;
-      left: 110px;
-    }
-
-    .spin {
-      -webkit-animation: spin 4s linear infinite;
-      -moz-animation: spin 4s linear infinite;
-      animation: spin 4s linear infinite;
-    }
-
-    .spin-back {
-      -webkit-animation: spin-back 4s linear infinite;
-      -moz-animation: spin-back 4s linear infinite;
-      animation: spin-back 4s linear infinite;
-    }
-
-    @-moz-keyframes spin {
-      100% {
-        -moz-transform: rotate(360deg);
-      }
-    }
-
-    @-webkit-keyframes spin {
-      100% {
-        -webkit-transform: rotate(360deg);
-      }
-    }
-
-    @keyframes spin {
-      100% {
-        -webkit-transform: rotate(360deg);
-        transform: rotate(360deg);
-      }
-    }
-
-    @-moz-keyframes spin-back {
-      100% {
-        -moz-transform: rotate(-360deg);
-      }
-    }
-
-    @-webkit-keyframes spin-back {
-      100% {
-        -webkit-transform: rotate(-360deg);
-      }
-    }
-
-    @keyframes spin-back {
-      100% {
-        -webkit-transform: rotate(-360deg);
-        transform: rotate(-360deg);
-      }
-    }
-
-    .bold {
-      font-weight: bold;
-    }
-
-    .raster {
-      fill: none;
-      opacity: 1;
-    }
-
-    .neutral-county {
-      fill: #FFF;
-      opacity: 0.4;
-    }
-
-    .neutral-county:hover {
-      fill: black;
-    }
-
-    .highlighted-county {
-      fill: #C00;
-      opacity: 0.6;
-    }
-
-    .neutral-county,
-    .highlighted-county {
-      stroke: #6E6E6E;
-      stroke-opacity: 0.6;
-      stroke-width: 0.7px;
-    }
-
-    .counties {
-      fill: none;
-      stroke: #6E6E6E;
-      stroke-opacity: 0.4;
-      stroke-width: 0.5px;
-    }
-
-    .state-border {
-      fill: none;
-      stroke: #6E6E6E;
-      stroke-opacity: 0.7;
-      stroke-width: 1px;
-    }
-
-    .city-marker {
-      fill: none;
-      opacity: 0.6;
-      stroke-width: 2px;
-      stroke: #000;
-    }
-
-    .capital-marker {
-      fill: goldenrod;
-      opacity: 1;
-      stroke-width: 3px;
-      stroke: #000;
-      stroke-opacity: 0.6;
-    }
-
-    .text-note {
-      font-size: 15px;
-      font-weight: 500;
-      color: #000;
-      opacity: 0.6;
-      line-height: 18px;
-      margin: 0;
-      text-shadow: 1px 1px 0 white,
-        1px -1px 0 white,
-        -1px 1px 0 white,
-        -1px -1px 0 white;
-    }
-
-    .city-label {
-      text-anchor: middle;
-      margin: 0;
-      font-size: 15px;
-      line-height: 14px;
-      font-weight: 500;
-      text-align: right;
-      opacity: 0.6;
-      color: #000;
-
-      text-shadow: 1px 1px 0 white,
-        1px -1px 0 white,
-        -1px 1px 0 white,
-        -1px -1px 0 white;
-    }
-
-    .legend {
-      font-size: 15px;
-      line-height: 24px;
-      font-weight: 500;
-      color: #333;
-    }
-
-    .label-line {
-      stroke: #000;
-      stroke-width: 1.5px;
-      stroke-opacity: 1;
-      opacity: 0.8;
-      fill: none;
-    }
-
-    .state-label {
-      font-weight: 500;
-      text-transform: uppercase;
-      text-anchor: middle;
-      opacity: 0.3;
-      color: #000;
-      font-size: 24px;
-      line-height: 28px;
-      letter-spacing: 0.6em;
-    }
-
-    .distance-scale {
-      font-size: 11px;
-      line-height: 11px;
-      position: absolute;
-      font-weight: 500;
-      text-transform: uppercase;
-      color: #000;
-    }
-
-    .distance-scale-line {
-      stroke: #000;
-      stroke-width: 1;
-      stroke-opacity: 1;
-      opacity: 1;
-      fill: #000;
-      shape-rendering: crispEdges;
-    }
-
-    #map {
-      width: 100%;
-      margin: auto;
-      margin-left: auto;
-      margin-right: auto;
-      width: 700px;
-    }
-
-    #map path {
-      cursor: pointer;
-    }
-
-    #hamnav {
-      width: 100%;
-      position: sticky;
-      top: 0;
-    }
-
-    #hamnav label,
-    #hamburger {
-      display: none;
-    }
-
-    .hamitems {
-      display: flex;
-    }
-
-    .hamitems a {
-      width: 20%;
-      padding: 10px;
-      color: white;
-      text-decoration: none;
-      text-align: center;
-    }
-
-    .hamitems a:hover {
-      background: #401408;
-    }
-
-    @media screen and (max-width: 915px) {
-      #hamnav label {
-        display: inline-block;
-        color: white;
-        font-style: normal;
-        font-size: 1.2em;
-        padding: 10px;
-        margin-top: -10px;
-      }
-
-      #hamnav label:hover {
-        background: #a02620;
-      }
-
-      .hamitems a {
-        box-sizing: border-box;
-        display: block;
-        width: 100%;
-        border-top: 1px solid #333;
-        background: rgba(250, 0, 0, 0.8);
-      }
-
-      .hamitems {
-        display: none;
-      }
-
-      .hamnav input:checked~.hamitems {
-        display: block;
-      }
-
-      .cold {
-        max-width: unset !important;
-        flex-basis: 100%;
-        min-width: unset !important;
-      }
-
-      .col2 {
-        max-width: 93.5% !important;
-      }
-    }
-
-    .jc {
-      justify-content: center;
-    }
-
-    .break {
-      flex-basis: 100%;
-      height: 0;
-    }
-
-    .unflex {
-      display: unset;
-      display: block !important;
-    }
-
-    * {
-      cursor: url(cur116.cur), auto !important;
-    }
-
-
-    .gradient-border {
-      --border-width: 5px;
-      left: 0;
-      right: 0;
-      top: 35%;
-      margin-left: auto;
-      margin-right: auto;
-      position: fixed;
-      display: flex;
-      flex-direction: column;
-      min-height: 200px;
-      max-height: 500px;
-      width: 500px;
-      margin: 0 auto;
-      font-family: sans-serif;
-      font-size: 1rem;
-      text-transform: uppercase;
-      color: white;
-      border-radius: var(--border-width);
-      padding-top: 5px;
-      background: rgba(255, 0, 0, 0.4);
-      z-index: 1000;
-    }
-
-    .gradient-border::after {
-      position: absolute;
-      content: "";
-      top: calc(-1 * var(--border-width));
-      left: calc(-1 * var(--border-width));
-      z-index: -1;
-      width: calc(100% + var(--border-width) * 2);
-      height: calc(100% + var(--border-width) * 2);
-      background: linear-gradient(60deg,
-          rgba(95, 134, 242, 0.5),
-          rgba(166, 95, 242, 0.5),
-          rgba(242, 95, 208, 0.5),
-          rgba(242, 95, 97, 0.5),
-          rgba(242, 203, 95, 0.5),
-          rgba(171, 242, 95, 0.5),
-          rgba(95, 242, 129, 0.5),
-          rgba(95, 242, 240, 0.5));
-      background-size: 300% 300%;
-      background-position: 0 50%;
-      border-radius: calc(2 * var(--border-width));
-      animation: moveGradient 4s alternate infinite;
-    }
-
-    @keyframes moveGradient {
-      50% {
-        background-position: 100% 50%;
-      }
-    }
-
-    .gradient-buttons {
-      display: flex;
-      justify-content: center;
-      width: 300px - --border-width*2;
-      padding: 0px;gi
-      margin-top: auto;
-      margin-bottom: 0px;
-    }
-
-    .gradient-buttons li {
-      list-style-type: none;
-      padding: 5px;
-      padding-left: 15px;
-      padding-right: 15px;
-      border-radius: 5px;
-      padding-top: 10px;
-      margin: 5px;
-      min-width: 10px;
-      background: rgba(255, 255, 255, 1);
-      color: black;
-      font-size: 1rem;
-    }
-
-    .gradient-buttons a {
-      color: black;
-      text-decoration: none;
-    }
-
-    .gradient-buttons li:hover {
-      background: rgba(255, 255, 255, 0.5);
-    }
-
-    .bottom {
-      display: inline;
-      vertical-align: bottom;
-    }
-  </style>
-  <script src="//d3js.org/d3.v3.min.js"></script>
+  <link rel="stylesheet" href="/css/main.css" name="www-onepick">
+  <!--<script src="//d3js.org/d3.v3.min.js"></script>
   <script src="//d3js.org/queue.v1.min.js"></script>
-  <script src="//d3js.org/topojson.v1.min.js"></script>
+  <script src="//d3js.org/topojson.v1.min.js"></script>-->
 </head>
 
 <body>
@@ -595,14 +30,14 @@
     </div>
     <div class="col">
       <a href="/" class="loader" target="_self">
-        <img src="logo-text-white.svg" class="brand-tag">
-        <img src="logo-white.svg" id="loadicon" class="brand-image spin">
+        <img src="images/logo-text-white.svg" class="brand-tag">
+        <img src="images/logo-white.svg" id="loadicon" class="brand-image spin">
       </a>
     </div>
     <div class="col">
       <div class="hamitems" style="float:right;">
         <a class="navbar-brand rj" href="/login/reddit">
-          <img src="reddit-logo.png" class="brand-image"></img>
+          <img src="images/reddit-logo.png" class="brand-image"></img>
         </a>
       </div>
     </div>
@@ -611,93 +46,17 @@
     <div class="row row-container">
       <div class="col flx cold">
         <div class="flex">
-          <div class="content unflex">
-            <center>
-              <h2>Mautamu<br />
-                <text style="color:#500000;font-size:2em;">
-                  &#10031;
-                  &#10031;
-                  &#10031;</text>
-                <style>
-                  .lrow {
-                    display: flex;
-                    justify-content: center;
-                  }
-
-                  .lcol2 {
-                    flex: 2;
-                    flex-basis: 50%;
-                  }
-
-                  .lcol {
-                    flex: 1;
-                    flex-basis: 33%;
-                  }
-                </style>
-                <div class="lrow">
-                  <div class="lcol">
-                    &#10031;
-                    &#10031; <br />
-                    <i style="font-size:0.5em;">Total turns:</i><br>
-                  </div>
-                  <div class="lcol">
-                    &#10031;
-                    &#10031; <br />
-                    <i style="font-size:0.5em;">Round turns:</i><br>
-                  </div>
-                  <div class="lcol">
-                    &#10031;
-                    &#10031; <br />
-                    <i style="font-size:0.5em;">MVPS:</i><br>
-                  </div>
-                </div>
-                <br />
-                <div class="lrow">
-                  <div class="lcol2">
-                    &#10031;
-                    &#10031;<br />
-                    <i style="font-size:0.5em;">Streak: </i><br>
-                  </div>
-                  <div class="lcol2">
-                    &#10031;
-                    &#10031; <br />
-                    <i style="font-size:0.5em;">CFB Stars:</i><br>
-                  </div>
-                </div>
-              </h2>
-              <br />
-              <h2>Texas A&M<br />
-                <img src="https://collegefootballrisk.com/logos/Texas A&amp;M.png" class="" width="128" height="128">
-                <div class="lrow">
-                  <div class="lcol2">
-                    100<br />
-                    <i style="font-size:0.5em;">Players yesterday</i><br>
-                  </div>
-                  <div class="lcol2">
-                    20<br />
-                    <i style="font-size:0.5em;">Mercernaries yesterday</i><br>
-                  </div>
-                </div>
-                <br />
-                <div class="lrow">
-                  <div class="lcol2">
-                    20<br />
-                    <i style="font-size:0.5em;">Star power</i><br>
-                  </div>
-                  <div class="lcol2">
-                    20<br />
-                    <i style="font-size:0.5em;">Territories</i><br>
-                  </div>
-                </div>
-              </h2>
-            </center>
+          <div id="playerCard" class="content unflex">
           </div>
         </div>
       </div>
       <div class="col2 cold">
-        <div class="flex">
-          <div class="content">
-            <svg id="map"></svg>
+        <div class="flex mapfix">
+          <div id="map-info">
+            <b id="map-county-info"></b>
+            <i style="font-size: 14px;" id="map-owner-info"></i>
+          </div>
+          <div id="map-container" class="fc jc">
           </div>
         </div>
       </div>
@@ -783,274 +142,136 @@
         <div class="col3 cold">
           <div class="flex">
             <div class="content unflex">
-              <div id="leaderboard" style="height: 500px; width:900px; border: solid 1px #ddd; background: none; margin-right: 20px;">
+              <div id="leaderboard"
+                style="height: 500px; width:900px; border: solid 1px #ddd; background: none; margin-right: 20px;">
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <script>
-
-
-        var keeper_counties = [
-        ];
-
-        var county_assoc;
-        fetch('assoc.t.json')
-          .then((response) => {
-            return response.json();
-          })
-          .then((data) => {
-            county_assoc = data;
-            console.log(data);
-          });
-
-        // Make sure at least one dimension is smaller than raster image (705 x 670).
-        var map_width = d3.selectAll("#map")[0][0].parentNode.offsetWidth * 0.65; //screen.width * 0.9 * 0.67 * 0.55,
-        map_height = d3.selectAll("#map")[0][0].parentNode.offsetWidth * 0.65; //screen.width * 0.9 * 0.67 * 0.55;
-
-        var svg = d3.selectAll("#map")
-          .attr("width", map_width)
-          .attr("height", map_height);
-
-        // Create a unit projection
-        var map_projection = d3.geo.mercator()
-          .scale(1)
-          .translate([0, 0]);
-
-        var map_path = d3.geo.path()
-          .projection(map_projection);
-
-        queue()
-          .defer(d3.json, "texas-counties.json")
-          .await(ready);
-
-        function ready(error, counties) {
-          if (error) throw error;
-
-          // Scale and center the map to fit into the given dimensions.
-          var b = map_path.bounds(topojson.feature(counties, counties.objects['texas-counties']));
-
-          // Pixels per map-path-degree, for both directions.
-          // 0.95 is for padding. 1.0 would fill entire bounding box.
-          var s = 0.95 / Math.max((b[1][0] - b[0][0]) / map_width, (b[1][1] - b[0][1]) / map_height);
-          var t = [(map_width - s * (b[1][0] + b[0][0])) / 2.0, (map_height - s * (b[1][1] + b[0][1])) / 2.0];
-
-          // Scale and center vector
-          map_projection
-            .scale(s)
-            .translate(t);
-
-          // Scale and position shaded relief raster image. Assumes already cropped.
-          var raster_width = (b[1][0] - b[0][0]) * s;
-          var raster_height = (b[1][1] - b[0][1]) * s;
-
-          var rtranslate_x = (map_width - raster_width) / 2.0;
-          var rtranslate_y = (map_height - raster_height) / 2.0;
-
-          // Shaded relief
-          svg.append("image")
-            .attr('id', 'Raster')
-            .attr("clip-path", "url(#texas_clip)")
-            .attr("xlink:href", "texas-raster.png")
-            .attr("class", "raster")
-            .attr("width", raster_width)
-            .attr("height", raster_height)
-            .attr("transform", "translate(" + rtranslate_x + ", " + rtranslate_y + ")");
-
-          // Draw counties
-          svg.append("g")
-            .attr('id', 'Counties')
-            .selectAll("path")
-            .data(topojson.feature(counties, counties.objects['texas-counties']).features)
-            .enter().append("path")
-            .attr("name", function (d) { return d.properties.NAME; })
-            .attr("class", function (d) {
-              if (keeper_counties.indexOf(d.properties.NAME) > -1) {
-                return 'highlighted-county';
-              } else {
-                return "neutral-county";
-              }
-            })
-            .attr("d", map_path);
-
-          // Draw state border
-          svg.append("g")
-            .attr('id', 'StateBorder')
-            .datum(topojson.mesh(counties, counties.objects['texas-counties'], function (a, b) { return a === b; }))
-            .append("path")
-            .attr("class", "state-border")
-            .attr("id", "texas_border")  // For shaded relief
-            .attr("d", map_path);
-
-
-          // State label
-          svg.append("text")
-            .attr("class", "state-label")
-            .attr("x", map_width * 0.55)
-            .attr("y", map_height * 0.5)
-            .text('Texas');
-
-          // Line path generator
-          var line = d3.svg.line()
-            .x(function (d) { return d.x; })
-            .y(function (d) { return d.y; })
-            .interpolate("basis");
-
-          // Draw curve between county and text
-          /*svg.selectAll(".label-line")
-            .data(topojson.feature(counties, counties.objects['texas-counties']).features)
-            .enter().append('path')
-            .attr("class", "label-line")
-            .attr("d", function (d) {
-              var centroid = map_path.centroid(d);
-  
-              if (d.properties.NAME === 'Lubbock') {
-                var lineData = [
-                  { "x": centroid[0] - 50, "y": centroid[1] - 59 },
-                  { "x": centroid[0] - 2, "y": centroid[1] - 7 }
-                ];
-              } else {
-                return;
-              }
-              var x_diff = lineData[1].x - lineData[0].x;
-              var y_diff = lineData[1].y - lineData[0].y;
-              return line([
-                { "x": lineData[0].x, "y": lineData[0].y },
-                { "x": lineData[0].x + x_diff * 0.5, "y": lineData[0].y },
-                { "x": lineData[1].x, "y": lineData[0].y + y_diff * 0.5 },
-                { "x": lineData[1].x, "y": lineData[1].y }
-              ]);
-            })
-            .filter(function (d) {
-              return d.properties.NAME !== 'Lubbock';
-            }).remove();
-  
-          // Write counties text note
-          /*svg.selectAll('.text-note')
-            .data(topojson.feature(counties, counties.objects['texas-counties']).features)
-            .enter().append('text')
-            .attr("class", "text-note")
-            .each(function (d) {
-              if (d.properties.NAME === 'Lubbock') {
-                d3.select(this)
-                  .attr("transform", function (d) { return "translate(" + map_path.centroid(d) + ")"; })
-                  .append("tspan")
-                  .attr("dx", "-55")
-                  .attr("dy", "-55")
-                  .style("text-anchor", "end")
-                  .text("This is ");
-                d3.select(this)
-                  .append("tspan")
-                  .attr("class", "bold")
-                  .text("Lubbock County.");
-              } else {
-                return;
-              }
-            })
-            .filter(function (d) {
-              return d.properties.NAME !== 'Lubbock';
-            }).remove();
-            
-  
-          // State label
-          //svg.append("text")
-          // .attr("class", "state-label")
-          // .attr("x", map_width * 0.55)
-          // .attr("y", map_height * 0.5)
-          // .text('TEXAS');
-  
-          // Line path generator
-          var line = d3.svg.line()
-            .x(function (d) { return d.x; })
-            .y(function (d) { return d.y; })
-            .interpolate("basis");
-              */
-
-
-          // Distance scale
-          function pixelLength(topojson, miles) {
-            // Calculates the window pixel length for a given map distance.
-
-            var actual_map_bounds = d3.geo.bounds(topojson);
-
-            var radians = d3.geo.distance(actual_map_bounds[0], actual_map_bounds[1]);
-            var earth_radius = 3959;  // miles
-            var arc_length = radians * earth_radius;  // s = r * theta
-
-            var projected_map_bounds = [
-              map_projection(actual_map_bounds[0]),
-              map_projection(actual_map_bounds[1])
-            ];
-
-            var projected_width = projected_map_bounds[1][0] - projected_map_bounds[0][0];
-            var projected_height = projected_map_bounds[0][1] - projected_map_bounds[1][1];
-            var projected_map_hypotenuse = Math.sqrt(
-              (Math.pow(projected_width, 2)) + (Math.pow(projected_height, 2))
-            );
-
-            var pixels_per_mile = projected_map_hypotenuse / arc_length;
-            var pixel_distance = pixels_per_mile * miles;
-
-            return pixel_distance;
-          }
-
-          var pixels_for_hundred_miles = pixelLength(topojson.feature(counties, counties.objects['texas-counties']), 100);
-
-          document.addEventListener('click', function (event) {
-            if (!event.target.matches('path')) return;
-            event.preventDefault();
-            if (event.target.attributes["class"].value == "highlighted-county") {
-              event.target.setAttribute("class", "neutral-county");
-              const index = keeper_counties.indexOf(event.target.attributes['name'].value);
-              if (index > -1) {
-                keeper_counties.splice(index, 1);
-              }
-            }
-            else {
-              event.target.setAttribute("class", "highlighted-county");
-              keeper_counties.push(event.target.attributes['name'].value)
-            }
-            arr = [];
-            for (i = 0; i < keeper_counties.length; i++) {
-              arr = arr.concat(county_assoc[keeper_counties[i]]);
-            }
-            for (j = 0; j < document.getElementsByTagName("path").length - 1; j++) {
-              if (arr.indexOf(document.getElementsByTagName("path")[j].attributes['name'].value) != -1 && keeper_counties.indexOf(document.getElementsByTagName("path")[j].attributes['name'].value) == -1) {
-                document.getElementsByTagName("path")[j].setAttribute("style", "fill:blue !important");
-              }
-              else {
-                document.getElementsByTagName("path")[j].setAttribute("style", "");
-              }
-            }
-          }, false);
-
-
+      <script id="templateMapCss" type="text/template">
+        <style>
+        #map {
+          width: 100%;
+          margin: auto;
+          margin-left: auto;
+          margin-right: auto;
+          width: 700px;
         }
-
+      
+        #map path {
+          cursor: pointer;
+          pointer-events: all;
+          fill: purple;
+        }
+      
+        path:hover {
+          fill: pink !important;
+        }
+        </style>
+      </script>
+      <script id="templatePlayerCard" type="text/template">
+        <center>
+                    <h2>{{user_name}}<br>
+                      <text style="color: {{user_team_color}}; font-size: 2em; --darkreader-inline-color:#cfcbc4;" data-darkreader-inline-color="">
+                      {{overall}}
+                    </text>
+                      <style>
+                        .lrow {
+                          display: flex;
+                          justify-content: center;
+                        }
+      
+                        .lcol2 {
+                          flex: 2;
+                          flex-basis: 50%;
+                        }
+      
+                        .lcol {
+                          flex: 1;
+                          flex-basis: 33%;
+                        }
+                      </style><style class="darkreader darkreader--sync" media="screen"></style>
+                      <div class="lrow">
+                        <div class="lcol">
+                          {{total_turns_stars}} <br>
+                          <i style="font-size:0.5em;">Total turns:</i><br>
+                          {{total_turns}}
+                        </div>
+                        <div class="lcol">
+                          {{round_turns_stars}} <br>
+                          <i style="font-size:0.5em;">Round turns:</i><br>
+                          {{round_turns}}
+                        </div>
+                        <div class="lcol">
+                          {{mvps_stars}} <br>
+                          <i style="font-size:0.5em;">MVPS:</i><br>
+                          {{mvps}}
+                        </div>
+                      </div>
+                      <br>
+                      <div class="lrow">
+                        <div class="lcol2">
+                          {{streak_stars}}<br>
+                          <i style="font-size:0.5em;">Streak: </i><br>
+                          {{streak}}
+                        </div>
+                        <div class="lcol2">
+                          {{cfb_stars_stars}} <br>
+                          <i style="font-size:0.5em;">CFB Stars:</i><br>
+                          {{cfb_stars}}
+                        </div>
+                      </div>
+                    </h2>
+                    <br>
+                    <h2>{{team}}<br>
+                      <img src="{{team_logo}}" class="" width="128" height="128">
+                      <div class="lrow">
+                        <div class="lcol2">
+                          {{team_players_yesterday}}<br>
+                          <i style="font-size:0.5em;">Players yesterday</i><br>
+                        </div>
+                        <div class="lcol2">
+                          {{team_mercs_yesterday}}<br>
+                          <i style="font-size:0.5em;">Mercernaries yesterday</i><br>
+                        </div>
+                      </div>
+                      <br>
+                      <div class="lrow">
+                        <div class="lcol2">
+                          {{team_star_power_yesterday}}<br>
+                          <i style="font-size:0.5em;">Star power</i><br>
+                        </div>
+                        <div class="lcol2">
+                          {{team_territories_yesterday}}<br>
+                          <i style="font-size:0.5em;">Territories</i><br>
+                        </div>
+                      </div>
+                    </h2>
+                  </center>
       </script>
       <script>
         var outstandingRequests = [];
-var globalError = false;
-function doAjaxGetRequest(url, source, callback, errorcallback) {
-    //addUrlFromRequests(url);
-    var xhttp = new XMLHttpRequest();
-    xhttp.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) {
-            callback(this);
-           //console.log(this);
-           // return JSON.parse(this.response);
-        } else {
-                globalError = true;
-            //updateLoaderVisibility();
-            //document.getElementsById("loadicon").classList.add("blink");
+        var globalError = false;
+        function doAjaxGetRequest(url, source, callback, errorcallback) {
+          //addUrlFromRequests(url);
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+              callback(this);
+              //console.log(this);
+              // return JSON.parse(this.response);
+            } else {
+              globalError = true;
+              //updateLoaderVisibility();
+              //document.getElementsById("loadicon").classList.add("blink");
+            }
+          };
+          xhttp.open("GET", url, true);
+          xhttp.send();
+          // removeUrlFromRequests(url);
         }
-    };
-    xhttp.open("GET", url, true);
-    xhttp.send();
-   // removeUrlFromRequests(url);
-}
         const userTheme = {
           color: 'white',
           frozenRowsColor: 'white',
@@ -1059,7 +280,6 @@ function doAjaxGetRequest(url, source, callback, errorcallback) {
           selectionBgColor: 'rgba(100,100,100,1)',
           highlightBgColor: 'rgba(0,0,0,1)',
           underlayBackgroundColor: 'rgba(0,0,0,1)',
-          // You can also change the theme apply in the state by using callback.
           frozenRowsBorderColor(args) {
             const {
               row,
@@ -1098,199 +318,149 @@ function doAjaxGetRequest(url, source, callback, errorcallback) {
           }
         };
         function drawLeaderboard(season, day) {
-
-          /*const records = [{
-            "rank": 1,
-            "name": "Michigan",
-            "logo": "https://collegefootballrisk.com/logos/Michigan.png",
-            "territoryCount": 19,
-            "playerCount": 820,
-            "mercCount": 10,
-            "starPower": 2520,
-            "efficiency": 132
-          }, {
-            "rank": 1,
-            "name": "Texas A&M",
-            "logo": "https://collegefootballrisk.com/logos/Texas A&M.png",
-            "territoryCount": 19,
-            "playerCount": 761,
-            "mercCount": 5,
-            "starPower": 1773,
-            "efficiency": 93
-          }, {
-            "rank": 3,
-            "name": "Ohio State",
-            "logo": "https://collegefootballrisk.com/logos/Ohio State.png",
-            "territoryCount": 18,
-            "playerCount": 874,
-            "mercCount": 3,
-            "starPower": 2096,
-            "efficiency": 116
-          }, {
-            "rank": 4,
-            "name": "Georgia Tech",
-            "logo": "https://collegefootballrisk.com/logos/Georgia Tech.png",
-            "territoryCount": 17,
-            "playerCount": 499,
-            "mercCount": 8,
-            "starPower": 1415,
-            "efficiency": 83
-          }, {
-            "rank": 5,
-            "name": "Chaos",
-            "logo": "https://collegefootballrisk.com/logos/Chaos.png",
-            "territoryCount": 12,
-            "playerCount": 212,
-            "mercCount": 202,
-            "starPower": 873,
-            "efficiency": 72
-          }, {
-            "rank": 6,
-            "name": "Nebraska",
-            "logo": "https://collegefootballrisk.com/logos/Nebraska.png",
-            "territoryCount": 9,
-            "playerCount": 305,
-            "mercCount": 1,
-            "starPower": 1299,
-            "efficiency": 144
-          }, {
-            "rank": 6,
-            "name": "Alabama",
-            "logo": "https://collegefootballrisk.com/logos/Alabama.png",
-            "territoryCount": 9,
-            "playerCount": 181,
-            "mercCount": 1,
-            "starPower": 752,
-            "efficiency": 83
-          }, {
-            "rank": 8,
-            "name": "Wisconsin",
-            "logo": "https://collegefootballrisk.com/logos/Wisconsin.png",
-            "territoryCount": 8,
-            "playerCount": 351,
-            "mercCount": 3,
-            "starPower": 1080,
-            "efficiency": 135
-          }, {
-            "rank": 8,
-            "name": "Clemson",
-            "logo": "https://collegefootballrisk.com/logos/Clemson.png",
-            "territoryCount": 8,
-            "playerCount": 58,
-            "mercCount": 0,
-            "starPower": 265,
-            "efficiency": 33
-          }, {
-            "rank": 10,
-            "name": "Texas",
-            "logo": "https://collegefootballrisk.com/logos/Texas.png",
-            "territoryCount": 6,
-            "playerCount": 248,
-            "mercCount": 0,
-            "starPower": 886,
-            "efficiency": 147
-          }, {
-            "rank": 11,
-            "name": "Stanford",
-            "logo": "https://collegefootballrisk.com/logos/Stanford.png",
-            "territoryCount": 4,
-            "playerCount": 42,
-            "mercCount": 0,
-            "starPower": 268,
-            "efficiency": 67
-          }, {
-            "rank": 12,
-            "name": "Oklahoma",
-            "logo": "https://collegefootballrisk.com/logos/Oklahoma.png",
-            "territoryCount": 2,
-            "playerCount": 95,
-            "mercCount": 0,
-            "starPower": 443,
-            "efficiency": 221
-          }]; */
-
-            doAjaxGetRequest('/api/stats/leaderboard', 'leaderboard request', function(data) {
-            console.log(data);
+          doAjaxGetRequest('/api/stats/leaderboard', 'leaderboard request', function (data) {
+            //console.log(data);
             records = JSON.parse(data.response);
             const grid = new cheetahGrid.ListGrid({
-            parentElement: document.querySelector('#leaderboard'),
-            records,
-            theme: userTheme,
-            header: [{
-              field: 'rank',
-              caption: 'Rank',
-              width: 75,
-              style: {
-                textAlign: 'center',
+              parentElement: document.querySelector('#leaderboard'),
+              records,
+              theme: userTheme,
+              header: [{
+                field: 'rank',
+                caption: 'Rank',
+                width: 75,
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            {
-              field: 'name',
-              caption: 'Name',
-              width: 200,
-              sort: true,
-              icon: {
-                src: 'logo',
-                width: 30,
+              {
+                field: 'name',
+                caption: 'Name',
+                width: 200,
+                sort: true,
+                icon: {
+                  src: 'logo',
+                  width: 30,
+                },
               },
-            },
-            {
-              field: 'territoryCount',
-              caption: 'Territories',
-              width: 120,
-              columnType: 'number',
-              style: {
-                textAlign: 'center',
+              {
+                field: 'territoryCount',
+                caption: 'Territories',
+                width: 120,
+                columnType: 'number',
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            {
-              field: 'playerCount',
-              caption: 'Players',
-              width: 120,
-              columnType: 'number',
-              style: {
-                textAlign: 'center',
+              {
+                field: 'playerCount',
+                caption: 'Players',
+                width: 120,
+                columnType: 'number',
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            {
-              field: 'mercCount',
-              caption: 'Mercernaries',
-              width: 120,
-              columnType: 'number',
-              style: {
-                textAlign: 'center',
+              {
+                field: 'mercCount',
+                caption: 'Mercernaries',
+                width: 120,
+                columnType: 'number',
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            {
-              field: 'starPower',
-              caption: 'Star Power',
-              width: 120,
-              columnType: 'number',
-              style: {
-                textAlign: 'center',
+              {
+                field: 'starPower',
+                caption: 'Star Power',
+                width: 120,
+                columnType: 'number',
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            {
-              field: 'efficiency',
-              caption: 'Efficiency',
-              width: 120,
-              columnType: 'number',
-              style: {
-                textAlign: 'center',
+              {
+                field: 'efficiency',
+                caption: 'Efficiency',
+                width: 120,
+                columnType: 'number',
+                style: {
+                  textAlign: 'center',
+                },
+                sort: true,
               },
-              sort: true,
-            },
-            ],
-          });
+              ],
+            });
           });
         }
 
         drawLeaderboard(0, 0);
+
+        doAjaxGetRequest('images/map.svg', 'Map', function (data) {
+          var style = document.getElementById("templateMapCss").innerHTML;
+          document.getElementById('map-container').innerHTML = data.response;
+          document.getElementById('map-container').innerHTML += style;
+          //now to fetch territory ownership!!
+        });
+      </script>
+      <script>
+
+        doAjaxGetRequest('/api/me', 'UserLoader', function (userObject) {
+          window.userObject = JSON.parse(userObject.response);
+          doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(window.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function (teamObject) {
+            teamObject = JSON.parse(teamObject.response);
+            console.log(teamObject);
+            userObject = window.userObject;
+            var template = document.getElementById("templatePlayerCard");
+
+            var templateHtml = template.innerHTML;
+
+            var listHtml = "";
+
+            listHtml += templateHtml
+              .replace(/{{user_name}}/g, userObject.name)
+              .replace(/{{user_team_color}}/, userObject.team.colors.primary)
+              .replace(/{{overall}}/g, "✯".repeat(userObject.ratings.overall))
+              .replace(/{{total_turns_stars}}/g, "✯".repeat(userObject.ratings.totalTurns))
+              .replace(/{{round_turns_stars}}/g, "✯".repeat(userObject.ratings.gameTurns))
+              .replace(/{{mvps_stars}}/g, "✯".repeat(userObject.ratings.mvps))
+              .replace(/{{streak_stars}}/g, "✯".repeat(userObject.ratings.streak))
+              .replace(/{{cfb_stars_stars}}/g, "✯".repeat(userObject.ratings.awards))
+              .replace(/{{total_turns}}/g, userObject.stats.totalTurns)
+              .replace(/{{round_turns}}/g, userObject.stats.gameTurns)
+              .replace(/{{mvps}}/g, userObject.stats.mvps)
+              .replace(/{{streak}}/g, userObject.stats.streak)
+              .replace(/{{cfb_stars}}/g, userObject.stats.awards)
+              .replace(/{{team}}/g, teamObject.team)
+              .replace(/{{team_players_yesterday}}/g, teamObject.players)
+              .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs)
+              .replace(/{{team_star_power_yesterday}}/g, teamObject.stars)
+              .replace(/{{team_territories_yesterday}}/g, teamObject.territories)
+              .replace(/{{team_logo}}/g, "https://collegefootballrisk.com/logos/Texas%20A&M.png");
+
+            document.getElementById("playerCard").innerHTML = listHtml;
+          });
+        });      
+
+        document.addEventListener('mouseover', function (event) {
+            if (!event.target.matches('path')) return;
+            event.preventDefault();
+            console.log(event.target.attributes["name"].value);
+            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+            document.getElementById("map-owner-info").innerHTML = event.target.attributes["name"].value;
+            /*if (event.target.attributes["class"].value == "highlighted-county") {
+              event.target.setAttribute("class", "neutral-county");
+              const index = keeper_counties.indexOf(event.target.attributes['name'].value);
+              if (index > -1) {
+                keeper_counties.splice(index, 1);
+              }
+            }*/
+          }, false);
       </script>
 
       <div class="gradient-border" style="display: none;">
