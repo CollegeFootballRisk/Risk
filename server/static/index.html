@@ -166,9 +166,9 @@
           fill: purple;
         }
       
-        path:hover {
+        /*path:hover {
           fill: pink !important;
-        }
+        }*/
         </style>
       </script>
       <script id="templatePlayerCard" type="text/template">
@@ -406,6 +406,24 @@
           document.getElementById('map-container').innerHTML = data.response;
           document.getElementById('map-container').innerHTML += style;
           //now to fetch territory ownership!!
+          doAjaxGetRequest('/api/teams','Teams',function(team_data) {
+            window.teamsObject = JSON.parse(team_data.response);
+            console.log(window.teamsObject);
+            for (team in window.teamsObject) {
+              console.log(teamsObject[team]);
+              document.documentElement.style
+              .setProperty('--'.concat(teamsObject[team].name.replace(/\W/g, '')).concat('-primary'), teamsObject[team].colors.primary);
+              document.documentElement.style
+              .setProperty('--'.concat(teamsObject[team].name.replace(/\W/g, '')).concat('-secondary'), teamsObject[team].colors.secondary);
+            }
+            doAjaxGetRequest('/api/territories','Territories', function(territory_data){
+              let territories = JSON.parse(territory_data.response);
+              for (territory in territories) {
+                document.getElementById('map').getElementById(territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
+                document.getElementById('map').getElementById(territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
+              }
+            });
+          });
         });
       </script>
       <script>
@@ -452,7 +470,23 @@
             event.preventDefault();
             console.log(event.target.attributes["name"].value);
             document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-            document.getElementById("map-owner-info").innerHTML = event.target.attributes["name"].value;
+            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
+            /*if (event.target.attributes["class"].value == "highlighted-county") {
+              event.target.setAttribute("class", "neutral-county");
+              const index = keeper_counties.indexOf(event.target.attributes['name'].value);
+              if (index > -1) {
+                keeper_counties.splice(index, 1);
+              }
+            }*/
+          }, false);
+          document.addEventListener('mouseout', function (event) {
+            if (!event.target.matches('path')) return;
+            event.preventDefault();
+            console.log(event.target.attributes["name"].value);
+            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
             /*if (event.target.attributes["class"].value == "highlighted-county") {
               event.target.setAttribute("class", "neutral-county");
               const index = keeper_counties.indexOf(event.target.attributes['name'].value);
