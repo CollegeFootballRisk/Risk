@@ -129,13 +129,13 @@ pub fn make_move(
     remote_addr: SocketAddr,
     key: State<String>,
     latest: State<Latest>,
-) -> Result<Json<ClientInfo>, Status> {
+) -> Result<Json<String>, Status> {
     //get cookie, verify it -> Claims (id, user, refresh_token)
     match cookies.get("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(mut c) => {
-                    let cinfo = ClientInfo {
+                    let _cinfo = ClientInfo {
                         claims: c.0.clone(),
                         ip: remote_addr.to_string(),
                     };
@@ -202,7 +202,7 @@ pub fn make_move(
                                         },
                                         &conn,
                                     ) {
-                                        Ok(_oka) => std::result::Result::Ok(Json(cinfo)),
+                                        Ok(_oka) => std::result::Result::Ok(Json(String::from("Okay"))),
                                         Err(_e) => std::result::Result::Err(Status::Found),
                                     }
                                 }
