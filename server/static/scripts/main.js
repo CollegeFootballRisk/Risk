@@ -139,31 +139,25 @@ function getUserInfo(resolve, reject) {
                         select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
                         errorNotif('Select a Team', select_team, {
                             text: "Join",
-                            action: function(update_status) {
+                            action: function() {
                                 doAjaxGetRequest(encodeURI('/auth/join?team='.concat(document.getElementById("team").value)), 'TeamSelector', function(status) {
                                     if (status.status == 200) {
                                         location.reload();
-                                        update_status(0);
                                     }
                                 }, function(status) {
                                     if (status.status == 409) {
                                         //user has team, 
-                                        update_status(1);
                                     } else if (status.status == 403) {
                                         //team has no territories!
                                         document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
-                                        update_status(1);
                                     } else {
                                         document.getElementsById('team-submit-form-error').innerHTML = "<br/><br/><b style=\"red\">Hmm, something went wrong. Try again?</b>";
-                                        update_status(1);
                                     }
                                 });
                             }
                         }, {
                             display: "none",
-                            action: function(update_status) {
-                                update_status(1);
-                            }
+                            action: function() {}
                         });
                     } else {
                         //oh no! your team has been e l i m i n a t e d 
