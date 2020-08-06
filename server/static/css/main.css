@@ -20,6 +20,9 @@ body {
 a {
     cursor: url('../images/cur117.cur'), auto !important;
     color: var(--theme-fg);
+}
+
+p a {
     background: var(--theme-bg);
     padding: 5px;
     border-radius: 5px;
@@ -422,6 +425,20 @@ a {
     flex-direction: column;
 }
 
+#map {
+    width: 100%;
+    margin: auto;
+    margin-left: auto;
+    margin-right: auto;
+    width: 700px;
+}
+
+#map path {
+    cursor: pointer;
+    pointer-events: all;
+    fill: purple;
+}
+
 @media screen and (max-width: 1050px) {
     #hamnav label {
         display: inline-block;
@@ -483,6 +500,7 @@ a {
     }
     .cold {
         max-width: unset !important;
+        min-width: 880px;
         flex-basis: 100%;
         min-width: unset !important;
     }
