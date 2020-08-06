@@ -336,6 +336,13 @@ function drawActionBoard(resolve, reject) {
     }
 }
 
+function resizeMap() {
+    let width = document.getElementById('map-container').clientWidth;
+    document.getElementById('map').setAttribute('width', width);
+    document.getElementById('map').setAttribute('preserveAspectRatio', 'xMinYMin');
+    document.getElementById('map').setAttribute('viewBox', '0 0 650 650');
+}
+
 function drawMap(resolve, reject) {
     doAjaxGetRequest('images/map.svg', 'Map', function(data) {
         document.getElementById('map-container').innerHTML = data.response;
@@ -346,6 +353,7 @@ function drawMap(resolve, reject) {
                 document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
                 document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
             }
+            resizeMap();
             resolve(window.territories);
         }, function() {
             reject("Error");
@@ -417,3 +425,8 @@ let doge = Promise.all([drawLeaderboard(0, 0), new Promise(drawMap), new Promise
         })
     })
     .catch((values) => { console.log(values) });
+
+
+function resizeGlobal() {
+    resizeMap();
+}
