@@ -403,13 +403,18 @@ function drawLeaderboard(season, day) {
 }
 
 
-let doge = Promise.all([drawLeaderboard(0, 0), new Promise(drawMap), new Promise(getTeamInfo), new Promise(getUserInfo)])
+let doge = Promise.all([drawLeaderboard(0, 0), new Promise(drawMap), new Promise(getTeamInfo)])
     .then((values) => {
         console.log(values);
     })
     .then(() => {
         return new Promise((resolve, reject) => {
             setupMapHover(resolve, reject);
+        })
+    })
+    .then(() => {
+        return new Promise((resolve, reject) => {
+            getUserInfo(resolve, reject);
         })
     })
     .then(() => {
