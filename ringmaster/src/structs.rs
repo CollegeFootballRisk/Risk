@@ -193,7 +193,9 @@ impl Stats {
                 fives: i.fives,
             });
         }
-        diesel::insert_into(stats::table).values(amended_stats).execute(conn)
+        diesel::insert_into(stats::table)
+            .values(amended_stats)
+            .execute(conn)
     }
 
     pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
@@ -220,7 +222,9 @@ impl Stats {
 
 impl TerritoryStats {
     pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(territory_stats::table).values(stats).execute(conn)
+        diesel::insert_into(territory_stats::table)
+            .values(stats)
+            .execute(conn)
     }
 }
 
@@ -240,7 +244,9 @@ impl TerritoryOwners {
 impl TerritoryOwnersInsert {
     pub fn insert(owners: Vec<TerritoryOwnersInsert>, conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::*;
-        insert_into(territory_ownership).values(&owners).execute(conn)
+        insert_into(territory_ownership)
+            .values(&owners)
+            .execute(conn)
     }
 }
 
