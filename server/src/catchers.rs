@@ -6,10 +6,14 @@ pub struct Httperror {
 
 #[catch(404)]
 pub fn not_found() -> Json<Httperror> {
-    Json(Httperror { status: 404 })
+    Json(Httperror {
+        status: 404,
+    })
 }
 
 #[catch(500)]
 pub fn internal_error() -> Json<Httperror> {
-    Json(Httperror { status: 500 })
+    Json(Httperror {
+        status: 500,
+    })
 }

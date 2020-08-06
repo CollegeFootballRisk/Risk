@@ -15,9 +15,9 @@ use std::io::Read;
 //extern crate time;
 //use time::Duration;
 extern crate chrono;
-use chrono::Duration;
 use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
+use chrono::Duration;
 
 #[get("/reddit")]
 pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
@@ -34,7 +34,9 @@ pub fn reddit_logout(mut cookies: Cookies) -> Redirect {
     let client = Client::with_connector(https);
     let _response = client
         .get("https://www.reddit.com/api/v1/revoke_token")
-        .header(Authorization(Bearer { token }))
+        .header(Authorization(Bearer {
+            token,
+        }))
         .header(UserAgent("AggieRiskLocal - Dev Edition".into()))
         .send()
         .context("failed to send request to API");
@@ -58,42 +60,45 @@ pub fn reddit_callback(
                 platform: "reddit".to_string(),
             };
             match UpsertableUser::upsert(new_user, &conn) {
-                Ok(_n) => match User::load(user_info.name.clone(), "reddit".to_string(), &conn) {
-                    Ok(user) => {
-                        let datetime = Utc::now();
-                        let timestamp: usize = 604800 + datetime.timestamp() as usize;
-                        let new_claims = Claims {
-                            id: user.id,
-                            user: user.uname,
-                            token: Some(token.refresh_token().unwrap().to_string()),
-                            refresh_token: Some(token.access_token().to_string()),
-                            exp: timestamp,
-                        };
-                        cookies.add(
-                            Cookie::build("username", user_info.name)
-                                .same_site(SameSite::Lax)
-                                .domain("localhost")
-                                .path("/")
-                                .max_age(Duration::hours(168))
-                                .finish(),
-                        );
-                        match Claims::put(&key.as_bytes(), new_claims) {
-                            Ok(s) => {
-                                cookies.add(
-                                    Cookie::build("jwt", s)
-                                        .same_site(SameSite::Lax)
-                                        .domain("localhost")
-                                        .path("/")
-                                        .max_age(Duration::hours(168))
-                                        .finish(),
-                                );
-                                std::result::Result::Ok(Redirect::to("/"))
+                Ok(_n) => {
+                    match User::load(user_info.name.clone(), "reddit".to_string(), &conn) {
+                        Ok(user) => {
+                            dotenv::from_filename("../.env").ok();
+                            let datetime = Utc::now();
+                            let timestamp: usize = 604800 + datetime.timestamp() as usize;
+                            let new_claims = Claims {
+                                id: user.id,
+                                user: user.uname,
+                                token: Some(token.refresh_token().unwrap().to_string()),
+                                refresh_token: Some(token.access_token().to_string()),
+                                exp: timestamp,
+                            };
+                            cookies.add(
+                                Cookie::build("username", user_info.name)
+                                    .same_site(SameSite::Lax)
+                                    .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                    .path("/")
+                                    .max_age(Duration::hours(168))
+                                    .finish(),
+                            );
+                            match Claims::put(&key.as_bytes(), new_claims) {
+                                Ok(s) => {
+                                    cookies.add(
+                                        Cookie::build("jwt", s)
+                                            .same_site(SameSite::Lax)
+                                            .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                            .path("/")
+                                            .max_age(Duration::hours(168))
+                                            .finish(),
+                                    );
+                                    std::result::Result::Ok(Redirect::to("/"))
+                                }
+                                _ => std::result::Result::Err(Status::NotAcceptable),
                             }
-                            _ => std::result::Result::Err(Status::NotAcceptable),
                         }
+                        Err(_e) => std::result::Result::Err(Status::BadRequest),
                     }
-                    Err(_e) => std::result::Result::Err(Status::BadRequest),
-                },
+                }
                 Err(_ex) => std::result::Result::Err(Status::PaymentRequired),
             }
         }
@@ -112,10 +117,12 @@ fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUser
         .header(UserAgent("AggieRiskLocal - Dev Edition".into()))
         .send()
     {
-        Ok(response) => match serde_json::from_reader(response.take(2 * 1024 * 1024)) {
-            Ok(send) => Ok(send),
-            Err(_e) => Err("Error in getting user data #2".to_string()),
-        },
+        Ok(response) => {
+            match serde_json::from_reader(response.take(2 * 1024 * 1024)) {
+                Ok(send) => Ok(send),
+                Err(_e) => Err("Error in getting user data #2".to_string()),
+            }
+        }
         Err(_e) => Err("Error in getting user data #1".to_string()),
     }
 }

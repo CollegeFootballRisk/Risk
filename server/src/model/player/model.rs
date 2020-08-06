@@ -67,49 +67,66 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
 }
 
 impl PlayerWithTurnsAndAdditionalTeam {
-    pub fn load(name: Vec<String>, team_assigned: bool, conn: &PgConnection) -> PlayerWithTurnsAndAdditionalTeam {
-        let me = PlayerWithTurns::load(name.clone(), false, &conn);
+    pub fn load(
+        name: Vec<String>,
+        team_assigned: bool,
+        conn: &PgConnection,
+    ) -> PlayerWithTurnsAndAdditionalTeam {
+        let me = PlayerWithTurns::load(name.clone(), true, &conn);
         use diesel::dsl::not;
-        let status_code: i32 = match team_assigned{
+        let status_code: i32 = match team_assigned {
             true => 0,
-            false => -1
+            false => -1,
         };
         let results = users::table
             .filter(users::uname.eq_any(name))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .select((
-                teams::tname.nullable(),
-                teams::color_1.nullable(),
-                teams::color_2.nullable(),
-            ))
-            .first::<Team>(conn)
-            .expect("Error loading users");
-
-        PlayerWithTurnsAndAdditionalTeam {
-            name: me[0].name.clone(),
-            team: me[0].team.clone(),
-            active_team: Some(TeamWithColors {
-                name: results.name,
-                colors: Colors {
-                    primary: results.color_1,
-                    secondary: results.color_2,
-                },
-            }),
-            platform: me[0].platform.clone(),
-            ratings: me[0].ratings.clone(),
-            stats: me[0].stats.clone(),
-            turns: me[0].turns.clone(),
+            .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
+            .first::<Team>(conn);
+        match results {
+            Ok(results) => {
+                PlayerWithTurnsAndAdditionalTeam {
+                    name: me[0].name.clone(),
+                    team: me[0].team.clone(),
+                    active_team: Some(TeamWithColors {
+                        name: results.name,
+                        colors: Colors {
+                            primary: results.color_1,
+                            secondary: results.color_2,
+                        },
+                    }),
+                    platform: me[0].platform.clone(),
+                    ratings: me[0].ratings.clone(),
+                    stats: me[0].stats.clone(),
+                    turns: me[0].turns.clone(),
+                }
+            }
+            Err(_e) => {
+                PlayerWithTurnsAndAdditionalTeam {
+                    name: me[0].name.clone(),
+                    team: None,
+                    active_team: None,
+                    platform: me[0].platform.clone(),
+                    ratings: me[0].ratings.clone(),
+                    stats: me[0].stats.clone(),
+                    turns: me[0].turns.clone(),
+                }
+            }
         }
     }
 }
 
 impl PlayerWithTurns {
-    pub fn load(name: Vec<String>, team_assigned: bool, conn: &PgConnection) -> Vec<PlayerWithTurns> {
+    pub fn load(
+        name: Vec<String>,
+        team_assigned: bool,
+        conn: &PgConnection,
+    ) -> Vec<PlayerWithTurns> {
         use diesel::dsl::not;
-        let status_code: i32 = match team_assigned{
+        let status_code: i32 = match team_assigned {
             true => 0,
-            false => -1
+            false => -1,
         };
         let results = users::table
             .filter(users::uname.eq_any(name))
@@ -126,11 +143,7 @@ impl PlayerWithTurns {
                     users::streak,
                     users::awards,
                 ),
-                (
-                    teams::tname.nullable(),
-                    teams::color_1.nullable(),
-                    teams::color_2.nullable(),
-                ),
+                (teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()),
             ))
             .load::<(User, Team)>(conn)
             .expect("Error loading users");
@@ -155,7 +168,7 @@ impl PlayerWithTurns {
                     territories::name,
                     teams::tname,
                 ))
-                .order((past_turns::season.desc(),past_turns::day.desc()))
+                .order((past_turns::season.desc(), past_turns::day.desc()))
                 .load::<PastTurn>(conn)
                 .expect("Error loading user turns");
             let uwp = PlayerWithTurns {

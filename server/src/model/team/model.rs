@@ -55,14 +55,21 @@ pub struct TeamPlayerMoves {
 impl TeamInfo {
     pub fn load(conn: &PgConnection) -> Vec<TeamInfo> {
         teams::table
-            .select((
-                teams::id,
-                teams::tname,
-                teams::logo,
-                (teams::color_1, teams::color_2),
-            ))
+            .select((teams::id, teams::tname, teams::logo, (teams::color_1, teams::color_2)))
             .load::<TeamInfo>(conn)
             .expect("Error loading teams")
+    }
+}
+
+impl TeamWithColors {
+    pub fn blank()-> TeamWithColors{
+        TeamWithColors{
+            name: None,
+            colors: Colors {
+                primary: None, 
+                secondary: None
+            }
+        }
     }
 }
 
@@ -74,39 +81,43 @@ impl TeamPlayerMoves {
         conn: &PgConnection,
     ) -> Vec<TeamPlayerMoves> {
         match team {
-            Some(team_seek) => team_player_moves::table
-                .select((
-                    team_player_moves::id,
-                    team_player_moves::season,
-                    team_player_moves::day,
-                    team_player_moves::team,
-                    team_player_moves::player,
-                    team_player_moves::stars,
-                    team_player_moves::mvp,
-                    team_player_moves::territory,
-                    team_player_moves::regularteam,
-                ))
-                .filter(team_player_moves::season.eq(season_seek))
-                .filter(team_player_moves::day.eq(day_seek))
-                .filter(team_player_moves::team.eq(team_seek))
-                .load::<TeamPlayerMoves>(conn)
-                .expect("Error loading moves"),
-            None => team_player_moves::table
-                .select((
-                    team_player_moves::id,
-                    team_player_moves::season,
-                    team_player_moves::day,
-                    team_player_moves::team,
-                    team_player_moves::player,
-                    team_player_moves::stars,
-                    team_player_moves::mvp,
-                    team_player_moves::territory,
-                    team_player_moves::regularteam,
-                ))
-                .filter(team_player_moves::season.eq(season_seek))
-                .filter(team_player_moves::day.eq(day_seek))
-                .load::<TeamPlayerMoves>(conn)
-                .expect("Error loading moves"),
+            Some(team_seek) => {
+                team_player_moves::table
+                    .select((
+                        team_player_moves::id,
+                        team_player_moves::season,
+                        team_player_moves::day,
+                        team_player_moves::team,
+                        team_player_moves::player,
+                        team_player_moves::stars,
+                        team_player_moves::mvp,
+                        team_player_moves::territory,
+                        team_player_moves::regularteam,
+                    ))
+                    .filter(team_player_moves::season.eq(season_seek))
+                    .filter(team_player_moves::day.eq(day_seek))
+                    .filter(team_player_moves::team.eq(team_seek))
+                    .load::<TeamPlayerMoves>(conn)
+                    .expect("Error loading moves")
+            }
+            None => {
+                team_player_moves::table
+                    .select((
+                        team_player_moves::id,
+                        team_player_moves::season,
+                        team_player_moves::day,
+                        team_player_moves::team,
+                        team_player_moves::player,
+                        team_player_moves::stars,
+                        team_player_moves::mvp,
+                        team_player_moves::territory,
+                        team_player_moves::regularteam,
+                    ))
+                    .filter(team_player_moves::season.eq(season_seek))
+                    .filter(team_player_moves::day.eq(day_seek))
+                    .load::<TeamPlayerMoves>(conn)
+                    .expect("Error loading moves")
+            }
         }
     }
 }
@@ -126,13 +137,7 @@ impl TeamInTurns {
                 odds::players,
                 odds::teampower,
                 odds::chance,
-                (
-                    odds::ones,
-                    odds::twos,
-                    odds::threes,
-                    odds::fours,
-                    odds::fives,
-                ),
+                (odds::ones, odds::twos, odds::threes, odds::fours, odds::fives),
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))

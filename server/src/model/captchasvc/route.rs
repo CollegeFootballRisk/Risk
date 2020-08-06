@@ -19,10 +19,12 @@ pub fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
     let result: QueryResult<usize> = Captchas::insert(insert_captcha, &conn);
     let outlet = result.unwrap_or(0);
     match outlet {
-        1 => std::result::Result::Ok(Json(UserCaptcha {
-            title: calculate_hash(&_solution).to_string(),
-            content: encode(&png),
-        })),
+        1 => {
+            std::result::Result::Ok(Json(UserCaptcha {
+                title: calculate_hash(&_solution).to_string(),
+                content: encode(&png),
+            }))
+        }
         _ => std::result::Result::Err(Status::NotFound),
     }
     //encode(&png)

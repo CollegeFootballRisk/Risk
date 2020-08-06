@@ -1,7 +1,7 @@
 [package]
 name = "rust-risk"
-version = "0.0.1-rc20200620"
-authors = ["Jace Nelson <kenneden@tamu.edu>"]
+version = "0.0.1"
+authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2018"
 
 [dependencies]

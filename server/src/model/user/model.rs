@@ -11,10 +11,7 @@ pub struct UpsertableUser {
 impl UpsertableUser {
     pub fn upsert(user: UpsertableUser, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(users::table)
-            .values((
-                users::uname.eq(&user.uname),
-                users::platform.eq(user.platform),
-            ))
+            .values((users::uname.eq(&user.uname), users::platform.eq(user.platform)))
             .on_conflict((users::uname, users::platform))
             .do_update()
             .set(users::uname.eq(&user.uname))

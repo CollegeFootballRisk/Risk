@@ -17,7 +17,7 @@ mod catchers;
 mod db;
 mod schema;
 use rocket_oauth2::OAuth2;
-use std::{thread,time,fs};
+use std::{fs, thread, time};
 struct User {
     pub username: String,
 }
@@ -42,7 +42,7 @@ fn main() {
         start();
     });
     dbg!("test");
-    let ten_millis = time::Duration::from_millis(1000*15*60);
+    let ten_millis = time::Duration::from_millis(1000 * 15 * 60);
     let metadata = fs::metadata("../.env").unwrap();
     if let Ok(time) = metadata.modified() {
         let mut last_tv_sec = time;
@@ -60,7 +60,6 @@ fn main() {
     }
 }
 
-
 fn start() {
     dotenv::from_filename("../.env").ok();
     let key = dotenv::var("SECRET").unwrap();
@@ -74,38 +73,32 @@ fn start() {
         .manage(latest)
         .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
         .register(catchers![catchers::not_found, catchers::internal_error])
-        .mount(
-            "/api",
-            routes![
-                player::route::player,
-                player::route::me,
-                player::route::players,
-                player::route::player_multifetch,
-                turn::route::turns,
-                turn::route::rolllog,
-                team::route::teams,
-                team::route::teamplayersbymoves,
-                territory::route::territories,
-                territory::route::territoryhistory,
-                territory::route::territory_turn,
-                stats::route::heat,
-                stats::route::stathistory,
-                stats::route::currentstrength,
-                stats::route::leaderboard,
-                stats::route::odds,
-            ],
-        )
-        .mount(
-            "/auth",
-            routes![
-                reddit::route::reddit_callback,
-                reddit::route::reddit_logout,
-                captchasvc::route::captchaServe,
-                auth::route::make_move,
-                auth::route::join_team,
-            ],
-        )
+        .mount("/api", routes![
+            player::route::player,
+            player::route::me,
+            player::route::players,
+            player::route::player_multifetch,
+            turn::route::turns,
+            turn::route::rolllog,
+            team::route::teams,
+            team::route::teamplayersbymoves,
+            territory::route::territories,
+            territory::route::territoryhistory,
+            territory::route::territory_turn,
+            stats::route::heat,
+            stats::route::stathistory,
+            stats::route::currentstrength,
+            stats::route::leaderboard,
+            stats::route::odds,
+        ])
+        .mount("/auth", routes![
+            reddit::route::reddit_callback,
+            reddit::route::reddit_logout,
+            captchasvc::route::captchaServe,
+            auth::route::make_move,
+            auth::route::join_team,
+        ])
         .mount("/login", routes![reddit::route::reddit_login,])
-        .mount("/", StaticFiles::from("/srv/rust/Risk/server/static"))
+        .mount("/", StaticFiles::from("static"))
         .launch();
 }

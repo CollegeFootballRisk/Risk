@@ -13,8 +13,8 @@ pub struct Claims {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ClientInfo {
-   pub claims: Claims,
-   pub ip: String,
+    pub claims: Claims,
+    pub ip: String,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -27,11 +27,7 @@ pub struct Move {
 
 impl Claims {
     pub fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
-        encode(
-            &Header::default(),
-            &user_claims,
-            &EncodingKey::from_secret(key),
-        )
+        encode(&Header::default(), &user_claims, &EncodingKey::from_secret(key))
     }
 
     pub fn interpret(key: &[u8], token: String) -> Result<(Claims, Header), String> {

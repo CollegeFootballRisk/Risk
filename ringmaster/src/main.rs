@@ -170,26 +170,16 @@ fn process_territories(
                     team: territory.owner_id,
                     season: territory.season,
                     day: territory.day,
-                    ones: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 1)
-                        .count() as i32,
-                    twos: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 2)
-                        .count() as i32,
-                    threes: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 3)
-                        .count() as i32,
-                    fours: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 4)
-                        .count() as i32,
-                    fives: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 5)
-                        .count() as i32,
+                    ones: territory_players.iter().filter(|player| player.stars == 1).count()
+                        as i32,
+                    twos: territory_players.iter().filter(|player| player.stars == 2).count()
+                        as i32,
+                    threes: territory_players.iter().filter(|player| player.stars == 3).count()
+                        as i32,
+                    fours: territory_players.iter().filter(|player| player.stars == 4).count()
+                        as i32,
+                    fives: territory_players.iter().filter(|player| player.stars == 5).count()
+                        as i32,
                     teampower: territory_players
                         .iter()
                         .map(|mover| mover.power.round() as f64)
@@ -448,11 +438,8 @@ fn main() {
         let mut turninfoblock = turninfodata.unwrap();
         turninfoblock.rollstarttime = Some(Utc::now().naive_utc());
         dbg!(&turninfoblock.season, &turninfoblock.day);
-        let players = PlayerMoves::load(
-            &turninfoblock.season.unwrap(),
-            &turninfoblock.day.unwrap(),
-            &conn,
-        );
+        let players =
+            PlayerMoves::load(&turninfoblock.season.unwrap(), &turninfoblock.day.unwrap(), &conn);
         let territories = TerritoryOwners::load(
             &turninfoblock.season.unwrap(),
             &turninfoblock.day.unwrap(),
