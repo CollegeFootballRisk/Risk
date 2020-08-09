@@ -35,7 +35,10 @@ pub fn establish_connection() -> PgConnection {
 }
 
 fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
-    let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
+    let mut teams = territory_players
+        .iter()
+        .map(|x| x.team)
+        .collect::<Vec<i32>>();
     teams.sort();
     teams.dedup();
     teams
@@ -67,7 +70,12 @@ fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
-) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>, Vec<TerritoryStats>) {
+) -> (
+    Vec<TerritoryOwnersInsert>,
+    Vec<PlayerMoves>,
+    HashMap<i32, Stats>,
+    Vec<TerritoryStats>,
+) {
     dbg!("process_territories");
     dbg!(territories.len());
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
@@ -155,8 +163,10 @@ fn process_territories(
                             teams[0],
                         )
                     })
-                    .starpower +=
-                    territory_players.iter().map(|mover| mover.power.round() as i32).sum::<i32>();
+                    .starpower += territory_players
+                    .iter()
+                    .map(|mover| mover.power.round() as i32)
+                    .sum::<i32>();
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
@@ -258,8 +268,10 @@ fn process_territories(
                     })
                     .territorycount += 1;
 
-                let total_power =
-                    territory_players.iter().map(|mover| mover.power.round() as f64).sum::<f64>();
+                let total_power = territory_players
+                    .iter()
+                    .map(|mover| mover.power.round() as f64)
+                    .sum::<f64>();
                 handleteamstats(&mut stats, territory_players);
                 for (key, val) in map.iter() {
                     territory_stats.push(TerritoryStats {
