@@ -56,6 +56,18 @@ table! {
 }
 
 table! {
+    teams (id) {
+        id -> Int4,
+        tname -> Nullable<Text>,
+        tshortname -> Nullable<Text>,
+        creation_date -> Nullable<Timestamp>,
+        logo -> Nullable<Text>,
+        color_1 -> Nullable<Text>,
+        color_2 -> Nullable<Text>,
+    }
+}
+
+table! {
     territory_ownership (id) {
         id -> Int4,
         territory_id -> Int4,
