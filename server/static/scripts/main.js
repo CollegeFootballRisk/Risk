@@ -257,6 +257,11 @@ function setupMapHover(resolve, reject) {
         document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
         event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
     }, false);
+    document.addEventListener('click', function(event) {
+        if (!event.target.matches('path')) return;
+        event.preventDefault();
+        window.location = '/territory/'.concat(event.target.attributes['name'].value);
+    }, false);
     resolve(true);
 }
 
@@ -280,10 +285,13 @@ function getTeamInfo(resolve, reject) {
 
 function makeMove(id) {
     let endCycleColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').concat("");
+    let endCycleColor05 = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-05').concat("");
     document.documentElement.style.setProperty("--theme-bg", "rgba(255,0,255,1)");
+    document.documentElement.style.setProperty("--theme-bg-05", "rgba(255,0,255,0.5)");
     var timeStamp = Math.floor(Date.now() / 1000); //use timestamp to override cache
     doAjaxGetRequest("/auth/move?target=".concat(id, '&timestamp=', timeStamp.toString()), 'Make Move', function() {
         document.documentElement.style.setProperty('--theme-bg', endCycleColor);
+        document.documentElement.style.setProperty('--theme-bg-05', endCycleColor05);
         errorNotif('Move Submitted', 'Your move has been submitted and received succesfully.', {
             text: "Okay"
         }, {
@@ -291,7 +299,8 @@ function makeMove(id) {
         });
         return 0;
     }, function() {
-        document.documentElement.style.setProperty('--theme-bg', 'rgba(255,0,0,1)')
+        document.documentElement.style.setProperty('--theme-bg', 'rgba(255,0,0,1)');
+        document.documentElement.style.setProperty('--theme-bg-05', 'rgba(255,0,0,0.5)');
         errorNotif('Could not make move', 'Hmm, couldn\'t set that as your move for the day.', {
             text: "Okay"
         }, {
@@ -338,7 +347,10 @@ function drawActionBoard(resolve, reject) {
 
 function resizeMap() {
     let width = document.getElementById('map-container').clientWidth;
-    document.getElementById('map').setAttribute('width', width);
+    if (width < 1000) {
+        document.getElementById('map').setAttribute('width', width);
+        document.getElementById('map').setAttribute('height', width);
+    }
     document.getElementById('map').setAttribute('preserveAspectRatio', 'xMinYMin');
     document.getElementById('map').setAttribute('viewBox', '0 0 650 650');
 }

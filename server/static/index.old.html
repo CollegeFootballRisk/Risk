@@ -1,0 +1,240 @@
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="alternate icon" href="images/favicon.ico">
+    <link rel="mask-icon" href="images/favico-tab.svg" color="#500000">
+    <script src="js/datatables.js"></script>
+    <title>Rust Risk</title>
+    <link rel="stylesheet" href="/css/main.css" name="www-onepick">
+</head>
+
+<body onresize="resizeGlobal()">
+    <div id="error-notif" class="gradient-border" style="display: block;" notif-id="0">
+        <center><b id="error-notif-title">Please Enable Javascript:</b><br /><br />
+            <div id="error-notif-body">
+                <p> We hate JavaScript as much as the next guy, but unfortunately this site needs JavaScript in order to run. Please enable it!
+            </div>
+        </center>
+        <ul class="gradient-buttons">
+            <li id="error-notif-button-1-container">
+                <button id="error-notif-button-1">Okay</button>
+            </li>
+            <li id="error-notif-button-2-container">
+                <button id="error-notif-button-2">Yikes</button>
+            </li>
+        </ul>
+    </div>
+    <nav class="navbar">
+        <div class="col">
+            <nav id="hamnav">
+                <label for="hamburger">&#9776;</label>
+                <input type="checkbox" id="hamburger" />
+                <div class="hamitems">
+                    <a href="index.html">Home</a>
+                    <a href="leaderboard.html">Leaderboard</a>
+                    <a href="odds.html">Odds</a>
+                    <a href="info.html">Info</a>
+                    <a href="https://github.com/mautamu/Risk/blob/stable/documentation/API.md">API</a>
+                </div>
+            </nav>
+        </div>
+        <div class="col">
+            <a href="/" class="loader" target="_self">
+                <img src="images/logo-text-white.svg" class="brand-tag">
+                <img src="images/logo-white.svg" id="loadicon" class="brand-image spin">
+            </a>
+        </div>
+        <div class="col">
+            <div class="hamitems" style="float:right;">
+                <a class="navbar-brand rj" href="/login/reddit">
+                    <img src="images/reddit-logo.png" class="brand-image"></img>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <div class="row row-container jc">
+        <div class="col flx cold">
+            <div class="flex">
+                <div id="playerCard" class="content unflex">
+                </div>
+            </div>
+        </div>
+        <div class="col2 cold">
+            <div class="flex mapfix">
+                <div id="map-info">
+                    <b id="map-county-info"></b>
+                    <i style="font-size: 14px;" id="map-owner-info"></i>
+                </div>
+                <div id="map-container" class="fc jc">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row row-container jc" id="action-container" style="display:none;">
+        <div class="col3 cold">
+            <div class="flex">
+                <div class="content jc">
+                    <div id="attack-defend-action">
+                        <center class="jc">
+                            <h2>Make Your Move</h2>
+                        </center>
+                        <div class="flx" style="wflex-direction: row;" class="df">
+                            <div id="attack-list" class="action-list fdr">
+                                <center>Attack:</center><br/></div>
+                            <div id="defend-list" class="action-list fdr">
+                                <center>Defend:</center><br/></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row row-container jc">
+        <div class="col3 cold">
+            <div class="flex">
+                <div class="content unflex">
+                    <center>
+                        <h2>
+                            Playing Rust Risk
+                        </h2>
+                    </center>
+                    <h3> What is Rust Risk? </h3>
+                    <p id="#what">
+                        Aggie Risk is similar to <a href="https://collegefootballrisk.com/">College Football Risk</a>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the
+                        largest number of territories of any team at the end of the season.
+                    </p>
+                    <h3> How does the game work? </h3>
+                    <p id="#gameplay">
+                        Every day at 22:00 U.S. Central Standard Time, the map is redrawn. For each territory on the map, the total <a href="#starpower">starpower</a> is calculated for each team that made moves in that territory. A random number is drawnn
+                        and the team who's player that number corresponds to is labeled
+                        <a href="#mvp">MVP</a> and wins the territory for that team.
+                    </p>
+                    <h3> How is this different from College Football Risk? </h3>
+                    <p>
+                        This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a href="https://github.com/kennroo/Risk">code</a>, and submit pull requests to change the game.
+                        <br /> This version of the game is written in the programming language <a href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <a href="https://github.com/kennroo/Risk">GitHub</a>.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="leaderboard-container" class="row row-container jc">
+        <div class="col3 cold">
+            <div class="flex">
+                <div class="content fd jc">
+                    <center>
+                        <h2>Leaderboard</h2>
+                    </center>
+                    <div id="leaderboard">
+                        <table id="leaderboard-table">
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="width:100%;">
+        <div class="row row-container jc">
+            <div class="col3 cold">
+                <div class="flex">
+                    <div class="content fd jc">
+                        <center>
+                            <h2>Acknowledgments</h2>
+                            <p>
+                                The Rust Risk logo is a derivative work of the <a href="https://www.rust-lang.org/policies/media-guide" style="background-color:#B9420F;">Rust</a> logo, created by Mozilla and licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.
+                            </p>
+                            <p>
+                                This project is largely based off of the design of <a href="https://github.com/bluescar">u/BlueSCar's</a> <a href="https://collegefootballrisk.com">College Football Risk.</a>.
+                            </p>
+                        </center>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script id="templatePlayerCard" type="text/template">
+        <center>
+            <h2>{{user_name}}<br>
+                <text style="color: {{user_team_color}}; font-size: 2em; --darkreader-inline-color:#cfcbc4;" data-darkreader-inline-color="">
+                      {{overall}}
+                    </text>
+                <style>
+                    .lrow {
+                        display: flex;
+                        justify-content: center;
+                    }
+                    
+                    .lcol2 {
+                        flex: 2;
+                        flex-basis: 50%;
+                    }
+                    
+                    .lcol {
+                        flex: 1;
+                        flex-basis: 33%;
+                    }
+                </style>
+                <style class="darkreader darkreader--sync" media="screen"></style>
+                <div class="lrow">
+                    <div class="lcol">
+                        {{total_turns_stars}} <br>
+                        <i style="font-size:0.5em;">Total turns:</i><br> {{total_turns}}
+                    </div>
+                    <div class="lcol">
+                        {{round_turns_stars}} <br>
+                        <i style="font-size:0.5em;">Round turns:</i><br> {{round_turns}}
+                    </div>
+                    <div class="lcol">
+                        {{mvps_stars}} <br>
+                        <i style="font-size:0.5em;">MVPS:</i><br> {{mvps}}
+                    </div>
+                </div>
+                <br>
+                <div class="lrow">
+                    <div class="lcol2">
+                        {{streak_stars}}<br>
+                        <i style="font-size:0.5em;">Streak: </i><br> {{streak}}
+                    </div>
+                    <div class="lcol2">
+                        {{cfb_stars_stars}} <br>
+                        <i style="font-size:0.5em;">CFB Stars:</i><br> {{cfb_stars}}
+                    </div>
+                </div>
+            </h2>
+            <br>
+            <h2>{{team}}<br>
+                <img src="{{team_logo}}" width="128" height="128">
+                <div class="lrow">
+                    <div class="lcol2">
+                        {{team_players_yesterday}}<br>
+                        <i style="font-size:0.5em;">Players yesterday</i><br>
+                    </div>
+                    <div class="lcol2">
+                        {{team_mercs_yesterday}}<br>
+                        <i style="font-size:0.5em;">Mercernaries yesterday</i><br>
+                    </div>
+                </div>
+                <br>
+                <div class="lrow">
+                    <div class="lcol2">
+                        {{team_star_power_yesterday}}<br>
+                        <i style="font-size:0.5em;">Star power</i><br>
+                    </div>
+                    <div class="lcol2">
+                        {{team_territories_yesterday}}<br>
+                        <i style="font-size:0.5em;">Territories</i><br>
+                    </div>
+                </div>
+            </h2>
+        </center>
+    </script>
+    <script src="scripts/main.js">
+    </script>
+</body>
+
+</html>
