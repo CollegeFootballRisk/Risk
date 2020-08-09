@@ -58,7 +58,6 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-attachment: fixed;
-    background-position-y: -100px;
 }
 
 hr {
@@ -864,6 +863,11 @@ footer p a {
     clear: both;
     content: " ";
     display: table;
+}
+
+#leaderboard {
+    max-width: 90vw;
+    overflow-x: scroll;
 }
 
 #leaderboard img {
