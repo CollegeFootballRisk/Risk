@@ -11,8 +11,8 @@ use std::net::SocketAddr;
 use rocket::State;
 //use rocket_oauth2::{OAuth2, TokenResponse};
 use crate::model::{
-    Claims, ClientInfo, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats, TeamInfo,
-    UpdateUser, CurrentStrength, TeamWithColors
+    Claims, ClientInfo, CurrentStrength, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats,
+    TeamInfo, TeamWithColors, UpdateUser,
 };
 use crate::schema::*;
 #[cfg(feature = "risk_security")]
@@ -57,14 +57,20 @@ pub fn join_team(
                                         match CurrentStrength::load_id(team, &conn) {
                                             Ok(strength) => {
                                                 if strength.territories > 0 {
-                                                    match users.team.unwrap_or(TeamWithColors::blank()).name {
+                                                    match users
+                                                        .team
+                                                        .unwrap_or(TeamWithColors::blank())
+                                                        .name
+                                                    {
                                                         Some(_e) => {
                                                             //merc!
-                                                            match update_user(false, c.0.id, team, &conn) {
+                                                            match update_user(
+                                                                false, c.0.id, team, &conn,
+                                                            ) {
                                                                 Ok(_e) => {
-                                                                    std::result::Result::Ok(Json(String::from(
-                                                                        "Okay",
-                                                                    )))
+                                                                    std::result::Result::Ok(Json(
+                                                                        String::from("Okay"),
+                                                                    ))
                                                                 }
                                                                 Err(_e) => {
                                                                     std::result::Result::Err(
@@ -75,11 +81,13 @@ pub fn join_team(
                                                         }
                                                         None => {
                                                             //new kid on the block
-                                                            match update_user(true, c.0.id, team, &conn) {
+                                                            match update_user(
+                                                                true, c.0.id, team, &conn,
+                                                            ) {
                                                                 Ok(_e) => {
-                                                                    std::result::Result::Ok(Json(String::from(
-                                                                        "Okay",
-                                                                    )))
+                                                                    std::result::Result::Ok(Json(
+                                                                        String::from("Okay"),
+                                                                    ))
                                                                 }
                                                                 Err(_e) => {
                                                                     std::result::Result::Err(
@@ -89,11 +97,8 @@ pub fn join_team(
                                                             }
                                                         }
                                                     }
-                                                }
-                                                else {
-                                                    std::result::Result::Err(
-                                                        Status::Forbidden,
-                                                    )
+                                                } else {
+                                                    std::result::Result::Err(Status::Forbidden)
                                                 }
                                             }
                                             Err(_e) => {
@@ -202,7 +207,9 @@ pub fn make_move(
                                         },
                                         &conn,
                                     ) {
-                                        Ok(_oka) => std::result::Result::Ok(Json(String::from("Okay"))),
+                                        Ok(_oka) => {
+                                            std::result::Result::Ok(Json(String::from("Okay")))
+                                        }
                                         Err(_e) => std::result::Result::Err(Status::Found),
                                     }
                                 }

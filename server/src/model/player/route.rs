@@ -1,5 +1,5 @@
 use crate::db::DbConn;
-use crate::model::{PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer, Claims};
+use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
 use rocket::http::Cookies;
 use rocket::http::Status;
 use rocket::State;
@@ -27,50 +27,50 @@ pub fn players(team: String, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Stat
 pub fn me(
     cookies: Cookies,
     conn: DbConn,
-    key: State<String>
+    key: State<String>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
     match cookies.get("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
-                    let users = PlayerWithTurnsAndAdditionalTeam::load(vec![c.0.user.clone()], false, &conn);
-                if users.name.to_lowercase() == c.0.user.to_lowercase() {
-                    std::result::Result::Ok(Json(users))
-                } else {
-                    std::result::Result::Err(Status::NotFound)
+                    let users = PlayerWithTurnsAndAdditionalTeam::load(
+                        vec![c.0.user.clone()],
+                        false,
+                        &conn,
+                    );
+                    if users.name.to_lowercase() == c.0.user.to_lowercase() {
+                        std::result::Result::Ok(Json(users))
+                    } else {
+                        std::result::Result::Err(Status::NotFound)
+                    }
                 }
-            },
-                Err(_e) => {
-                    std::result::Result::Err(Status::BadRequest)
-                }
+                Err(_e) => std::result::Result::Err(Status::BadRequest),
             }
-    }
-        None => {
-            std::result::Result::Err(Status::Unauthorized)
         }
+        None => std::result::Result::Err(Status::Unauthorized),
     }
 }
-   /* let player: String = cookies
-        .get("username")
-        .and_then(|cookie| cookie.value().parse().ok());
-        let player: String = cookies
-        .get("username")
-        .and_then(|cookie| cookie.value().parse())
-        .unwrap_or_else(|| "".to_string());
-        match cookies
-        .get("username") {
-            Some(user) => {
-                let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player.clone()], false, &conn);
-                if users.name.to_lowercase() == player.to_lowercase() {
-                    std::result::Result::Ok(Json(users))
-                } else {
-                    std::result::Result::Err(Status::NotFound)
-                }
-            }
-            None => {
-                std::result::Result::Err(Status::Unauthorized)
-            }
-        }*/
+/* let player: String = cookies
+.get("username")
+.and_then(|cookie| cookie.value().parse().ok());
+let player: String = cookies
+.get("username")
+.and_then(|cookie| cookie.value().parse())
+.unwrap_or_else(|| "".to_string());
+match cookies
+.get("username") {
+    Some(user) => {
+        let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player.clone()], false, &conn);
+        if users.name.to_lowercase() == player.to_lowercase() {
+            std::result::Result::Ok(Json(users))
+        } else {
+            std::result::Result::Err(Status::NotFound)
+        }
+    }
+    None => {
+        std::result::Result::Err(Status::Unauthorized)
+    }
+}*/
 //}
 
 #[get("/players/batch?<players>")]

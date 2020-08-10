@@ -1,6 +1,12 @@
 //initialize globals
 var outstandingRequests = [];
 var errorNotifications = [];
+var now = new Date();
+var rollTime = new Date();
+rollTime.setUTCHours(3, 0, 0, 0);
+if (rollTime < now) {
+    rollTime.setUTCDate(rollTime.getUTCDate() + 1)
+}
 
 
 // JS is enabled, so hide that notif
@@ -283,6 +289,18 @@ function getTeamInfo(resolve, reject) {
     }
 }
 
+function getTurns(resolve, reject) {
+    try {
+        doAjaxGetRequest('/api/turns', 'Turns', function(team_data) {
+            window.turnsObject = JSON.parse(team_data.response);
+            window.turn = window.turnsObject[window.turnsObject.length - 1];
+            resolve(window.turnsObject);
+        }, function() { reject("Error"); });
+    } catch {
+        reject("Error loading team info");
+    }
+}
+
 function makeMove(id) {
     let endCycleColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').concat("");
     let endCycleColor05 = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-05').concat("");
@@ -436,6 +454,12 @@ let doge = Promise.all([drawLeaderboard(0, 0), new Promise(drawMap), new Promise
             drawActionBoard(resolve, reject);
         })
     })
+    .then(() => {
+        return new Promise((resolve, reject) => {
+            getTurns(resolve, reject);
+            setUpCounter();
+        })
+    })
     .catch((values) => { console.log(values) });
 
 
@@ -542,6 +566,32 @@ router
     .add('/info', () => {
         alert('welcome in about page');
     })
+    .add('/bug', () => {
+        bug_form = document.getElementById("bug_form");
+        bug_form = bug_form.innerHTML;
+        errorNotif('Bug Report', bug_form, {
+            text: "Submit",
+            action: function() {
+                doAjaxGetRequest(encodeURI('/auth/join?team='.concat(document.getElementById("team").value)), 'TeamSelector', function(status) {
+                    if (status.status == 200) {
+                        location.reload();
+                    }
+                }, function(status) {
+                    if (status.status == 409) {
+                        //user has team, 
+                    } else if (status.status == 403) {
+                        //team has no territories!
+                        document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
+                    } else {
+                        document.getElementsById('team-submit-form-error').innerHTML = "<br/><br/><b style=\"red\">Hmm, something went wrong. Try again?</b>";
+                    }
+                });
+            }
+        }, {
+            display: "none",
+            action: function() {}
+        });
+    })
     .add(/products\/(.*)\/specification\/(.*)/, (id, specification) => {
         alert(`products: ${id} specification: ${specification}`);
     })
@@ -549,3 +599,42 @@ router
         // general controller
         console.log('welcome in catch all controller');
     });
+
+function doDate() {
+    var templatePlayerCard = document.getElementById("templateRollInfo");
+    templatePlayerCard = templatePlayerCard.innerHTML;
+    var now = new Date();
+    var str = ""
+    var difference = rollTime - now;
+    var days = 0;
+    var days = Math.floor(difference / 1000 / 24 / 60 / 60)
+    difference -= days * 1000 * 24 * 60 * 60;
+    var hours = Math.floor(difference / 1000 / 60 / 60);
+    difference -= hours * 1000 * 60 * 60;
+    var minutes = Math.floor(difference / 1000 / 60);
+    difference -= minutes * 1000 * 60;
+    var seconds = Math.floor(difference / 1000);
+    difference -= seconds * 1000;
+    str += templatePlayerCard
+        .replace(/{{day}}/, window.turn.day)
+        .replace(/{{days}}/, pad(days, 'days', false, false, 0))
+        .replace(/{{hours}}/, pad(hours, 'hours', false, false, days))
+        .replace(/{{minutes}}/, pad(minutes, 'minutes', true, false, hours + days))
+        .replace(/{{seconds}}/, pad(seconds, 'seconds', true, true, minutes + days + hours));
+    document.getElementById("rollInfo").innerHTML = str;
+}
+
+function pad(number, notion, final, next, prev) {
+    if (number != 0 || prev != 0) {
+        return (next == true && prev != 0 ? "and " : "") + (number < 10 ? "0" : "") + number + " " + notion + (final == false ? ", " : " ");
+    } else {
+        return '';
+    }
+    if (prev == 0 && number == 0) {
+        rollTime.setUTCDate(rollTime.getUTCDate() + 1)
+    }
+}
+
+function setUpCounter() {
+    setInterval(doDate, 1000);
+}

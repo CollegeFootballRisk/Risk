@@ -48,6 +48,7 @@
             <li><a href="/odds/">Odds</a></li>
             <li><a href="/info">Info</a></li>
             <li><a href="/api">API</a></li>
+            <li><a href="/bug">&#128027;</a></li>
         </nav>
     </header>
 
@@ -68,8 +69,7 @@
             <li class="large" style="background-image: url(/assets/img/island.jpg);"></li>
         </ul>
         <hr>
-        <h3 class="title">Day {{day}}</h3>
-        <p>{{hour}} hours, {{minutes}} minutes, {{seconds}} seconds remain until the next roll.</p>
+        <div id="rollInfo"></div>
         <hr>
         <ul class="grid" id="action-container">
             <li>
@@ -150,14 +150,27 @@
             The Rust Risk logo is a derivative work of the <a href="https://www.rust-lang.org/policies/media-guide" style="background-color:#B9420F;">Rust</a> logo, created by Mozilla and licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.
         </p>
         <p>
-            This project is largely based off of the design of <a href="https://github.com/bluescar">u/BlueSCar's</a> <a href="https://collegefootballrisk.com">College Football Risk.</a>.
+            This project is largely based off of the design of <a href="https://github.com/bluescar">u/BlueSCar's</a> <a href="https://collegefootballrisk.com">College Football Risk.</a>
+        </p>
+        <p>
+            All other <a href="https://pixnio.com/nature-landscapes/night/cosmos-galaxy-wallpaper-night-silhouette-sky-stars-tree#img_info">parts</a> <a href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a>            this website are <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License v2.</a>
         </p>
     </footer>
+    <script id="templateRollInfo" type="text/template">
+        <h3 class="title">Day {{day}}</h3>
+        <p>{{hours}}{{minutes}}{{seconds}} remain until the next roll.</p>
+    </script>
+    <script id="bug_form" type="text/template">
+        <p>Shucks, did we miss something? <br/> <br/>If it's truly an error and not a <u><a alt="feature requests go here" href="https://github.com/mautamu/risk">feature request</a></u> or <u><a alt="those go here" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">complaint about the results of a turn</a></u>,
+            let us know what you were doing and what unexpected behaviour happened please:</p><br/>
+        <textarea style="width:90%;height:100px;"> </textarea>
+        <p><br/><i>On behalf of the Rust Risk team, thank you for reporting this error!</i></p>
+    </script>
     <script id="templatePlayerCard" type="text/template">
         <li class="small" style="background-image: url(/assets/img/bluebonnet.jpg);">
             <center>
                 <h2>{{user_name}}<br>
-                    <text style="color: {{user_team_color}}; ">
+                    <text style="color: {{user_team_color}};">
 						  {{overall}}
 						</text>
                     <style>

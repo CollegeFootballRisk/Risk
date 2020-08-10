@@ -138,6 +138,7 @@ impl CurrentStrength {
             .order(statistics::day.desc())
             .first::<CurrentStrength>(conn)
     }
+
     pub fn load_id(team: i32, conn: &PgConnection) -> Result<CurrentStrength, Error> {
         statistics::table
             .select((
