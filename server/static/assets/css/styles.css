@@ -403,10 +403,23 @@ header nav li:last-child {
     .our-work .grid li:last-child {
         margin-bottom: 0;
     }
+    .our-work .ugrid li {
+        flex-basis: 70%;
+        margin-bottom: 65px;
+    }
+    .our-work .ugrid li:last-child {
+        margin-bottom: 0;
+    }
+    ul.ugrid {
+        width: 100vw;
+    }
 }
 
 @media (max-width: 600px) {
     .our-work .grid li {
+        flex-basis: 100%;
+    }
+    .our-work .ugrid li {
         flex-basis: 100%;
     }
 }
