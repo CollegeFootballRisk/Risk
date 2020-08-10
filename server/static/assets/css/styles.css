@@ -80,11 +80,21 @@ section {
     section {
         padding: 100px 100px;
     }
+    header {
+        background: var(--theme-bg);
+        padding: 10px !important;
+        padding-bottom: 0px !important;
+    }
 }
 
 @media (max-width: 600px) {
     section {
         padding: 100px 100px;
+    }
+    header {
+        background: var(--theme-bg);
+        padding: 10px !important;
+        padding-bottom: 0px !important;
     }
 }
 
@@ -170,6 +180,12 @@ header nav li:last-child {
     header {
         padding: 20px 50px;
     }
+    .our-work .ugrid li center i {
+        font-size: 0.25em;
+    }
+    .our-work .ugrid li text {
+        font-size: 0.5em;
+    }
 }
 
 @media (max-width: 700px) {
@@ -182,6 +198,12 @@ header nav li:last-child {
     .loader {
         position: relative;
         left: 25px;
+    }
+    .our-work .ugrid li center i {
+        font-size: 0.25em;
+    }
+    .our-work .ugrid li text {
+        font-size: 0.5em;
     }
 }
 
@@ -318,6 +340,14 @@ header nav li:last-child {
     background-position: center;
     background-color: #333;
     border-radius: 50px;
+}
+
+.our-work .ugrid li center i {
+    font-size: 0.5em;
+}
+
+.our-work .ugrid li text {
+    font-size: 2em;
 }
 
 .our-work .ugrid li center {

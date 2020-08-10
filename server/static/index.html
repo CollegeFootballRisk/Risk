@@ -5,20 +5,20 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
-    <link rel="alternate icon" href="images/favicon.ico">
-    <link rel="mask-icon" href="images/favico-tab.svg" color="#500000">
+    <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
+    <link rel="alternate icon" href="/images/favicon.ico">
+    <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>Aggie Risk | Home</title>
 
     <!--<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Quicksand" rel="stylesheet">
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.6.0/css/font-awesome.min.css">-->
-    <link rel="stylesheet" href="assets/css/styles.css">
-    <script src="js/datatables.js"></script>
+    <link rel="stylesheet" href="/assets/css/styles.css">
+    <script src="/js/datatables.js"></script>
 
 </head>
 
-<body>
+<body onresize="resizeGlobal();">
     <div id="error-notif" class="gradient-border" style="display: block;" notif-id="0">
         <center><b id="error-notif-title">Please Enable Javascript:</b><br /><br />
             <div id="error-notif-body">
@@ -38,16 +38,16 @@
     <header>
         <h2>
             <a href="/" class="loader" target="_self">
-                <img src="images/logo-text-white.svg">
-                <img src="images/logo-white.svg" id="loadicon" class="brand-image spin">
+                <img src="/images/logo-text-white.svg">
+                <img src="/images/logo-white.svg" id="loadicon" class="brand-image spin">
             </a>
         </h2>
         <nav>
             <li><a href="/">Home</a></li>
             <li><a href="/leaderboard">Leaderboard</a></li>
             <li><a href="/odds/">Odds</a></li>
-            <li><a href="#">Info</a></li>
-            <li><a href="#">API</a></li>
+            <li><a href="/info">Info</a></li>
+            <li><a href="/api">API</a></li>
         </nav>
     </header>
 
@@ -64,8 +64,8 @@
 
     <section class="our-work">
         <ul class="ugrid" id="playerCard">
-            <li class="small" style="background-image: url(assets/img/coast.jpg);"></li>
-            <li class="large" style="background-image: url(assets/img/island.jpg);"></li>
+            <li class="small" style="background-image: url(/assets/img/coast.jpg);"></li>
+            <li class="large" style="background-image: url(/assets/img/island.jpg);"></li>
         </ul>
         <hr>
         <h3 class="title">Day {{day}}</h3>
@@ -154,10 +154,10 @@
         </p>
     </footer>
     <script id="templatePlayerCard" type="text/template">
-        <li class="small" style="background-image: url(assets/img/bluebonnet.jpg);">
+        <li class="small" style="background-image: url(/assets/img/bluebonnet.jpg);">
             <center>
                 <h2>{{user_name}}<br>
-                    <text style="color: {{user_team_color}}; font-size: 2em; --darkreader-inline-color:#cfcbc4;" data-darkreader-inline-color="">
+                    <text style="color: {{user_team_color}}; ">
 						  {{overall}}
 						</text>
                     <style>
@@ -176,66 +176,65 @@
                             flex-basis: 33%;
                         }
                     </style>
-                    <style class="darkreader darkreader--sync" media="screen"></style>
                     <div class="lrow">
                         <div class="lcol">
                             {{total_turns_stars}} <br>
-                            <i style="font-size:0.5em;">Total turns:</i><br> {{total_turns}}
+                            <i>Total turns:</i><br> {{total_turns}}
                         </div>
                         <div class="lcol">
                             {{round_turns_stars}} <br>
-                            <i style="font-size:0.5em;">Round turns:</i><br> {{round_turns}}
+                            <i>Round turns:</i><br> {{round_turns}}
                         </div>
                         <div class="lcol">
                             {{mvps_stars}} <br>
-                            <i style="font-size:0.5em;">MVPS:</i><br> {{mvps}}
+                            <i>Total MVPS:</i><br> {{mvps}}
                         </div>
                     </div>
                     <br>
                     <div class="lrow">
                         <div class="lcol2">
                             {{streak_stars}}<br>
-                            <i style="font-size:0.5em;">Streak: </i><br> {{streak}}
+                            <i>Streak: </i><br> {{streak}}
                         </div>
                         <div class="lcol2">
                             {{cfb_stars_stars}} <br>
-                            <i style="font-size:0.5em;">CFB Stars:</i><br> {{cfb_stars}}
+                            <i>CFB Stars:</i><br> {{cfb_stars}}
                         </div>
                     </div>
                 </h2>
                 <br>
             </center>
         </li>
-        <li class="large" style="background-image: url(assets/img/bluebonnet.jpg);">
+        <li class="large" style="background-image: url(/assets/img/bluebonnet.jpg);">
             <center>
                 <h2>{{team}}<br>
                     <img src="{{team_logo}}" width="128" height="128">
                     <div class="lrow">
                         <div class="lcol2">
                             {{team_players_yesterday}}<br>
-                            <i style="font-size:0.5em;">Players yesterday</i><br>
+                            <i>Players yesterday</i><br>
                         </div>
                         <div class="lcol2">
                             {{team_mercs_yesterday}}<br>
-                            <i style="font-size:0.5em;">Mercernaries yesterday</i><br>
+                            <i>Mercernaries yesterday</i><br>
                         </div>
                     </div>
                     <br>
                     <div class="lrow">
                         <div class="lcol2">
                             {{team_star_power_yesterday}}<br>
-                            <i style="font-size:0.5em;">Star power</i><br>
+                            <i>Star power</i><br>
                         </div>
                         <div class="lcol2">
                             {{team_territories_yesterday}}<br>
-                            <i style="font-size:0.5em;">Territories</i><br>
+                            <i>Territories</i><br>
                         </div>
                     </div>
                 </h2>
             </center>
         </li>
     </script>
-    <script src="scripts/main.js">
+    <script src="/scripts/main.js">
     </script>
 </body>
 

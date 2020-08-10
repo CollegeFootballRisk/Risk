@@ -13,6 +13,7 @@ use crate::model::{auth, captchasvc, player, reddit, stats, team, territory, tur
 use rocket::http::Cookies;
 use rocket::request::{self, FromRequest, Request};
 use rocket::{routes, Outcome};
+use rocket::response::{NamedFile};
 mod catchers;
 mod db;
 mod schema;
@@ -60,6 +61,14 @@ fn main() {
     }
 }
 
+// These are JS Routes
+#[get("/<_data>", rank=1)]
+fn js_api_leaderboard(_data: Option<String>) -> NamedFile{
+    NamedFile::open("static/index.html").ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
+
 fn start() {
     dotenv::from_filename("../.env").ok();
     let key = dotenv::var("SECRET").unwrap();
@@ -99,6 +108,7 @@ fn start() {
             auth::route::join_team,
         ])
         .mount("/login", routes![reddit::route::reddit_login,])
-        .mount("/", StaticFiles::from("static"))
+        .mount("/", StaticFiles::from("static").rank(2))
+        .mount("/", routes![js_api_leaderboard])
         .launch();
 }
