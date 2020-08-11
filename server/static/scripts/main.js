@@ -8,9 +8,24 @@ if (rollTime < now) {
     rollTime.setUTCDate(rollTime.getUTCDate() + 1)
 }
 
-
 // JS is enabled, so hide that notif
 document.getElementById('error-notif').style.display = "none";
+
+// link handling
+document.addEventListener('click', function(event) {
+    switch (event.target.tagName) {
+        case 'path':
+            window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(event.target.attributes['name'].value));
+            break;
+        case 'A':
+            if (link_is_external(event.target)) return;
+            event.preventDefault();
+            window.history.pushState("Rust Risk", "Rust Risk", event.target.href);
+            break;
+        default:
+            return;
+    }
+}, false);
 
 
 //request handling
@@ -64,7 +79,7 @@ function updateLoaderVisibility(forceHide = false) {
     }
 }
 
-// error handling
+/*** Error Notifications ***/
 
 function errorNotif(title, body, button1, button2, resolveself = true, skipnotifcheck = false, errorIndex = 0) {
     if (skipnotifcheck != true) {
@@ -125,7 +140,42 @@ function errorOver(errorIndex) {
     }
 }
 
+function drawPlayerCard(userObject, teamObject) {
+    var template = document.getElementById("templatePlayerCard");
 
+    var templateHtml = template.innerHTML;
+
+    var listHtml = "";
+    var index = 0;
+    for (i in window.teamsObject) {
+        if (window.teamsObject[i].name == teamObject.team) {
+            index = i;
+        }
+    }
+    listHtml += templateHtml
+        .replace(/{{user_name}}/g, userObject.name)
+        .replace(/{{user_team_color}}/, userObject.team.colors.primary)
+        .replace(/{{overall}}/g, "✯".repeat(userObject.ratings.overall))
+        .replace(/{{total_turns_stars}}/g, "✯".repeat(userObject.ratings.totalTurns))
+        .replace(/{{round_turns_stars}}/g, "✯".repeat(userObject.ratings.gameTurns))
+        .replace(/{{mvps_stars}}/g, "✯".repeat(userObject.ratings.mvps))
+        .replace(/{{streak_stars}}/g, "✯".repeat(userObject.ratings.streak))
+        .replace(/{{cfb_stars_stars}}/g, "✯".repeat(userObject.ratings.awards))
+        .replace(/{{total_turns}}/g, userObject.stats.totalTurns)
+        .replace(/{{round_turns}}/g, userObject.stats.gameTurns)
+        .replace(/{{mvps}}/g, userObject.stats.mvps)
+        .replace(/{{streak}}/g, userObject.stats.streak)
+        .replace(/{{cfb_stars}}/g, userObject.stats.awards)
+        .replace(/{{team}}/g, teamObject.team || "")
+        .replace(/{{team_players_yesterday}}/g, teamObject.players || "0")
+        .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
+        .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")
+        .replace(/{{team_territories_yesterday}}/g, teamObject.territories || "0")
+        .replace(/{{team_logo}}/g, window.teamsObject[index].logo || "0");
+    document.getElementById("playerCard").innerHTML = listHtml;
+}
+
+/*** Get Data Fxs ***/
 function getUserInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/me', 'UserLoader', function(userObject) {
@@ -199,38 +249,7 @@ function getUserInfo(resolve, reject) {
                     doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(window.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(teamObject) {
                         teamObject = JSON.parse(teamObject.response);
                         userObject = window.userObject;
-                        var template = document.getElementById("templatePlayerCard");
-
-                        var templateHtml = template.innerHTML;
-
-                        var listHtml = "";
-                        var index = 0;
-                        for (i in window.teamsObject) {
-                            if (window.teamsObject[i].name == teamObject.team) {
-                                index = i;
-                            }
-                        }
-                        listHtml += templateHtml
-                            .replace(/{{user_name}}/g, userObject.name)
-                            .replace(/{{user_team_color}}/, userObject.team.colors.primary)
-                            .replace(/{{overall}}/g, "✯".repeat(userObject.ratings.overall))
-                            .replace(/{{total_turns_stars}}/g, "✯".repeat(userObject.ratings.totalTurns))
-                            .replace(/{{round_turns_stars}}/g, "✯".repeat(userObject.ratings.gameTurns))
-                            .replace(/{{mvps_stars}}/g, "✯".repeat(userObject.ratings.mvps))
-                            .replace(/{{streak_stars}}/g, "✯".repeat(userObject.ratings.streak))
-                            .replace(/{{cfb_stars_stars}}/g, "✯".repeat(userObject.ratings.awards))
-                            .replace(/{{total_turns}}/g, userObject.stats.totalTurns)
-                            .replace(/{{round_turns}}/g, userObject.stats.gameTurns)
-                            .replace(/{{mvps}}/g, userObject.stats.mvps)
-                            .replace(/{{streak}}/g, userObject.stats.streak)
-                            .replace(/{{cfb_stars}}/g, userObject.stats.awards)
-                            .replace(/{{team}}/g, teamObject.team || "")
-                            .replace(/{{team_players_yesterday}}/g, teamObject.players || "0")
-                            .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
-                            .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")
-                            .replace(/{{team_territories_yesterday}}/g, teamObject.territories || "0")
-                            .replace(/{{team_logo}}/g, window.teamsObject[index].logo || "0");
-                        document.getElementById("playerCard").innerHTML = listHtml;
+                        drawPlayerCard(userObject, teamObject);
                         resolve("Okay");
                     }, function() {
                         reject("Error");
@@ -248,26 +267,36 @@ function getUserInfo(resolve, reject) {
     }
 }
 
+function mapHover(event) {
+    if (!event.target.matches('path')) return;
+    type = event.type;
+    switch (type) {
+        case 'mouseover':
+            event.preventDefault();
+            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
+            break;
+        case 'mouseout':
+            event.preventDefault();
+            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
+            break;
+        default:
+            break;
+    }
+}
+
 function setupMapHover(resolve, reject) {
-    document.addEventListener('mouseover', function(event) {
-        if (!event.target.matches('path')) return;
-        event.preventDefault();
-        document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-        document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
-        event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
-    }, false);
-    document.addEventListener('mouseout', function(event) {
-        if (!event.target.matches('path')) return;
-        event.preventDefault();
-        document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-        document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
-        event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
-    }, false);
-    document.addEventListener('click', function(event) {
-        if (!event.target.matches('path')) return;
-        event.preventDefault();
-        window.location = '/territory/'.concat(event.target.attributes['name'].value);
-    }, false);
+    document.addEventListener('mouseover', mapHover, false);
+    document.addEventListener('mouseout', mapHover, false);
+    resolve(true);
+}
+
+function removeMapHover(resolve, reject) {
+    document.removeEventListener('mouseover', mapHover, false);
+    document.removeEventListener('mouseout', mapHover, false);
     resolve(true);
 }
 
@@ -373,27 +402,117 @@ function resizeMap() {
     document.getElementById('map').setAttribute('viewBox', '0 0 650 650');
 }
 
-function drawMap(resolve, reject) {
+function seasonDayObject(season = 0, day = 0, autoup = false) {
+    //TODO: implement season stuff plz
+    opt = "<option value=\"{{val}}\" {{sel}}>Season {{season}}, Day {{day}}</option>";
+    days = "<select onchange=\"page_leaderboard_update(this.value); \" name=\"day_select\" id=\"day_select\">";
+    for (turnb in window.turnsObject) {
+        if (turnb == 0) {
+            continue;
+        }
+        turn = window.turnsObject.length - turnb - 1;
+        sel = (window.turnsObject[turn].day == day || (day == 0 && turn == window.turnsObject.length - 1)) ? "selected" : "";
+        days += opt.replaceAll(/{{val}}/gi, window.turnsObject[turn].season + "." + window.turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, window.turnsObject[turn].season).replace(/{{day}}/, window.turnsObject[turn].day);
+    }
+    days += "</select>";
+    if (autoup == false) {
+        return "{{day}}".replace(/{{day}}/, days);
+    } else {
+        //yay! time to redraw stuffs: 
+        document.getElementById('day_select').outerHTML = days;
+    }
+}
+
+function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
+    // source should be either 'heat' or 'territories'
+    var addendum = (season > 0 && day > 0) ? "?season=" + season + "&day=" + day : "";
     doAjaxGetRequest('/images/map.svg', 'Map', function(data) {
         document.getElementById('map-container').innerHTML = data.response;
-        //now to fetch territory ownership!!
-        doAjaxGetRequest('/api/territories', 'Territories', function(territory_data) {
-            window.territories = JSON.parse(territory_data.response);
-            for (territory in window.territories) {
-                document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
-                document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
-            }
-            resizeMap();
-            resolve(window.territories);
-        }, function() {
-            reject("Error");
-        });
+        //now to fetch territory ownership or heat data
+        switch (source) {
+            case 'heat':
+                doAjaxGetRequest('/api/heat' + addendum, 'Heat', function(heat_data) {
+                    heat = JSON.parse(heat_data.response);
+                    // find maximum
+                    maxmin = getMaxMin(heat, "power");
+                    for (territory in heat) {
+                        red = Math.round(255 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "rgba(" + red + ", " + red + ", " + red + ", 0.5)";
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
+                        document.getElementById("map-county-info").innerHTML = "Leaderboard";
+                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0);
+                        document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
+                    }
+                    resizeMap();
+                    resolve(heat);
+                }, function() {
+                    reject("Error");
+                });
+                break;
+            case 'territories':
+                doAjaxGetRequest('/api/territories' + addendum, 'Territories', function(territory_data) {
+                    window.territories = JSON.parse(territory_data.response);
+                    for (territory in window.territories) {
+                        document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
+                        document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
+                    }
+                    resizeMap();
+                    resolve(window.territories);
+                }, function() {
+                    reject("Error");
+                });
+                break;
+            default:
+                break;
+        }
     });
 }
 
+
+function drawUserTurnHistory(playerObject) {
+    let turnHistoryObject = playerObject.turns;
+    let display_headings = ["season", "day", "stars", "team", "territory", "mvp"];
+
+    var obj = {
+        // Quickly get the headings
+        headings: ["Season", "Day", "Stars", "Team", "Territory", "MVP"],
+
+        // data array
+        data: []
+    };
+
+    // Loop over the objects to get the values
+    for (var i = 0; i < turnHistoryObject.length; i++) {
+
+        obj.data[i] = [];
+
+        for (var p in turnHistoryObject[i]) {
+            if (turnHistoryObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
+                obj.data[i].push(turnHistoryObject[i][p]);
+            }
+        }
+    }
+    try {
+        window.datatable.destroy();
+    } catch {
+        // don't do anything, nor output to table ;)
+    } finally {
+        window.datatable = new DataTable("#history-table", {
+            data: obj,
+            columns: obj.columns,
+            searchable: false,
+            perPageSelect: false,
+            footer: false,
+            labels: {
+                info: "",
+            }
+        });
+    }
+}
+
 function drawLeaderboard(season, day) {
-    doAjaxGetRequest('/api/stats/leaderboard', 'leaderboard request', function(leaderboard_data) {
-        //console.log(data);
+    var addendum = (season > 0 && day > 0) ? "?season=" + season + "&day=" + day : "";
+    doAjaxGetRequest('/api/stats/leaderboard' + addendum, 'leaderboard request', function(leaderboard_data) {
         let leaderboardObject = JSON.parse(leaderboard_data.response);
         let display_headings = ["rank", "name", "territoryCount", "playerCount", "mercCount", "starPower", "efficiency"];
 
@@ -421,50 +540,167 @@ function drawLeaderboard(season, day) {
             }
         }
 
-        var datatable = new DataTable("#leaderboard-table", {
-            data: obj,
-            columns: obj.columns,
-            searchable: false,
-            perPageSelect: false,
-            footer: false,
-            labels: {
-                info: "",
-            }
-        });
+        try {
+            window.datatable.destroy();
+        } catch {
+            // don't do anything, nor output to table ;)
+        } finally {
+            window.datatable = new DataTable("#leaderboard-table", {
+                data: obj,
+                columns: obj.columns,
+                searchable: false,
+                perPageSelect: false,
+                footer: false,
+                labels: {
+                    info: "",
+                }
+            });
+        }
     });
 }
 
+function page_leaderboard_update(seasonday) {
+    //decouple to ints
+    seasonday = seasonday.split(".");
+    season = Number(seasonday[0]) || 0;
+    day = Number(seasonday[1]) || 0;
+    drawLeaderboard(season, day, templateLeaderboard, contentTag);
+    drawMap(console.log, console.log, 'heat', season, day);
+}
 
-let doge = Promise.all([drawLeaderboard(0, 0), new Promise(drawMap), new Promise(getTeamInfo)])
-    .then((values) => {
-        console.log(values);
-    })
-    .then(() => {
+function page_info(contentTag) {
+    var templateInfo = document.getElementById("templateInfo");
+    contentTag.innerHTML += templateInfo.innerHTML;
+    console.log(contentTag);
+}
+
+function page_leaderboard(contentTag) {
+    /* objects:
+        1. map (heat)
+        2. leaderboard
+
+    First, we fetch the heat data for turn
+        */
+    var templateLeaderboard = document.getElementById("templateLeaderboard");
+    templateLeaderboard = templateLeaderboard.innerHTML;
+    var templateMap = document.getElementById("templateMap");
+    templateMap = templateMap.innerHTML;
+    contentTag.innerHTML += templateMap;
+    contentTag.innerHTML += templateLeaderboard;
+    drawLeaderboard(0, 0, templateLeaderboard, contentTag);
+    let leaderboard = new Promise((resolve, reject) => {
+        getTurns(resolve, reject);
+        getTeamInfo(resolve, reject);
+    }).then(() => {
         return new Promise((resolve, reject) => {
-            setupMapHover(resolve, reject);
+            drawMap(resolve, reject, "heat");
         })
-    })
-    .then(() => {
+    }).then(() => {
         return new Promise((resolve, reject) => {
-            getUserInfo(resolve, reject);
+            removeMapHover(resolve, reject);
         })
-    })
-    .then(() => {
-        return new Promise((resolve, reject) => {
-            drawActionBoard(resolve, reject);
+    });
+
+}
+
+function page_territory_cover(contentTag, tname) {
+    let territory_history = new Promise((resolve, reject) => {
+        getTurns(resolve, reject);
+    }).then(() => {
+        //get MaxMin
+        turn_maxmin = getMaxMin(window.turnsObject, "season");
+        max_season = turn_maxmin[0].season;
+        //fetch territory's history ;)
+        doAjaxGetRequest("/api/territory/history?territory=" + tname + "&season=" + max_season, 'Territory Cover', function(territoryResponse) {
+            var templateTerritoryHistory = document.getElementById("templateTerritoryHistory");
+            var box = document.getElementById("templateTerritoryHistoryBox");
+            var str = "";
+            territoryHistoryObject = JSON.parse(territoryResponse.response);
+            for (obj in territoryHistoryObject) {
+                var objr = territoryHistoryObject.length - obj - 1;
+                str += box.innerHTML.replaceAll(/{{day}}/gi, territoryHistoryObject[objr].day).replace(/{{team}}/, territoryHistoryObject[objr].owner).replace(/{{season}}/, territoryHistoryObject[objr].season);
+            }
+            contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replaceAll(/{{TerritoryName}}/gi, decodeURIComponent(tname));
+        }, console.log)
+    });
+}
+
+function page_index(contentTag) {
+    /*objects:
+        1. map
+        2. userinfo / team info
+        3. roll
+        */
+    var templateMap = document.getElementById("templateMap");
+    var templateRoll = document.getElementById("templateRoll");
+    contentTag.innerHTML += templateMap.innerHTML;
+    contentTag.innerHTML += templateRoll.innerHTML;
+    let index = Promise.all([new Promise(drawMap), new Promise(getTeamInfo)])
+        .then((values) => {
+            console.log(values);
         })
-    })
-    .then(() => {
-        return new Promise((resolve, reject) => {
-            getTurns(resolve, reject);
-            setUpCounter();
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                setupMapHover(resolve, reject);
+            })
         })
-    })
-    .catch((values) => { console.log(values) });
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                getUserInfo(resolve, reject);
+            })
+        })
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                drawActionBoard(resolve, reject);
+            })
+        })
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                getTurns(resolve, reject);
+                setUpCounter();
+            })
+        })
+        .catch((values) => { console.log(values) });
+}
+
+function page_player(contentTag, pid) {
+    //fetch player info
+    let leaderboard = new Promise((resolve, reject) => {
+        getTeamInfo(resolve, reject);
+    });
+    var templatePlayerCardWrap = document.getElementById("templatePlayerCardWrap");
+    var templateHistory = document.getElementById("templateHistory");
+    contentTag.innerHTML += templatePlayerCardWrap.innerHTML;
+    contentTag.innerHTML += templateHistory.innerHTML;
+    doAjaxGetRequest(encodeURI('/api/player?player=' + pid), 'UserLoader', function(playerObject) {
+            //Get team
+            playerObject = JSON.parse(playerObject.response);
+            console.log(playerObject);
+            let active_team = playerObject.team || {
+                name: null
+            };
+            if (active_team.name == null) {
+                document.getElementById('playerCard').innerHTML = "Sorry, user doesn't have a team yet.";
+            } else {
+                doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(playerObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(pteamObject) {
+                    pteamObject = JSON.parse(pteamObject.response);
+                    drawPlayerCard(playerObject, pteamObject);
+                    drawUserTurnHistory(playerObject);
+                }, function() {});
+            }
+
+        },
+        function() {
+            document.getElementById('playerCard').innerHTML = "Hmm, user does not exist";
+        });
 
 
-function resizeGlobal() {
-    resizeMap();
+}
+
+function handleNewPage(title, contentTag, call, vari) {
+    contentTag.innerHTML = "";
+    document.title = "Aggie Risk | " + title;
+    call(contentTag, vari);
 }
 
 class Router {
@@ -556,53 +792,211 @@ const router = new Router({
     root: '/'
 });
 
+var contentTag = document.getElementById('content-wrapper');
+
 router
     .add('/leaderboard', () => {
-        alert('leaderboard');
+        handleNewPage('Leaderboard', contentTag, page_leaderboard);
     })
     .add('/odds', () => {
-        alert('odds');
+        handleNewPage('Odds', contentTag, page_odds);
     })
     .add('/info', () => {
-        alert('welcome in about page');
+        handleNewPage('Information', contentTag, page_info);
+    })
+    .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
+        console.log(territoryName, season, day);
+    })
+    .add('/territory/(.*)', (territoryName) => {
+        handleNewPage(territoryName, contentTag, page_territory_cover, territoryName);
     })
     .add('/bug', () => {
+        var Browserinfo = {
+            init: function() {
+                this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
+                this.version = this.searchVersion(navigator.userAgent) || this.searchVersion(navigator.appVersion) || "an unknown version";
+                this.OS = this.searchString(this.dataOS) || "an unknown OS";
+                this.cookies = navigator.cookieEnabled;
+                this.language = (this.browser === "Explorer" ? navigator.userLanguage : navigator.language);
+                this.colors = window.screen.colorDepth;
+                this.browserWidth = window.screen.width;
+                this.browserHeight = window.screen.height;
+                this.java = (navigator.javaEnabled() == 1 ? true : false);
+                this.codeName = navigator.appCodeName;
+                this.cpu = navigator.oscpu;
+                this.useragent = navigator.userAgent;
+                this.plugins = navigator.plugins;
+                this.ipAddress();
+            },
+            searchString: function(data) {
+                for (var i = 0; i < data.length; i++) {
+                    var dataString = data[i].string;
+                    var dataProp = data[i].prop;
+                    this.versionSearchString = data[i].versionSearch || data[i].identity;
+                    if (dataString) {
+                        if (dataString.indexOf(data[i].subString) != -1) return data[i].identity;
+                    } else if (dataProp) return data[i].identity;
+                }
+            },
+            searchVersion: function(dataString) {
+                var index = dataString.indexOf(this.versionSearchString);
+                if (index == -1) return;
+                return parseFloat(dataString.substring(index + this.versionSearchString.length + 1));
+            },
+
+            ipAddress: function() {
+
+                if (navigator.javaEnabled() && (navigator.appName != "Microsoft Internet Explorer")) {
+                    vartool = java.awt.Toolkit.getDefaultToolkit();
+                    addr = java.net.InetAddress.getLocalHost();
+                    this.host = addr.getHostName();
+                    this.ip = addr.getHostAddress();
+                } else {
+                    this.host = false;;
+                    this.ip = false;
+                }
+
+            },
+
+            screenSize: function() {
+                var myWidth = 0,
+                    myHeight = 0;
+                if (typeof(window.innerWidth) == 'number') {
+                    //Non-IE
+                    this.browserWidth = window.innerWidth;
+                    this.browserHeight = window.innerHeight;
+                } else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
+                    //IE 6+ in 'standards compliant mode'
+                    this.browserWidth = document.documentElement.clientWidth;
+                    this.browserHeight = document.documentElement.clientHeight;
+                } else if (document.body && (document.body.clientWidth || document.body.clientHeight)) {
+                    //IE 4 compatible
+                    this.browserWidth = document.body.clientWidth;
+                    this.browserHeight = document.body.clientHeight;
+                }
+            },
+            dataBrowser: [{
+                string: navigator.userAgent,
+                subString: "Chrome",
+                identity: "Chrome"
+            }, {
+                string: navigator.userAgent,
+                subString: "OmniWeb",
+                versionSearch: "OmniWeb/",
+                identity: "OmniWeb"
+            }, {
+                string: navigator.vendor,
+                subString: "Apple",
+                identity: "Safari",
+                versionSearch: "Version"
+            }, {
+                prop: window.opera,
+                identity: "Opera"
+            }, {
+                string: navigator.vendor,
+                subString: "iCab",
+                identity: "iCab"
+            }, {
+                string: navigator.vendor,
+                subString: "KDE",
+                identity: "Konqueror"
+            }, {
+                string: navigator.userAgent,
+                subString: "Firefox",
+                identity: "Firefox"
+            }, {
+                string: navigator.vendor,
+                subString: "Camino",
+                identity: "Camino"
+            }, { // for newer Netscapes (6+)
+                string: navigator.userAgent,
+                subString: "Netscape",
+                identity: "Netscape"
+            }, {
+                string: navigator.userAgent,
+                subString: "MSIE",
+                identity: "Explorer",
+                versionSearch: "MSIE"
+            }, {
+                string: navigator.userAgent,
+                subString: "Gecko",
+                identity: "Mozilla",
+                versionSearch: "rv"
+            }, { // for older Netscapes (4-)
+                string: navigator.userAgent,
+                subString: "Mozilla",
+                identity: "Netscape",
+                versionSearch: "Mozilla"
+            }],
+            dataOS: [{
+                string: navigator.platform,
+                subString: "Win",
+                identity: "Windows"
+            }, {
+                string: navigator.platform,
+                subString: "Mac",
+                identity: "Mac"
+            }, {
+                string: navigator.userAgent,
+                subString: "iPhone",
+                identity: "iPhone/iPod"
+            }, {
+                string: navigator.platform,
+                subString: "Linux",
+                identity: "Linux"
+            }]
+
+        }
+        Browserinfo.init();
+
+        BrowserInfo = {
+            os: Browserinfo.OS,
+            browser: Browserinfo.browser,
+            version: Browserinfo.version,
+            cookies: Browserinfo.cookies,
+            language: Browserinfo.language,
+            browserWidth: Browserinfo.browserWidth,
+            browserHeight: Browserinfo.browserHeight,
+            java: Browserinfo.java,
+            colors: Browserinfo.colors,
+            codeName: Browserinfo.codeName,
+            host: Browserinfo.host,
+            cpu: Browserinfo.cpu,
+            useragent: Browserinfo.useragent,
+            cookies: document.cookie
+        };
+
         bug_form = document.getElementById("bug_form");
         bug_form = bug_form.innerHTML;
+        bug_form = bug_form.replace(/{{uinf}}/, JSON.stringify(BrowserInfo))
+            .replace(/{{errors}}/, JSON.stringify(errorNotifications)).replace(/{{pending}}/, JSON.stringify(outstandingRequests));
         errorNotif('Bug Report', bug_form, {
-            text: "Submit",
+            text: "Okay",
             action: function() {
-                doAjaxGetRequest(encodeURI('/auth/join?team='.concat(document.getElementById("team").value)), 'TeamSelector', function(status) {
-                    if (status.status == 200) {
-                        location.reload();
-                    }
-                }, function(status) {
-                    if (status.status == 409) {
-                        //user has team, 
-                    } else if (status.status == 403) {
-                        //team has no territories!
-                        document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
-                    } else {
-                        document.getElementsById('team-submit-form-error').innerHTML = "<br/><br/><b style=\"red\">Hmm, something went wrong. Try again?</b>";
-                    }
-                });
-            }
+                console.log("Submit");
+            },
         }, {
             display: "none",
             action: function() {}
         });
     })
+    .add('/player/(.*)', (pid) => {
+        handleNewPage(pid, contentTag, page_player, pid);
+    })
     .add(/products\/(.*)\/specification\/(.*)/, (id, specification) => {
         alert(`products: ${id} specification: ${specification}`);
     })
-    .add('', () => {
+    .add('/', () => {
         // general controller
-        console.log('welcome in catch all controller');
+        handleNewPage('Home', contentTag, page_index);
+    })
+    .add('', () => {
+        console.log('404');
     });
 
 function doDate() {
-    var templatePlayerCard = document.getElementById("templateRollInfo");
-    templatePlayerCard = templatePlayerCard.innerHTML;
+    var templateRollInfo = document.getElementById("templateRollInfo");
+    templateRollInfo = templateRollInfo.innerHTML;
     var now = new Date();
     var str = ""
     var difference = rollTime - now;
@@ -615,13 +1009,19 @@ function doDate() {
     difference -= minutes * 1000 * 60;
     var seconds = Math.floor(difference / 1000);
     difference -= seconds * 1000;
-    str += templatePlayerCard
+    str += templateRollInfo
         .replace(/{{day}}/, window.turn.day)
         .replace(/{{days}}/, pad(days, 'days', false, false, 0))
         .replace(/{{hours}}/, pad(hours, 'hours', false, false, days))
         .replace(/{{minutes}}/, pad(minutes, 'minutes', true, false, hours + days))
         .replace(/{{seconds}}/, pad(seconds, 'seconds', true, true, minutes + days + hours));
     document.getElementById("rollInfo").innerHTML = str;
+}
+
+/*** UTILITIES ***/
+
+function setUpCounter() {
+    setInterval(doDate, 1000);
 }
 
 function pad(number, notion, final, next, prev) {
@@ -635,6 +1035,22 @@ function pad(number, notion, final, next, prev) {
     }
 }
 
-function setUpCounter() {
-    setInterval(doDate, 1000);
+function link_is_external(link_element) {
+    return (link_element.host !== window.location.host);
+}
+
+function resizeGlobal() {
+    resizeMap();
+}
+
+function getMaxMin(arr, prop) {
+    var max;
+    var min;
+    for (var i = 0; i < arr.length; i++) {
+        if (max == null || parseInt(arr[i][prop]) > parseInt(max[prop]))
+            max = arr[i];
+        if (min == null || parseInt(arr[i][prop]) < parseInt(min[prop]))
+            min = arr[i];
+    }
+    return [max, min];
 }

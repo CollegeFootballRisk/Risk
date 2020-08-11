@@ -180,10 +180,10 @@ header nav li:last-child {
     header {
         padding: 20px 50px;
     }
-    .our-work .ugrid li center i {
+    .roll-wrap .ugrid li center i {
         font-size: 0.25em;
     }
-    .our-work .ugrid li text {
+    .roll-wrap .ugrid li text {
         font-size: 0.5em;
     }
 }
@@ -199,10 +199,10 @@ header nav li:last-child {
         position: relative;
         left: 25px;
     }
-    .our-work .ugrid li center i {
+    .roll-wrap .ugrid li center i {
         font-size: 0.25em;
     }
-    .our-work .ugrid li text {
+    .roll-wrap .ugrid li text {
         font-size: 0.5em;
     }
 }
@@ -259,10 +259,10 @@ header nav li:last-child {
 
 
 /*----------------
- 	Hero Section
+ 	map-wrap Section
 ----------------*/
 
-.hero {
+.map-wrap {
     position: relative;
     justify-content: center;
     /*min-height: 100vh;*/
@@ -272,7 +272,7 @@ header nav li:last-child {
 }
 
 
-/*.hero .background-image {
+/*.map-wrap .background-image {
     position: absolute;
     top: 0;
     left: 0;
@@ -283,7 +283,7 @@ header nav li:last-child {
     z-index: -1;
 }
 
-.hero .background-image:after {
+.map-wrap .background-image:after {
     content: '';
     position: absolute;
     top: 0;
@@ -294,45 +294,98 @@ header nav li:last-child {
     opacity: 0.75;
 }*/
 
-.hero h1 {
+.map-wrap h1 {
     font: bold 60px 'Open Sans', sans-serif;
     margin-bottom: 15px;
 }
 
-.hero h3 {
+.map-wrap h3 {
     font: normal 28px 'Open Sans', sans-serif;
     margin-bottom: 40px;
 }
 
-.hero a.btn {
+.map-wrap a.btn {
     padding: 20px 46px;
 }
 
 @media (max-width: 800px) {
-    .hero {
+    .map-wrap {
         min-height: 0px;
     }
-    .hero h1 {
+    .map-wrap h1 {
         font-size: 24px;
     }
-    .hero h3 {
+    .map-wrap h3 {
         font-size: 16px;
     }
-    .hero a.btn {
+    .map-wrap a.btn {
         padding: 15px 40px;
     }
 }
 
 
 /*--------------------
- 	Our Work Section
+ 	History Section
 ---------------------*/
 
-.our-work {
+.grid-history {
+    background-color: var(--theme-bg-05);
+    height: 100vh;
+}
+
+.grid-history h1 {
+    font: bold 60px 'Open Sans', sans-serif;
+    margin-bottom: 15px;
+}
+
+.grid-history .grid li {
+    padding: 30px 0px;
+    flex-basis: 10%;
+    text-align: center;
+}
+
+.grid-history .grid li i {
+    font-size: 50px;
+    color: var(--theme-fg);
+    margin-bottom: 25px;
+}
+
+.grid-history .grid li h4 {
+    color: var(--theme-fg);
+    font-size: 20px;
+    margin-bottom: 25px;
+}
+
+.grid-history .grid li p {
+    margin: 0;
+}
+
+@media (max-width: 1000px) {
+    .grid-history .grid li {
+        flex-basis: 70%;
+        margin-bottom: 65px;
+    }
+    .grid-history .grid li:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (max-width: 600px) {
+    .grid-history .grid li {
+        flex-basis: 100%;
+    }
+}
+
+
+/*--------------------
+ 	User Section
+---------------------*/
+
+.roll-wrap {
     background-color: var(--theme-bg-05);
 }
 
-.our-work .ugrid li {
+.roll-wrap .ugrid li {
     padding: 20px;
     height: 400px;
     background-clip: content-box;
@@ -342,15 +395,15 @@ header nav li:last-child {
     border-radius: 50px;
 }
 
-.our-work .ugrid li center i {
+.roll-wrap .ugrid li center i {
     font-size: 0.5em;
 }
 
-.our-work .ugrid li text {
+.roll-wrap .ugrid li text {
     font-size: 2em;
 }
 
-.our-work .ugrid li center {
+.roll-wrap .ugrid li center {
     background: rgba(0, 0, 0, 0.5);
     height: 100%;
     width: 100%;
@@ -358,56 +411,56 @@ header nav li:last-child {
     padding: 20px;
 }
 
-.our-work .ugrid li.small {
+.roll-wrap .ugrid li.small {
     flex-basis: 50%;
 }
 
-.our-work .ugrid li.large {
+.roll-wrap .ugrid li.large {
     flex-basis: 50%;
 }
 
 @media (max-width: 1000px) {
-    .our-work .ugrid li.small,
-    .our-work .ugrid li.large {
+    .roll-wrap .ugrid li.small,
+    .roll-wrap .ugrid li.large {
         flex-basis: 100%;
     }
 }
 
-.our-work .grid li {
+.roll-wrap .grid li {
     padding: 0 30px;
     flex-basis: 33%;
     text-align: center;
 }
 
-.our-work .grid li i {
+.roll-wrap .grid li i {
     font-size: 50px;
     color: #2196F3;
     margin-bottom: 25px;
 }
 
-.our-work .grid li h4 {
+.roll-wrap .grid li h4 {
     color: var(--theme-fg);
     font-size: 20px;
     margin-bottom: 25px;
 }
 
-.our-work .grid li p {
+.roll-wrap .grid li p {
     margin: 0;
 }
 
 @media (max-width: 1000px) {
-    .our-work .grid li {
+    .roll-wrap .grid li {
         flex-basis: 70%;
         margin-bottom: 65px;
     }
-    .our-work .grid li:last-child {
+    .roll-wrap .grid li:last-child {
         margin-bottom: 0;
     }
-    .our-work .ugrid li {
+    .roll-wrap .ugrid li {
         flex-basis: 70%;
         margin-bottom: 65px;
     }
-    .our-work .ugrid li:last-child {
+    .roll-wrap .ugrid li:last-child {
         margin-bottom: 0;
     }
     ul.ugrid {
@@ -416,57 +469,76 @@ header nav li:last-child {
 }
 
 @media (max-width: 600px) {
-    .our-work .grid li {
+    .roll-wrap .grid li {
         flex-basis: 100%;
     }
-    .our-work .ugrid li {
+    .roll-wrap .ugrid li {
         flex-basis: 100%;
     }
 }
 
 
 /*----------------------
- 	Features Section
+ 	leaderboard-wrap Section
 ----------------------*/
 
-.features {
-    background-color: var(--theme-bg-05);
+#day_select {
+    color: var(--theme-fg);
+    background: none;
+    border: none;
+    font: normal 28px 'Open Sans', sans-serif;
+    appearance: none;
 }
 
-.features .grid li {
+h3[selectitem]::after {
+    content: '↓';
+    color: var(--theme-fg);
+    right: 11px;
+    /*Adjust for position however you want*/
+    padding: 0 0 2px;
+    /*left line */
+    pointer-events: none;
+}
+
+.leaderboard-wrap {
+    background-color: var(--theme-bg-05);
+    padding-top: 0px !important;
+}
+
+.leaderboard-wrap .grid li {
     padding: 0 30px;
     flex-basis: 33%;
     text-align: center;
 }
 
-.features .grid li i {
+.leaderboard-wrap .grid li i {
     font-size: 50px;
     color: #2196F3;
     margin-bottom: 25px;
 }
 
-.features .grid li h4 {
+.leaderboard-wrap .grid li h4 {
     color: var(--theme-fg);
     font-size: 20px;
     margin-bottom: 25px;
 }
 
-.features .grid li p {
+.leaderboard-wrap .grid li p {
     margin: 0;
 }
 
 @media (max-width: 1000px) {
-    .features .grid li {
+    .leaderboard-wrap .grid li {
         flex-basis: 70%;
         margin-bottom: 65px;
     }
-    .features .grid li:last-child {
+    .leaderboard-wrap .grid li:last-child {
         margin-bottom: 0;
     }
 }
 
 @media (max-width: 600px) {
-    .features .grid li {
+    .leaderboard-wrap .grid li {
         flex-basis: 100%;
     }
 }
@@ -908,7 +980,8 @@ footer p a {
     display: table;
 }
 
-#leaderboard {
+#leaderboard,
+#history {
     max-width: 90vw;
     overflow-x: scroll;
 }

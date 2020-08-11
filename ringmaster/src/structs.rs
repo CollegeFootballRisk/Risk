@@ -260,7 +260,7 @@ impl TerritoryOwnersInsert {
     pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::*;
         insert_into(territory_ownership)
-            .values(&owners)
+            .values(*&owners)
             .execute(conn)
     }
 }

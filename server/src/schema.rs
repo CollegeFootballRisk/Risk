@@ -134,7 +134,6 @@ table! {
         season -> Int4,
         day -> Int4,
         name -> Text,
-        tname -> Text,
         prev_owner -> Text,
         owner -> Text,
     }

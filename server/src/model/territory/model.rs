@@ -60,7 +60,7 @@ impl TerritoryHistory {
                 territory_ownership_without_neighbors::season,
                 territory_ownership_without_neighbors::day,
                 territory_ownership_without_neighbors::name,
-                territory_ownership_without_neighbors::tname,
+                territory_ownership_without_neighbors::owner,
             ))
             .load::<TerritoryHistory>(conn)
             .expect("Error loading neighbor territory info")

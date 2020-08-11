@@ -74,6 +74,20 @@ fn js_api_territory(_data: Option<String>) -> NamedFile {
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
+
+#[get("/team/<_data>", rank = 1)]
+fn js_api_team(_data: Option<String>) -> NamedFile {
+    NamedFile::open("static/index.html").ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
+
+#[get("/player/<_data>", rank = 1)]
+fn js_api_player(_data: Option<String>) -> NamedFile {
+    NamedFile::open("static/index.html").ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
 #[get("/territory/<_territory>/<_data>/<_data2>", rank = 1)]
 fn js_api_territories(_data: Option<String>, _territory: Option<String>, _data2:  Option<String>) -> NamedFile {
     NamedFile::open("static/index.html").ok().unwrap()
@@ -120,6 +134,6 @@ fn start() {
         ])
         .mount("/login", routes![reddit::route::reddit_login,])
         .mount("/", StaticFiles::from("static").rank(2))
-        .mount("/", routes![js_api_leaderboard, js_api_territory, js_api_territories])
+        .mount("/", routes![js_api_leaderboard, js_api_territory, js_api_territories, js_api_team, js_api_player])
         .launch();
 }
