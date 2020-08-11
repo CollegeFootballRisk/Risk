@@ -50,9 +50,9 @@ pub struct PlayerInTurns {
     pub player: Option<String>,
     pub stars: Option<i32>,
     pub weight: i32,
-    pub multiplier: i32,
+    pub multiplier: f64,
     pub mvp: Option<bool>,
-    pub power: i32,
+    pub power: f64,
 }
 
 #[derive(Queryable, Serialize, Deserialize)]
