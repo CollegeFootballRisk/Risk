@@ -25,11 +25,11 @@ pub fn players(team: String, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Stat
 
 #[get("/me")]
 pub fn me(
-    cookies: Cookies,
+    mut cookies: Cookies,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
-    match cookies.get("jwt") {
+    match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {

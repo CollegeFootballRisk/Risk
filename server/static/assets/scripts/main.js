@@ -823,16 +823,16 @@ function drawOddsPage(junk) {
     // GET /team/odds?team=Texas&day=1&season=1
     // GET doAjaxGetRequest('/images/map.svg', 'Map', function(data) {
     // add all the chances together to get Expected terrritories,
-    var team = 'Texas';
-    var day = 3;
-    var season = 1;
-    var territory_count = 0;
-    var territory_expected = 0;
-    var survival_odds = 1;
+    var team = document.getElementById('team_select').value;
+    var seasonday = document.getElementById('day_select').value.split('.');
+    var day = seasonday[1];
+    var season = seasonday[0];
+    document.getElementById("heat-notif").innerHTML = "Where " + team + " deployed forces";
+    document.getElementById("odds-notif").innerHTML = "Where " + team + " had the highest odds";
     doAjaxGetRequest('/api/team/odds?team=Texas&day=1&season=1', 'oddsfetch', function(oddsObject) {
         var territory_count = 0;
         var territory_expected = 0;
-        var survival_odds = 0;
+        var survival_odds = 1;
         oddsObject = JSON.parse(oddsObject.response);
         var obj = {
             // Quickly get the headings
@@ -854,8 +854,8 @@ function drawOddsPage(junk) {
         document.getElementById('heat-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="heatmap_');
         document.getElementById('odds-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="oddmap_');
         for (i in oddsObject) {
-            territory_count = (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
-            territory_expected = oddsObject[i].chance;
+            territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
+            territory_expected += oddsObject[i].chance;
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
             player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players));
             odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance));
@@ -892,6 +892,10 @@ function drawOddsPage(junk) {
                 }
             });
         }
+
+        document.getElementById('odds-survival').innerHTML = Math.floor(100 * (1 - survival_odds)) + "%";
+        document.getElementById('odds-expect').innerHTML = territory_expected.toFixed(2);
+        document.getElementById('odds-actual').innerHTML = territory_count.toFixed(2);
     });
 }
 

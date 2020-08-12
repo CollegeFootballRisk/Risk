@@ -32,11 +32,11 @@ use std::io::Read; //, model::User};
 #[get("/join?<team>")]
 pub fn join_team(
     team: i32,
-    cookies: Cookies,
+    mut cookies: Cookies,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Json<String>, Status> {
-    match cookies.get("jwt") {
+    match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
@@ -129,14 +129,14 @@ pub fn join_team(
 //#[cfg(feature = "risk_security")]
 pub fn make_move(
     target: i32,
-    cookies: Cookies,
+    mut cookies: Cookies,
     conn: DbConn,
     remote_addr: SocketAddr,
     key: State<String>,
     latest: State<Latest>,
 ) -> Result<Json<String>, Status> {
     //get cookie, verify it -> Claims (id, user, refresh_token)
-    match cookies.get("jwt") {
+    match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(mut c) => {

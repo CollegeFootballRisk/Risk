@@ -182,18 +182,24 @@
             <ul class="ugrid" id="action-container">
                 <li>
                     <h3>Heat Map</h3>
-                    <h4>Where {{team}} deployed forces</h4>
+                    <h4 id="heat-notif"></h4>
                     <div id="heat-map"></div>
                 </li>
                 <li>
                     <h3>Odds Map</h3>
-                    <h4>Where {{team}} had the highest odds</h4>
+                    <h4 id="odds-notif"></h4>
                     <div id="odds-map"></div>
                 </li>
             </ul>
             </div>
         </section>
         <section class="leaderboard-wrap">
+            <ul class="ugrid">
+                <li class="small p20">
+                    <h2>Survival Odds</h2><br/><text id="odds-survival"></text></li>
+                <li class="small p20">
+                    <h2>Territories</h2><br/>Expected: <text id="odds-expect"></text><br/> Actual: <text id="odds-actual"></text></li>
+            </ul>
             <h3 class="title">Players</h3>
 
             <div id="odds-players">
