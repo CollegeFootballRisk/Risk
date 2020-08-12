@@ -29,7 +29,7 @@ document.addEventListener('click', function(event) {
 
 
 //request handling
-function doAjaxGetRequest(url, source, callback, errorcallback) {
+function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNotif) {
     var instance_index = addUrlFromRequests(source, url);
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
@@ -138,6 +138,19 @@ function errorOver(errorIndex) {
     } else {
         //do nothing
     }
+}
+
+function defaultErrorNotif(data) {
+    errorNotif(
+        'Fetch Error',
+        '<h1>Howdy partner</h1>, unfortunately we encountered an error. Not sure what it\'s about. <br/><br/> If this keeps occuring, please <a href="mailto:risk@aggierisk.ml">email us.</a>', {
+            text: "Okay",
+            action: function() {}
+        }, {
+            display: "none",
+            action: function() {}
+        }
+    )
 }
 
 function drawPlayerCard(userObject, teamObject) {
