@@ -173,7 +173,69 @@
     </script>
     <script id="templateTerritoryCompleteHeader" type="text/template">
         <h1>{{TerritoryName}}</h1><br/>
-        <h3>Owned by {{owner}}, won by {{winner}}</h3>
+    </script>
+    <script id="templateOdds" type="text/template">
+        <section class="map-wrap">
+            <h1 id="map-county-info">Odds</h1>
+            <h3 id="map-owner-info">Loading . . . </h3>
+            <h3 id="map-owner-teams" selectitem>Loading . . . </h3>
+            <ul class="ugrid" id="action-container">
+                <li>
+                    <h3>Heat Map</h3>
+                    <h4>Where {{team}} deployed forces</h4>
+                    <div id="heat-map"></div>
+                </li>
+                <li>
+                    <h3>Odds Map</h3>
+                    <h4>Where {{team}} had the highest odds</h4>
+                    <div id="odds-map"></div>
+                </li>
+            </ul>
+            </div>
+        </section>
+        <section class="leaderboard-wrap">
+            <h3 class="title">Players</h3>
+
+            <div id="odds-players">
+                <table id="odds-players-table">
+                </table>
+            </div>
+            <hr>
+        </section>
+    </script>
+    <script id="templateTeam" type="text/template">
+        <section class="roll-wrap">
+            <div id="team-header"></div>
+            <ul class="ugrid">
+                <li>
+                    <img id="team-logo" style="width:400px;height:400px;"></img>
+                </li>
+                <li style="width:400px;height:400px;display: flex;
+                text-align: center;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;">
+                    <p>Previous Turn:</p>
+                    <p id="team-prev-players"></p>
+                    <p id="team-prev-stars"></p>
+                </li>
+            </ul>
+            <ul class="ugrid">
+                <li>
+                    <canvas id="star-power-history" width="400px" height="400px"></canvas>
+                </li>
+                <li>
+                    <canvas id="player-history" width="400px" height="400px"></canvas>
+                </li>
+            </ul>
+        </section>
+        <section class="leaderboard-wrap">
+            <div id="team-turns">
+                <table id="team-turns-table">
+                </table>
+            </div>
+            <hr>
+        </section>
     </script>
     <script id="templateTerritoryComplete" type="text/template">
         <section class="roll-wrap">
@@ -205,10 +267,11 @@
         <p><br/><i>On behalf of the Rust Risk team, thank you for reporting this error!</i></p>
     </script>
     <script id="templatePlayerCard" type="text/template">
-        <li class="small" style="background-image: url(/assets/img/bluebonnet.jpg);">
+        <li class="small">
+            <!--//style="background-image: url(/assets/img/bluebonnet.jpg);">-->
             <center>
-                <h2>{{user_name}}<br>
-                    <text style="color: {{user_team_color}};">
+                <h2><a href="/player/{{user_name}}">{{user_name}}</a><br>
+                    <text style="color: {{user_team_color}};font-size:3.8em;">
 						  {{overall}}
 						</text>
                     <style>
@@ -256,9 +319,10 @@
                 <br>
             </center>
         </li>
-        <li class="large" style="background-image: url(/assets/img/bluebonnet.jpg);">
+        <li class="large">
+            <!--// style="background-image: url(/assets/img/bluebonnet.jpg);">-->
             <center>
-                <h2>{{team}}<br>
+                <h2><a href="/team/{{team}}">{{team}}</a><br>
                     <img src="{{team_logo}}" width="128" height="128">
                     <div class="lrow">
                         <div class="lcol2">

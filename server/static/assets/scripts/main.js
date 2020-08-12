@@ -34,7 +34,11 @@ function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNot
     var xhttp = new XMLHttpRequest();
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
-            callback(this);
+            if (typeof callback == 'function') {
+                callback(this);
+            } else {
+                return JSON.parse(this.response);
+            }
             updateUrlFromRequests(instance_index, 1);
             // return JSON.parse(this.response);
         } else if (this.readyState == 4 && this.status != 200) {
@@ -415,17 +419,17 @@ function resizeMap() {
     document.getElementById('map').setAttribute('viewBox', '0 0 650 650');
 }
 
-function seasonDayObject(season = 0, day = 0, autoup = false) {
+function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
     //TODO: implement season stuff plz
     opt = "<option value=\"{{val}}\" {{sel}}>Season {{season}}, Day {{day}}</option>";
-    days = "<select onchange=\"page_leaderboard_update(this.value); \" name=\"day_select\" id=\"day_select\">";
-    for (turnb in window.turnsObject) {
+    days = "<select onchange=\"" + fn + "(this.value); \" name=\"day_select\" id=\"day_select\">";
+    for (turnb in turnsObject) {
         if (turnb == 0) {
             continue;
         }
-        turn = window.turnsObject.length - turnb - 1;
-        sel = (window.turnsObject[turn].day == day || (day == 0 && turn == window.turnsObject.length - 1)) ? "selected" : "";
-        days += opt.replaceAll(/{{val}}/gi, window.turnsObject[turn].season + "." + window.turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, window.turnsObject[turn].season).replace(/{{day}}/, window.turnsObject[turn].day);
+        turn = turnsObject.length - turnb - 1;
+        sel = (turnsObject[turn].day == day || (day == 0 && turn == turnsObject.length - 1)) ? "selected" : "";
+        days += opt.replaceAll(/{{val}}/gi, turnsObject[turn].season + "." + turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, turnsObject[turn].season).replace(/{{day}}/, turnsObject[turn].day);
     }
     days += "</select>";
     if (autoup == false) {
@@ -453,7 +457,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "rgba(" + red + ", " + red + ", " + red + ", 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("map-county-info").innerHTML = "Leaderboard";
-                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0);
+                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, page_leaderboard_update, window.turnsObject);
                         document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
                     }
                     resizeMap();
@@ -545,7 +549,7 @@ function drawLeaderboard(season, day) {
             for (var p in leaderboardObject[i]) {
                 if (leaderboardObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
                     if (p == 'name') {
-                        obj.data[i].push("<img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
+                        obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
                     } else {
                         obj.data[i].push(leaderboardObject[i][p]);
                     }
@@ -663,6 +667,8 @@ function page_territory(contentTag, t_object) {
                         if (territoryTurn.teams[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
                             if (p == 'chance') {
                                 obj.data[i].push(territoryTurn.teams[i][p].toFixed(2));
+                            } else if (p == 'team') {
+                                obj.data[i].push("<a href=\"/team/{{team}}\" >{{team}}</a>".replace(/{{team}}/gi, territoryTurn.teams[i][p]));
                             } else {
                                 obj.data[i].push(territoryTurn.teams[i][p]);
                             }
@@ -702,10 +708,10 @@ function page_territory(contentTag, t_object) {
                         }
                     }
                 });
-                let display_headings_players = ['player', 'team', 'stars', 'weight', 'multiplier', 'power'];
+                let display_headings_players = ['team', 'player', 'stars', 'weight', 'multiplier', 'power'];
                 var obj_players = {
                     // Quickly get the headings
-                    headings: ['Player', 'Team', 'Stars', 'Weight', 'Multiplier', 'Power'],
+                    headings: ['Team', 'Player', 'Stars', 'Weight', 'Multiplier', 'Power'],
 
                     // data array
                     data: []
@@ -716,7 +722,13 @@ function page_territory(contentTag, t_object) {
 
                     for (var p in territoryTurn.players[i]) {
                         if (territoryTurn.players[i].hasOwnProperty(p) && display_headings_players.indexOf(p) != -1) {
-                            obj_players.data[i].push(territoryTurn.players[i][p]);
+                            if (p == 'team') {
+                                obj_players.data[i].push("<a href=\"/team/{{team}}\" >{{team}}</a>".replace(/{{team}}/gi, territoryTurn.players[i][p]));
+                            } else if (p == 'player') {
+                                obj_players.data[i].push("<a href=\"/player/{{player}}\" >{{player}}</a>".replace(/{{player}}/gi, territoryTurn.players[i][p]));
+                            } else {
+                                obj_players.data[i].push(territoryTurn.players[i][p]);
+                            }
                         }
                     }
                 }
@@ -775,6 +787,7 @@ function page_index(contentTag) {
     var templateRoll = document.getElementById("templateRoll");
     contentTag.innerHTML += templateMap.innerHTML;
     contentTag.innerHTML += templateRoll.innerHTML;
+
     let index = Promise.all([new Promise(drawMap), new Promise(getTeamInfo)])
         .then((values) => {
             console.log(values);
@@ -803,6 +816,279 @@ function page_index(contentTag) {
         .catch((values) => { console.log(values) });
 }
 
+function drawOddsPage(junk) {
+    // get value of team_select
+    // get value of day_select and break into season, day
+    // show heat map, odds map
+    // GET /team/odds?team=Texas&day=1&season=1
+    // GET doAjaxGetRequest('/images/map.svg', 'Map', function(data) {
+    // add all the chances together to get Expected terrritories,
+    var team = 'Texas';
+    var day = 3;
+    var season = 1;
+    var territory_count = 0;
+    var territory_expected = 0;
+    var survival_odds = 1;
+    doAjaxGetRequest('/api/team/odds?team=Texas&day=1&season=1', 'oddsfetch', function(oddsObject) {
+        var territory_count = 0;
+        var territory_expected = 0;
+        var survival_odds = 0;
+        oddsObject = JSON.parse(oddsObject.response);
+        var obj = {
+            // Quickly get the headings
+            headings: ["Territory", "Owner", "MVPs", "Players", "1✯", "2✯", "3✯", "4✯", "5✯", "Team Power", "Territory Power", "Chance"],
+
+            // data array
+            data: []
+        };
+        let player_mm = getMaxMin(oddsObject, 'players');
+        var chance_max;
+        var chance_min;
+        for (var i = 0; i < oddsObject.length; i++) {
+            if (chance_max == null || oddsObject[i]['chance'] > chance_max['chance'])
+                chance_max = oddsObject[i];
+            if (chance_min == null || oddsObject[i]['chance'] < chance_min['chance'])
+                chance_min = oddsObject[i];
+        }
+        let chance_mm = [chance_max, chance_min];
+        document.getElementById('heat-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="heatmap_');
+        document.getElementById('odds-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="oddmap_');
+        for (i in oddsObject) {
+            territory_count = (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
+            territory_expected = oddsObject[i].chance;
+            survival_odds = survival_odds * (1 - oddsObject[i].chance);
+            player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players));
+            odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance));
+            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + player_red + ", " + player_red + ", " + player_red + ", 0.5)";
+            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + odds_red + ", " + odds_red + ", " + odds_red + ", 0.5)";
+            obj.data.push([oddsObject[i]['territory'],
+                oddsObject[i]["owner"],
+                oddsObject[i]["mvp"],
+                oddsObject[i]["players"],
+                oddsObject[i]["starBreakdown"]["ones"],
+                oddsObject[i]["starBreakdown"]["twos"],
+                oddsObject[i]["starBreakdown"]["threes"],
+                oddsObject[i]["starBreakdown"]["fours"],
+                oddsObject[i]["starBreakdown"]["fives"],
+                oddsObject[i]["teamPower"],
+                oddsObject[i]["territoryPower"],
+                oddsObject[i]["chance"].toFixed(2)
+            ]);
+        }
+        //resizeMap();
+        try {
+            window.datatable.destroy();
+        } catch {
+            // don't do anything, nor output to table ;)
+        } finally {
+            window.datatable = new DataTable("#odds-players-table", {
+                data: obj,
+                columns: obj.columns,
+                searchable: false,
+                perPageSelect: false,
+                footer: false,
+                labels: {
+                    info: "",
+                }
+            });
+        }
+    });
+}
+
+function page_odds(contentTag) {
+    // We just dump the grid and such, then let the user sort out what they want
+    contentTag.innerHTML = document.getElementById('templateOdds').innerHTML;
+    doAjaxGetRequest('/images/map.svg', 'Map', function(data) { window.mapTemplate = data.response; });
+    // we now populate the two lists with options, need a list of teams and a list of turns
+    Promise.all([new Promise(getTeamInfo), new Promise((resolve, reject) => {
+            getTurns(resolve, reject);
+        })])
+        .then((values) => {
+            //make pretty thingy 
+            str = '<select onchange="drawOddsPage(this.value); " name="team_select" id="team_select">';
+            for (i in values[0]) {
+                str += "<option name=\"team_select\" value=\"" + values[0][i].name + "\">" + values[0][i].name + "</option>";
+            }
+            document.getElementById("map-owner-info").innerHTML = seasonDayObject(0, 0, autoup = false, 'drawOddsPage', values[1]);
+            document.getElementById("map-owner-teams").innerHTML = str;
+            document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
+            console.log(values);
+        });
+}
+
+
+function drawTeamPage(teamsObject, teamTurnsObject, team) {
+    for (x in teamsObject) {
+        console.log(team, teamsObject[x].name);
+        if (teamsObject[x].name.replace(/\W/g, '') == decodeURIComponent(team).replace(/\W/g, '')) {
+            document.getElementById("team-logo").setAttribute('src', teamsObject[x].logo);
+            break;
+        }
+    }
+
+    teamTurnsObject = JSON.parse(teamTurnsObject.response);
+    var lastTeamTurn = teamTurnsObject[teamTurnsObject.length - 1];
+    document.getElementById('team-prev-players').innerHTML = "Players:" + lastTeamTurn.players;
+    document.getElementById('team-prev-stars').innerHTML = "Star power:" + lastTeamTurn.starPower;
+    let display_headings = ["season", "day", "territories", "players", "starPower", "effectivePower"];
+
+    var power_data = [];
+
+    var player_counts = [
+        [],
+        [],
+        [],
+        [],
+        []
+    ];
+
+    var obj = {
+        // Quickly get the headings
+        headings: ["Season", "Day", "Players", "Territories", "Star Power", "Effective Power"],
+
+        // data array
+        data: []
+    };
+
+    // Loop over the objects to get the values
+    for (var i = 0; i < teamTurnsObject.length; i++) {
+        obj.data[i] = [];
+        power_data.push({ x: i, y: teamTurnsObject[i]['players'] });
+        player_counts[0].push({ x: i, y: teamTurnsObject[i]['starbreakdown']['ones'] });
+        player_counts[1].push({ x: i, y: teamTurnsObject[i]['starbreakdown']['twos'] });
+        player_counts[2].push({ x: i, y: teamTurnsObject[i]['starbreakdown']['threes'] });
+        player_counts[3].push({ x: i, y: teamTurnsObject[i]['starbreakdown']['fours'] });
+        player_counts[4].push({ x: i, y: teamTurnsObject[i]['starbreakdown']['fives'] });
+        for (var p in teamTurnsObject[i]) {
+            if (teamTurnsObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
+                obj.data[i].push(teamTurnsObject[i][p]);
+            }
+        }
+    }
+    //first we fill the charts
+    Chart.defaults.global.defaultFontColor = 'black';
+    var starChart = new Chart(document.getElementById("star-power-history"), {
+        type: 'line',
+        backgroundColor: 'white',
+        data: {
+            datasets: [{
+                label: 'Star Power',
+                data: power_data,
+                borderColor: 'rgba(255,0,0,0.5)',
+                backgroundColor: 'rgba(255,0,0,0)'
+            }]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'linear',
+                    position: 'bottom',
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Day'
+                    }
+                }],
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Star Power'
+                    }
+                }]
+            }
+        }
+    });
+    var playerHistory = new Chart(document.getElementById("player-history"), {
+        type: 'line',
+        data: {
+            datasets: [{
+                    label: 'Ones',
+                    data: player_counts[0],
+                    borderColor: 'rgba(255,0,0,0.5)',
+                    backgroundColor: 'rgba(255,0,0,0)'
+                },
+                {
+                    label: 'Twos',
+                    data: player_counts[1],
+                    borderColor: 'rgba(0,255,0,0.5)',
+                    backgroundColor: 'rgba(255,0,0,0)'
+                },
+                {
+                    label: 'Threes',
+                    data: player_counts[2],
+                    borderColor: 'rgba(0,0,255,0.5)',
+                    backgroundColor: 'rgba(255,0,0,0)'
+                },
+                {
+                    label: 'Fours',
+                    data: player_counts[3],
+                    borderColor: 'rgba(0,255,255,0.5)',
+                    backgroundColor: 'rgba(255,0,0,0)'
+                },
+                {
+                    label: 'Fives',
+                    data: player_counts[4],
+                    borderColor: 'rgba(255,0,255,0.5)',
+                    backgroundColor: 'rgba(255,0,0,0)'
+                }
+            ]
+        },
+        options: {
+            scales: {
+                xAxes: [{
+                    type: 'linear',
+                    position: 'bottom',
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Day'
+                    }
+                }],
+                yAxes: [{
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Players'
+                    }
+                }]
+            }
+        }
+    });
+    //then we fill the table
+    try {
+        window.datatable.destroy();
+    } catch {
+        // don't do anything, nor output to table ;)
+    } finally {
+        window.datatable = new DataTable("#team-turns-table", {
+            data: obj,
+            columns: obj.columns,
+            searchable: false,
+            perPageSelect: false,
+            footer: false,
+            labels: {
+                info: "",
+            }
+        });
+    }
+    //then we fill the header
+}
+
+
+function page_team(contentTag, team) {
+    // load the teams info and save to tag
+    // /api/stats/team/history
+    var templateTeam = document.getElementById("templateTeam");
+    contentTag.innerHTML += templateTeam.innerHTML;
+    document.getElementById('team-header').innerHTML = "<h1>" + decodeURIComponent(team) + "</h1>";
+    var templateTeamPage = document.getElementById("templateTeamPage");
+    let team_page_2 = new Promise((resolve, reject) => {
+            getTeamInfo(resolve, reject);
+        })
+        .then((values) => {
+            doAjaxGetRequest('/api/stats/team/history?team=' + team.replace('&', '%26'), 'TeamFetch', function(data) {
+                drawTeamPage(values, data, team);
+            });
+        })
+}
+
 function page_player(contentTag, pid) {
     //fetch player info
     let leaderboard = new Promise((resolve, reject) => {
@@ -812,7 +1098,7 @@ function page_player(contentTag, pid) {
     var templateHistory = document.getElementById("templateHistory");
     contentTag.innerHTML += templatePlayerCardWrap.innerHTML;
     contentTag.innerHTML += templateHistory.innerHTML;
-    doAjaxGetRequest(encodeURI('/api/player?player=' + pid), 'UserLoader', function(playerObject) {
+    doAjaxGetRequest('/api/player?player=' + pid, 'UserLoader', function(playerObject) {
             //Get team
             playerObject = JSON.parse(playerObject.response);
             console.log(playerObject);
@@ -944,6 +1230,9 @@ router
     })
     .add('/info', () => {
         handleNewPage('Information', contentTag, page_info);
+    })
+    .add('/team/(.*)', (team) => {
+        handleNewPage(team, contentTag, page_team, team.replace('#', ''));
     })
     .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
         console.log(territoryName, season, day);

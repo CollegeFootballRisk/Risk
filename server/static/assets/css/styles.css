@@ -271,6 +271,24 @@ header nav li:last-child {
     background-color: var(--theme-bg-05);
 }
 
+@media (max-width: 1000px) {
+    .map-wrap .ugrid li center i {
+        font-size: 0.25em;
+    }
+    .map-wrap .ugrid li text {
+        font-size: 0.5em;
+    }
+}
+
+@media (max-width: 700px) {
+    .map-wrap .ugrid li center i {
+        font-size: 0.25em;
+    }
+    .map-wrap .ugrid li text {
+        font-size: 0.5em;
+    }
+}
+
 
 /*.map-wrap .background-image {
     position: absolute;
@@ -407,12 +425,19 @@ header nav li:last-child {
     font-size: 0.5em;
 }
 
+#star-power-history,
+#player-history {
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+}
+
 .roll-wrap .ugrid li text {
     font-size: 2em;
 }
 
 .roll-wrap .ugrid li center {
-    background: rgba(0, 0, 0, 0.5);
+    /*background: rgba(0, 0, 0, 0.5);*/
     height: 100%;
     width: 100%;
     border-radius: 29px;
@@ -491,6 +516,14 @@ header nav li:last-child {
 ----------------------*/
 
 #day_select {
+    color: var(--theme-fg);
+    background: none;
+    border: none;
+    font: normal 28px 'Open Sans', sans-serif;
+    appearance: none;
+}
+
+#team_select {
     color: var(--theme-fg);
     background: none;
     border: none;
