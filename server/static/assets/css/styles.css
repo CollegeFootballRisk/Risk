@@ -385,13 +385,21 @@ header nav li:last-child {
     background-color: var(--theme-bg-05);
 }
 
+.roll-wrap h1 {
+    font: bold 60px 'Open Sans', sans-serif;
+    margin-bottom: 30px;
+}
+
+.roll-wrap h3 {
+    margin-bottom: 30px;
+}
+
 .roll-wrap .ugrid li {
     padding: 20px;
     height: 400px;
     background-clip: content-box;
     background-size: cover;
     background-position: center;
-    background-color: #333;
     border-radius: 50px;
 }
 
@@ -525,6 +533,11 @@ h3[selectitem]::after {
 
 .leaderboard-wrap .grid li p {
     margin: 0;
+}
+
+#territory-complete-players {
+    max-width: 90vw;
+    width: 70vw;
 }
 
 @media (max-width: 1000px) {

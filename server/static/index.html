@@ -10,8 +10,9 @@
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>Aggie Risk | Home</title>
     <link rel="stylesheet" href="/assets/css/styles.css">
-    <script src="/js/datatables.js"></script>
-
+    <script src="/assets/scripts/datatables.js"></script>
+    <script src="/assets/scripts/charts.js">
+    </script>
 </head>
 
 <body onresize="resizeGlobal();">
@@ -102,7 +103,7 @@
             </p>
             <h3> How is this different from College Football Risk? </h3>
             <p>
-                This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a href="https://github.com/kennroo/Risk">code</a>, and submit pull requests to change the game.
+                This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a href="https://github.com/mautamu/Risk">code</a>, and submit pull requests to change the game.
                 <br /> This version of the game is written in the programming language <a href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a href="https://github.com/kennroo/Risk">GitHub</a></u>.
             </p>
         </section>
@@ -168,6 +169,33 @@
                     </div>
                 </li>
             </ul>
+        </section>
+    </script>
+    <script id="templateTerritoryCompleteHeader" type="text/template">
+        <h1>{{TerritoryName}}</h1><br/>
+        <h3>Owned by {{owner}}, won by {{winner}}</h3>
+    </script>
+    <script id="templateTerritoryComplete" type="text/template">
+        <section class="roll-wrap">
+            <div id="territoryCompleteHeader"></div>
+            <ul class="ugrid">
+                <li>
+                    <table id="owner-table">
+                    </table>
+                </li>
+                <li>
+                    <canvas id="territory-complete-pie" width="400px" height="400px"></canvas>
+                </li>
+            </ul>
+        </section>
+        <section class="leaderboard-wrap">
+            <h3 class="title">Players</h3>
+
+            <div id="territory-complete-players">
+                <table id="territory-complete-players-table">
+                </table>
+            </div>
+            <hr>
         </section>
     </script>
     <script id="bug_form" type="text/template">
@@ -257,7 +285,7 @@
             </center>
         </li>
     </script>
-    <script src="/scripts/main.js">
+    <script src="/assets/scripts/main.js">
     </script>
 </body>
 

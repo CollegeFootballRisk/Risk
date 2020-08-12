@@ -603,6 +603,133 @@ function page_leaderboard(contentTag) {
 
 }
 
+function page_territory(contentTag, t_object) {
+    territory = t_object.name;
+    season = t_object.season;
+    day = t_object.day;
+    contentTag.innerHTML = document.getElementById('templateTerritoryComplete').innerHTML;
+    if (season > 0 && day > 0) {
+        //attempt to fetch the data for that day & season
+        doAjaxGetRequest('/api/territory/turn?season=' + season + '&day=' + day + '&territory=' + territory,
+            'TerritoryFetch',
+            function(territoryData) {
+                //Fill the table!
+                territoryTurn = JSON.parse(territoryData.response);
+                territoryCompleteHeader = document.getElementById('templateTerritoryCompleteHeader').innerHTML;
+                document.getElementById('territoryCompleteHeader').innerHTML = territoryCompleteHeader
+                    .replace(/{{TerritoryName}}/, decodeURIComponent(territory))
+                    .replace(/{{owner}}/, territoryTurn.occupier)
+                    .replace(/{{winner}}/, territoryTurn.winner)
+                let display_headings = ["team", "players", "power", "chance"];
+                var obj = {
+                    // Quickly get the headings
+                    headings: ["Team", "Players", "Power", "Chance"],
+
+                    // data array
+                    data: []
+                };
+
+                chart = {
+                    team: [],
+                    power: [],
+                    background: [],
+                    hover: []
+                };
+
+                // Loop over the objects to get the values
+                for (var i = 0; i < territoryTurn.teams.length; i++) {
+
+                    chart.team.push(territoryTurn.teams[i].team);
+                    chart.power.push(territoryTurn.teams[i].power);
+                    chart.background.push(territoryTurn.teams[i].color);
+                    chart.hover.push(territoryTurn.teams[i].secondaryColor);
+
+                    obj.data[i] = [];
+
+                    for (var p in territoryTurn.teams[i]) {
+                        if (territoryTurn.teams[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
+                            if (p == 'chance') {
+                                obj.data[i].push(territoryTurn.teams[i][p].toFixed(2));
+                            } else {
+                                obj.data[i].push(territoryTurn.teams[i][p]);
+                            }
+                        }
+                    }
+                }
+                try {
+                    window.datatable.destroy();
+                } catch {
+                    // don't do anything, nor output to table ;)
+                } finally {
+                    window.datatable = new DataTable("#owner-table", {
+                        data: obj,
+                        columns: obj.columns,
+                        searchable: false,
+                        perPageSelect: false,
+                        footer: false,
+                        labels: {
+                            info: "",
+                        }
+                    });
+                }
+                territoryPie = document.getElementById('territory-complete-pie');
+                Chart.defaults.global.defaultFontColor = 'white';
+                new Chart(territoryPie, {
+                    "type": "doughnut",
+                    "data": {
+                        "labels": chart.team,
+                        "datasets": [{
+                            "label": "Win Odds",
+                            "data": chart.power,
+                            "backgroundColor": chart.background,
+                            "hoverBackgroundColor": chart.hover
+                        }],
+                        font: {
+                            color: 'white',
+                        }
+                    }
+                });
+                let display_headings_players = ['player', 'team', 'stars', 'weight', 'multiplier', 'power'];
+                var obj_players = {
+                    // Quickly get the headings
+                    headings: ['Player', 'Team', 'Stars', 'Weight', 'Multiplier', 'Power'],
+
+                    // data array
+                    data: []
+                };
+                for (var i = 0; i < territoryTurn.players.length; i++) {
+
+                    obj_players.data[i] = [];
+
+                    for (var p in territoryTurn.players[i]) {
+                        if (territoryTurn.players[i].hasOwnProperty(p) && display_headings_players.indexOf(p) != -1) {
+                            obj_players.data[i].push(territoryTurn.players[i][p]);
+                        }
+                    }
+                }
+                try {
+                    window.datatable2.destroy();
+                } catch {
+                    // don't do anything, nor output to table ;)
+                } finally {
+                    console.log(obj_players);
+                    window.datatable2 = new DataTable("#territory-complete-players-table", {
+                        data: obj_players,
+                        columns: obj_players.columns,
+                        searchable: false,
+                        perPageSelect: false,
+                        footer: false,
+                        labels: {
+                            info: "",
+                        }
+                    });
+                }
+
+            }, console.log
+        )
+    }
+}
+
 function page_territory_cover(contentTag, tname) {
     let territory_history = new Promise((resolve, reject) => {
         getTurns(resolve, reject);
@@ -700,6 +827,7 @@ function page_player(contentTag, pid) {
 function handleNewPage(title, contentTag, call, vari) {
     contentTag.innerHTML = "";
     document.title = "Aggie Risk | " + title;
+    clearInterval(window.pulse);
     call(contentTag, vari);
 }
 
@@ -772,7 +900,7 @@ class Router {
     };
 
     interval = () => {
-        if (this.current === this.getFragment()) return;
+        if (this.current === this.getFragment() || this.current + "#" === this.getFragment()) return;
         this.current = this.getFragment();
 
         this.routes.some(route => {
@@ -806,6 +934,7 @@ router
     })
     .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
         console.log(territoryName, season, day);
+        handleNewPage(territoryName, contentTag, page_territory, { name: territoryName, season: season.replace('#', ''), day: day.replace('#', '') });
     })
     .add('/territory/(.*)', (territoryName) => {
         handleNewPage(territoryName, contentTag, page_territory_cover, territoryName);
@@ -983,9 +1112,6 @@ router
     .add('/player/(.*)', (pid) => {
         handleNewPage(pid, contentTag, page_player, pid);
     })
-    .add(/products\/(.*)\/specification\/(.*)/, (id, specification) => {
-        alert(`products: ${id} specification: ${specification}`);
-    })
     .add('/', () => {
         // general controller
         handleNewPage('Home', contentTag, page_index);
@@ -1021,7 +1147,7 @@ function doDate() {
 /*** UTILITIES ***/
 
 function setUpCounter() {
-    setInterval(doDate, 1000);
+    window.pulse = setInterval(doDate, 1000);
 }
 
 function pad(number, notion, final, next, prev) {
@@ -1040,7 +1166,11 @@ function link_is_external(link_element) {
 }
 
 function resizeGlobal() {
-    resizeMap();
+    try {
+        resizeMap();
+    } catch {
+        //we're not on the main page. :shrug:
+    }
 }
 
 function getMaxMin(arr, prop) {
