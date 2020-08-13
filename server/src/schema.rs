@@ -56,7 +56,7 @@ table! {
         turns -> Nullable<Int4>,
         mvps -> Nullable<Int4>,
         tname -> Nullable<Text>,
-        power -> Nullable<Int4>,
+        power -> Nullable<Double>,
         weight -> Nullable<Int4>,
         stars -> Nullable<Int4>,
     }
@@ -92,8 +92,8 @@ table! {
         territory -> Nullable<Text>,
         regularteam -> Nullable<Text>,
         weight -> Int4,
-        power -> Int4,
-        multiplier -> Int4,
+        power -> Double,
+        multiplier -> Double,
     }
 }
 
@@ -134,7 +134,6 @@ table! {
         season -> Int4,
         day -> Int4,
         name -> Text,
-        tname -> Text,
         prev_owner -> Text,
         owner -> Text,
     }

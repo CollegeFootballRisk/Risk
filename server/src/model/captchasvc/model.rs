@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::schema::captchas;
 use diesel::prelude::*;
 #[derive(Deserialize, Insertable)]
 #[table_name = "captchas"]

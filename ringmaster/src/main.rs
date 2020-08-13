@@ -20,8 +20,11 @@ use std::fs::OpenOptions;
 use std::io::Read;
 use std::io::Write;
 
+extern crate image;
+extern crate nsvg;
+
 use structs::{
-    PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
+    PlayerMoves, Stats, Team, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
 };
 
 pub fn establish_connection() -> PgConnection {
@@ -429,6 +432,42 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
     }
 }
 
+fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
+    // first we got get the SVG image
+    use std::fs;
+    let teams = Team::load(&conn);
+    let mut vec = fs::read_to_string("resources/map.svg").unwrap();
+    let base: String = "{{?}}".to_owned();
+    let mut team_map = HashMap::new();
+    match teams {
+        Ok(teams) => {
+            for team in teams {
+                team_map.insert(team.id, team.color.unwrap_or_else(|| "#fff".to_string()));
+            }
+            for item in territories {
+                vec = vec.replace(
+                    &base.replace("?", &item.territory_id.to_string()),
+                    &team_map.get(&item.owner_id).unwrap(),
+                );
+            }
+            let svg = nsvg::parse_str(&vec, nsvg::Units::Pixel, 96.0).unwrap();
+            let image = svg.rasterize(2.0).unwrap();
+            let (width, height) = image.dimensions();
+            image::save_buffer(
+                "../server/static/images/curr_map.png",
+                &image.into_raw(),
+                width,
+                height,
+                image::ColorType::Rgba8,
+            )
+            .expect("Failed to save png.");
+        }
+        Err(e) => {
+            dbg!(e);
+        }
+    }
+}
+
 fn main() {
     use std::time::Instant;
     let now = Instant::now();
@@ -462,7 +501,7 @@ fn main() {
                                 Ok(_result) => {
                                     match Stats::insert(stats, turninfoblock.id, &conn) {
                                         Ok(_result) => {
-                                            match TerritoryOwnersInsert::insert(owners, &conn) {
+                                            match TerritoryOwnersInsert::insert(&owners, &conn) {
                                                 Ok(result) => {
                                                     dbg!(result);
                                                     match PlayerMoves::mvps(mvps, &conn) {
@@ -581,6 +620,7 @@ fn main() {
                                                                             buffer.as_bytes(),
                                                                         )
                                                                         .expect("error");
+                                                                    make_image(owners, &conn);
                                                                 }
                                                                 Err(e) => {
                                                                     dbg!(e);

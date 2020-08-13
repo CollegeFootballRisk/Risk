@@ -1,5 +1,5 @@
-use crate::model::*;
-use crate::schema::*;
+use crate::model::StarBreakdown64;
+use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 use diesel::result::Error;
 #[derive(Queryable, Serialize, Deserialize, Associations)]
@@ -62,13 +62,13 @@ impl TeamInfo {
 }
 
 impl TeamWithColors {
-    pub fn blank()-> TeamWithColors{
-        TeamWithColors{
+    pub fn blank() -> TeamWithColors {
+        TeamWithColors {
             name: None,
             colors: Colors {
-                primary: None, 
-                secondary: None
-            }
+                primary: None,
+                secondary: None,
+            },
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::schema::{heat_full, odds, statistics};
 use diesel::prelude::*;
 use diesel::result::Error;
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -138,6 +138,7 @@ impl CurrentStrength {
             .order(statistics::day.desc())
             .first::<CurrentStrength>(conn)
     }
+  
     pub fn load_id(team: i32, conn: &PgConnection) -> Result<CurrentStrength, Error> {
         statistics::table
             .select((

@@ -1,10 +1,13 @@
-use crate::schema::{new_turns, past_turns, stats, territory_ownership, territory_stats, turninfo};
+use crate::schema::{
+    new_turns, past_turns, stats, teams, territory_ownership, territory_stats, turninfo,
+};
 use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::{insert_into, update};
 use std::collections::HashMap;
+
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
 #[table_name = "new_turns"]
 pub struct PlayerMoves {
@@ -42,6 +45,12 @@ pub struct Stats {
     pub threes: i32,
     pub fours: i32,
     pub fives: i32,
+}
+
+#[derive(Deserialize, Queryable)]
+pub struct Team {
+    pub id: i32,
+    pub color: Option<String>,
 }
 
 #[derive(Deserialize, Insertable, Queryable)]
@@ -220,6 +229,12 @@ impl Stats {
     }
 }
 
+impl Team {
+    pub fn load(conn: &PgConnection) -> Result<Vec<Team>, Error> {
+        teams::table.select((teams::id, teams::color_1)).load::<Team>(conn)
+    }
+}
+
 impl TerritoryStats {
     pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(territory_stats::table)
@@ -242,10 +257,10 @@ impl TerritoryOwners {
 }
 
 impl TerritoryOwnersInsert {
-    pub fn insert(owners: Vec<TerritoryOwnersInsert>, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::*;
         insert_into(territory_ownership)
-            .values(&owners)
+            .values(*&owners)
             .execute(conn)
     }
 }

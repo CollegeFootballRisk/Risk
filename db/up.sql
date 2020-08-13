@@ -437,6 +437,7 @@ CREATE VIEW public.moves AS
  SELECT past_turns.season,
     past_turns.day,
     past_turns.territory,
+    foo.user_id,
     users.current_team AS team,
     past_turns.user_id AS player,
     past_turns.mvp,
@@ -727,7 +728,8 @@ CREATE VIEW public.statistics AS
     stats.fours,
     stats.fives,
     teams.tname,
-    (('img/logo/'::text || teams.id) || '.png'::text) AS logo
+    --(('img/logo/'::text || teams.id) || '.png'::text) AS logo
+    teams.logo AS logo
    FROM (public.stats
      JOIN public.teams ON ((teams.id = stats.team)));
 

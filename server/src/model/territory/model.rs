@@ -1,5 +1,5 @@
 use crate::model::*;
-use crate::schema::*;
+use crate::schema::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
 use diesel::prelude::*;
 use serde_json::Value;
 use std::result::Result;
@@ -60,7 +60,7 @@ impl TerritoryHistory {
                 territory_ownership_without_neighbors::season,
                 territory_ownership_without_neighbors::day,
                 territory_ownership_without_neighbors::name,
-                territory_ownership_without_neighbors::tname,
+                territory_ownership_without_neighbors::owner,
             ))
             .load::<TerritoryHistory>(conn)
             .expect("Error loading neighbor territory info")

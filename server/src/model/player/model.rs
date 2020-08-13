@@ -1,5 +1,5 @@
-use crate::model::team::*;
-use crate::model::turn::*;
+use crate::model::team::TeamWithColors;
+use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn};
 use crate::schema::*;
 use diesel::prelude::*;
@@ -50,9 +50,9 @@ pub struct PlayerInTurns {
     pub player: Option<String>,
     pub stars: Option<i32>,
     pub weight: i32,
-    pub multiplier: i32,
+    pub multiplier: f64,
     pub mvp: Option<bool>,
-    pub power: i32,
+    pub power: f64,
 }
 
 #[derive(Queryable, Serialize, Deserialize)]

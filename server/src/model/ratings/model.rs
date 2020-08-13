@@ -1,5 +1,4 @@
-//use serde::{Deserialize, Serialize};
-use crate::model::stats::*;
+use crate::model::stats::Stats;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Ratings {
     pub overall: i32,

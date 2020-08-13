@@ -4,39 +4,37 @@ use hyper::{
     net::HttpsConnector,
     Client,
 };*/
-
-use rocket::http::{Cookies, Status};
-use std::net::SocketAddr;
-//use rocket::response::{Debug, Redirect};
-use rocket::State;
 //use rocket_oauth2::{OAuth2, TokenResponse};
+//use rocket::response::{Debug, Redirect};
+//hyper::header::{Authorization, Bearer, UserAgent},
 use crate::model::{
-    Claims, ClientInfo, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats, TeamInfo,
-    UpdateUser, CurrentStrength, TeamWithColors
+    Claims, ClientInfo, CurrentStrength, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats,
+    TeamInfo, TeamWithColors, UpdateUser,
 };
-use crate::schema::*;
-#[cfg(feature = "risk_security")]
-use crate::security::*;
+use crate::schema::{new_turns, territory_adjacency, territory_ownership, users};
 use diesel::prelude::*;
 use diesel::result::Error;
+use rocket::http::{Cookies, Status};
+use rocket::State;
+use std::net::SocketAddr;
 extern crate rand;
 use crate::db::DbConn;
-use hyper::{
-    //header::{Authorization, Bearer, UserAgent},
-    net::HttpsConnector,
-    Client,
-};
+use hyper::{net::HttpsConnector, Client};
 use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
-use std::io::Read; //, model::User};
+use std::io::Read;
+
+#[cfg(feature = "risk_security")]
+use crate::security::*;
+
 #[get("/join?<team>")]
 pub fn join_team(
     team: i32,
-    cookies: Cookies,
+    mut cookies: Cookies,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Json<String>, Status> {
-    match cookies.get("jwt") {
+    match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
@@ -48,7 +46,7 @@ pub fn join_team(
                     );
                     if users.name.to_lowercase() == c.0.user.to_lowercase() {
                         //see if user needs a new team, or a team in general
-                        match users.active_team.unwrap_or(TeamWithColors::blank()).name {
+                        match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
                             None => {
                                 //check team exists
                                 match TeamInfo::load(&conn).iter().any(|e| e.id == team) {
@@ -57,14 +55,20 @@ pub fn join_team(
                                         match CurrentStrength::load_id(team, &conn) {
                                             Ok(strength) => {
                                                 if strength.territories > 0 {
-                                                    match users.team.unwrap_or(TeamWithColors::blank()).name {
+                                                    match users
+                                                        .team
+                                                        .unwrap_or_else(TeamWithColors::blank)
+                                                        .name
+                                                    {
                                                         Some(_e) => {
                                                             //merc!
-                                                            match update_user(false, c.0.id, team, &conn) {
+                                                            match update_user(
+                                                                false, c.0.id, team, &conn,
+                                                            ) {
                                                                 Ok(_e) => {
-                                                                    std::result::Result::Ok(Json(String::from(
-                                                                        "Okay",
-                                                                    )))
+                                                                    std::result::Result::Ok(Json(
+                                                                        String::from("Okay"),
+                                                                    ))
                                                                 }
                                                                 Err(_e) => {
                                                                     std::result::Result::Err(
@@ -75,11 +79,13 @@ pub fn join_team(
                                                         }
                                                         None => {
                                                             //new kid on the block
-                                                            match update_user(true, c.0.id, team, &conn) {
+                                                            match update_user(
+                                                                true, c.0.id, team, &conn,
+                                                            ) {
                                                                 Ok(_e) => {
-                                                                    std::result::Result::Ok(Json(String::from(
-                                                                        "Okay",
-                                                                    )))
+                                                                    std::result::Result::Ok(Json(
+                                                                        String::from("Okay"),
+                                                                    ))
                                                                 }
                                                                 Err(_e) => {
                                                                     std::result::Result::Err(
@@ -89,11 +95,8 @@ pub fn join_team(
                                                             }
                                                         }
                                                     }
-                                                }
-                                                else {
-                                                    std::result::Result::Err(
-                                                        Status::Forbidden,
-                                                    )
+                                                } else {
+                                                    std::result::Result::Err(Status::Forbidden)
                                                 }
                                             }
                                             Err(_e) => {
@@ -124,14 +127,14 @@ pub fn join_team(
 //#[cfg(feature = "risk_security")]
 pub fn make_move(
     target: i32,
-    cookies: Cookies,
+    mut cookies: Cookies,
     conn: DbConn,
     remote_addr: SocketAddr,
     key: State<String>,
     latest: State<Latest>,
 ) -> Result<Json<String>, Status> {
     //get cookie, verify it -> Claims (id, user, refresh_token)
-    match cookies.get("jwt") {
+    match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(mut c) => {
@@ -202,7 +205,9 @@ pub fn make_move(
                                         },
                                         &conn,
                                     ) {
-                                        Ok(_oka) => std::result::Result::Ok(Json(String::from("Okay"))),
+                                        Ok(_oka) => {
+                                            std::result::Result::Ok(Json(String::from("Okay")))
+                                        }
                                         Err(_e) => std::result::Result::Err(Status::Found),
                                     }
                                 }
@@ -400,14 +405,3 @@ fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryRes
         false => diesel::update(users::table).set(users::playing_for.eq(team)).execute(conn),
     }
 }
-
-/*fn get_owned_territories (c: &Claims, latest: State<Latest>, conn: &PgConnection) -> Result<Vec<(Option<i32>,i32)>,Error>{
-    use diesel::prelude::*;
-    territory_ownership::table
-    .inner_join(users::table.on(territory_ownership::owner_id.eq(users::playing_for)))
-    .filter(users::id.eq(c.id))
-    .filter(territory_ownership::season.eq(latest.season))
-    .filter(territory_ownership::day.eq(latest.day))
-    .select((users::playing_for, territory_ownership::territory_id))
-    .load::<(Option<i32>, i32)>(conn)
-}*/

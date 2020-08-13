@@ -1,5 +1,7 @@
+//use anyhow::Context;
+//extern crate time;
+//use time::Duration;
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use anyhow::Context;
 use hyper::{
     header::{Authorization, Bearer, UserAgent},
     net::HttpsConnector,
@@ -12,8 +14,6 @@ use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 use serde_json::{self};
 use std::io::Read;
-//extern crate time;
-//use time::Duration;
 extern crate chrono;
 use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
@@ -26,8 +26,8 @@ pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) ->
 
 #[get("/logout")]
 pub fn reddit_logout(mut cookies: Cookies) -> Redirect {
-    let token: String = cookies
-        .get_private("refreshToken")
+    /*let token: String = cookies
+        .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
         .unwrap_or_else(|| "".to_string());
     let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
@@ -39,11 +39,11 @@ pub fn reddit_logout(mut cookies: Cookies) -> Redirect {
         }))
         .header(UserAgent("AggieRiskLocal - Dev Edition".into()))
         .send()
-        .context("failed to send request to API");
-    cookies.remove(Cookie::named("jwt"));
-    cookies.remove(Cookie::named("username"));
+        .context("failed to send request to API");*/
+    cookies.remove_private(Cookie::named("jwt"));
+    cookies.remove_private(Cookie::named("username"));
     Redirect::to("/")
-    //Implement a deletion call to reddit.
+    //TODO: Implement a deletion call to reddit.
 }
 
 #[get("/reddit")]
@@ -73,20 +73,20 @@ pub fn reddit_callback(
                                 refresh_token: Some(token.access_token().to_string()),
                                 exp: timestamp,
                             };
-                            cookies.add(
+                            cookies.add_private(
                                 Cookie::build("username", user_info.name)
                                     .same_site(SameSite::Lax)
-                                    .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                    .domain(dotenv::var("uri").unwrap_or_default())
                                     .path("/")
                                     .max_age(Duration::hours(168))
                                     .finish(),
                             );
                             match Claims::put(&key.as_bytes(), new_claims) {
                                 Ok(s) => {
-                                    cookies.add(
+                                    cookies.add_private(
                                         Cookie::build("jwt", s)
                                             .same_site(SameSite::Lax)
-                                            .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                            .domain(dotenv::var("uri").unwrap_or_default())
                                             .path("/")
                                             .max_age(Duration::hours(168))
                                             .finish(),
