@@ -586,6 +586,7 @@ function page_leaderboard_update(seasonday) {
 }
 
 function page_info(contentTag) {
+    updateLoaderVisibility();
     var templateInfo = document.getElementById("templateInfo");
     contentTag.innerHTML += templateInfo.innerHTML;
     console.log(contentTag);

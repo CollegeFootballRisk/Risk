@@ -348,7 +348,7 @@ header nav li:last-child {
 
 .grid-history {
     background-color: var(--theme-bg-05);
-    height: 100vh;
+    min-height: 100vh;
 }
 
 .grid-history h1 {
@@ -543,7 +543,7 @@ h3[selectitem]::after {
 
 .leaderboard-wrap {
     background-color: var(--theme-bg-05);
-    padding-top: 0px !important;
+    /*padding-top: 0px !important;*/
 }
 
 .leaderboard-wrap .grid li {
