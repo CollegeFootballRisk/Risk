@@ -1,5 +1,7 @@
-use crate::model::{Claims, RedditUserInfo, UpsertableUser};
 //use anyhow::Context;
+//extern crate time;
+//use time::Duration;
+use crate::model::{Claims, RedditUserInfo, UpsertableUser};
 use hyper::{
     header::{Authorization, Bearer, UserAgent},
     net::HttpsConnector,
@@ -12,8 +14,6 @@ use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 use serde_json::{self};
 use std::io::Read;
-//extern crate time;
-//use time::Duration;
 extern crate chrono;
 use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
@@ -76,7 +76,7 @@ pub fn reddit_callback(
                             cookies.add_private(
                                 Cookie::build("username", user_info.name)
                                     .same_site(SameSite::Lax)
-                                    .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                    .domain(dotenv::var("uri").unwrap_or_default())
                                     .path("/")
                                     .max_age(Duration::hours(168))
                                     .finish(),
@@ -86,7 +86,7 @@ pub fn reddit_callback(
                                     cookies.add_private(
                                         Cookie::build("jwt", s)
                                             .same_site(SameSite::Lax)
-                                            .domain(dotenv::var("uri").unwrap_or(String::new()))
+                                            .domain(dotenv::var("uri").unwrap_or_default())
                                             .path("/")
                                             .max_age(Duration::hours(168))
                                             .finish(),

@@ -1,5 +1,5 @@
-use crate::model::*;
-use crate::schema::*;
+use crate::model::StarBreakdown64;
+use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 use diesel::result::Error;
 #[derive(Queryable, Serialize, Deserialize, Associations)]

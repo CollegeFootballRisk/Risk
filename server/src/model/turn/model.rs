@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::schema::{past_turns, rollinfo, turninfo};
 use diesel::prelude::*;
 use diesel::result::Error;
 use serde_json::Value;

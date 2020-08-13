@@ -1,5 +1,5 @@
-use crate::model::team::*;
-use crate::model::turn::*;
+use crate::model::team::TeamWithColors;
+use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn};
 use crate::schema::*;
 use diesel::prelude::*;

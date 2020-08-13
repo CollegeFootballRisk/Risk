@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::schema::{heat_full, odds, statistics};
 use diesel::prelude::*;
 use diesel::result::Error;
 #[derive(Serialize, Deserialize, Clone, Debug)]

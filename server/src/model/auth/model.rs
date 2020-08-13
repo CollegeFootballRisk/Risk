@@ -36,11 +36,7 @@ impl Claims {
         };
         match decode::<Claims>(&token, &DecodingKey::from_secret(key), &validation) {
             Ok(c) => Ok((c.claims, c.header)),
-            Err(err) => Err(err.to_string()), /*match *err.kind() {
-                                                  ErrorKind::InvalidToken => Err(String::from("Invalid Token")), // Example on how to handle a specific error
-                                                  ErrorKind::InvalidIssuer => Err(String::from("Invalid Issuer")), // Example on how to handle a specific error
-                                                  _ => Err(String::from("Error")),
-                                              },*/
+            Err(err) => Err(err.to_string()),
         }
     }
 }
