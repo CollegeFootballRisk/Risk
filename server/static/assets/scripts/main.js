@@ -1404,8 +1404,8 @@ router
 
         bug_form = document.getElementById("bug_form");
         bug_form = bug_form.innerHTML;
-        bug_form = bug_form.replace(/{{uinf}}/, JSON.stringify(BrowserInfo))
-            .replace(/{{errors}}/, JSON.stringify(errorNotifications)).replace(/{{pending}}/, JSON.stringify(outstandingRequests));
+        bug_form = bug_form.replace(/{{uinf}}/, encodeURI(JSON.stringify(BrowserInfo)))
+            .replace(/{{errors}}/, encodeURI(JSON.stringify(errorNotifications))).replace(/{{pending}}/, encodeURI(JSON.stringify(outstandingRequests)));
         errorNotif('Bug Report', bug_form, {
             text: "Okay",
             action: function() {
