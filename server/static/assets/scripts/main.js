@@ -457,7 +457,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "rgba(" + red + ", " + red + ", " + red + ", 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("map-county-info").innerHTML = "Leaderboard";
-                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, page_leaderboard_update, window.turnsObject);
+                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, "page_leaderboard_update", window.turnsObject);
                         document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
                     }
                     resizeMap();
