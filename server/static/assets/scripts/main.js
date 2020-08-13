@@ -829,7 +829,7 @@ function drawOddsPage(junk) {
     var season = seasonday[0];
     document.getElementById("heat-notif").innerHTML = "Where " + team + " deployed forces";
     document.getElementById("odds-notif").innerHTML = "Where " + team + " had the highest odds";
-    doAjaxGetRequest('/api/team/odds?team=Texas&day=1&season=1', 'oddsfetch', function(oddsObject) {
+    doAjaxGetRequest('/api/team/odds?team=' + team.replace('&', '%26') + '&day=' + day + '&season=' + season, 'oddsfetch', function(oddsObject) {
         var territory_count = 0;
         var territory_expected = 0;
         var survival_odds = 1;
