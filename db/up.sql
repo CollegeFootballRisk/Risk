@@ -289,10 +289,11 @@ CREATE TABLE public.past_turns (
     mvp boolean DEFAULT false NOT NULL,
     power double precision,
     multiplier double precision,
-    weight double precision,
+    weight integer,
     stars integer,
     team integer,
-    alt_score integer
+    alt_score integer,
+    merc boolean DEFAULT false
 );
 
 
@@ -334,11 +335,11 @@ ALTER TABLE public.heat OWNER TO postgres;
 
 CREATE TABLE public.teams (
     id integer NOT NULL,
-    tname public.citext,
-    tshortname public.citext,
+    tname text,
+    tshortname text,
     creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    color_1 public.citext,
-    color_2 public.citext,
+    color_1 text,
+    color_2 text,
     logo text
 );
 
@@ -352,7 +353,7 @@ ALTER TABLE public.teams OWNER TO postgres;
 CREATE TABLE public.territory_ownership (
     id integer NOT NULL,
     territory_id integer,
-    territory_name public.citext,
+    territory_name text,
     owner_id integer,
     day integer,
     season integer,
@@ -371,10 +372,11 @@ ALTER TABLE public.territory_ownership OWNER TO postgres;
 
 CREATE TABLE public.users (
     id integer NOT NULL,
-    uname public.citext NOT NULL,
-    platform public.citext NOT NULL,
+    uname text NOT NULL,
+    platform text NOT NULL,
     join_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    current_team integer DEFAULT '-1'::integer NOT NULL,
+    current_team integer DEFAULT 0 NOT NULL,
+    auth_key text,
     overall integer DEFAULT 1,
     turns integer DEFAULT 0,
     game_turns integer DEFAULT 0,
@@ -382,7 +384,7 @@ CREATE TABLE public.users (
     streak integer DEFAULT 0,
     awards integer DEFAULT 0,
     role_id integer DEFAULT 0,
-    playing_for integer DEFAULT '-1'::integer
+    playing_for integer
 );
 
 
@@ -476,7 +478,8 @@ CREATE TABLE public.new_turns (
     weight double precision,
     stars integer,
     team integer,
-    alt_score integer
+    alt_score integer,
+    merc boolean DEFAULT false
 );
 
 
@@ -505,96 +508,59 @@ ALTER SEQUENCE public.new_turns_id_seq OWNED BY public.new_turns.id;
 
 
 --
+-- Name: territory_stats; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.territory_stats (
+    team integer,
+    season integer,
+    day integer,
+    ones integer,
+    twos integer,
+    threes integer,
+    fours integer,
+    fives integer,
+    teampower double precision,
+    chance double precision,
+    id integer NOT NULL,
+    territory integer,
+    territory_power double precision
+);
+
+
+ALTER TABLE public.territory_stats OWNER TO postgres;
+
+--
 -- Name: odds; Type: VIEW; Schema: public; Owner: postgres
 --
 
 CREATE VIEW public.odds AS
- SELECT sq.players,
-    sq.ones,
-    sq.twos,
-    sq.threes,
-    sq.fours,
-    sq.fives,
-    sq.teampower,
-    sq.territorypower,
-    (sq.teampower / (sq.territorypower)::double precision) AS chance,
-    sq.team,
-    sq.season,
-    sq.day,
-    sq.territory_name,
-    territory_ownership_without_neighbors.owner AS tname,
-    territory_ownership_without_neighbors.prev_owner,
-    territory_ownership_without_neighbors.mvp,
+ SELECT territory_stats.ones,
+    territory_stats.twos,
+    territory_stats.threes,
+    territory_stats.fours,
+    territory_stats.fives,
+    ((((territory_stats.ones + territory_stats.twos) + territory_stats.threes) + territory_stats.fours) + territory_stats.fives) AS players,
+    territory_stats.teampower,
+    territory_stats.territory_power AS territorypower,
+    territory_stats.chance,
+    territory_stats.team,
+    territory_stats.season,
+    territory_stats.day,
+    territories.name AS territory_name,
     teams.tname AS team_name,
     teams.color_1 AS color,
-    teams.color_2 AS secondary_color
-   FROM ((( SELECT count(*) AS players,
-            sum(
-                CASE
-                    WHEN (past_turns.stars = 1) THEN 1
-                    ELSE 0
-                END) AS ones,
-            sum(
-                CASE
-                    WHEN (past_turns.stars = 2) THEN 1
-                    ELSE 0
-                END) AS twos,
-            sum(
-                CASE
-                    WHEN (past_turns.stars = 3) THEN 1
-                    ELSE 0
-                END) AS threes,
-            sum(
-                CASE
-                    WHEN (past_turns.stars = 4) THEN 1
-                    ELSE 0
-                END) AS fours,
-            sum(
-                CASE
-                    WHEN (past_turns.stars = 5) THEN 1
-                    ELSE 0
-                END) AS fives,
-            sum(past_turns.power) AS teampower,
-            public.territorypower(past_turns.day, past_turns.season, past_turns.territory) AS territorypower,
-            past_turns.team,
-            past_turns.season,
-            past_turns.day,
-            territories.name AS territory_name
-           FROM (public.past_turns
-             JOIN public.territories ON ((territories.id = past_turns.territory)))
-          GROUP BY past_turns.day, past_turns.season, territories.name, past_turns.territory, past_turns.team) sq
-     JOIN public.territory_ownership_without_neighbors ON (((territory_ownership_without_neighbors.name = sq.territory_name) AND (territory_ownership_without_neighbors.season = sq.season) AND (territory_ownership_without_neighbors.day = sq.day))))
-     JOIN public.teams ON ((teams.id = sq.team)))
-  ORDER BY sq.territory_name;
+    teams.color_2 AS secondary_color,
+    territory_ownership_without_neighbors.owner AS tname,
+    territory_ownership_without_neighbors.prev_owner,
+    territory_ownership_without_neighbors.mvp
+   FROM (((public.territory_stats
+     JOIN public.territories ON ((territories.id = territory_stats.territory)))
+     JOIN public.teams ON ((teams.id = territory_stats.team)))
+     JOIN public.territory_ownership_without_neighbors ON (((territory_ownership_without_neighbors.name = territories.name) AND (territory_ownership_without_neighbors.season = territory_stats.season) AND (territory_ownership_without_neighbors.day = (territory_stats.day + 1)))));
 
 
 ALTER TABLE public.odds OWNER TO postgres;
-
-
-CREATE VIEW public.odds AS 
-  select ones, 
-  twos, 
-  threes,
-   fours, 
-   fives,
-    (ones+twos+threes+fours+fives) as players,
-     teampower, territory_power as territorypower,
-      chance, team, territory_stats.season as season, 
-      territory_stats.day as day, territories.name as territory_name,
-       teams.tname as team_name, 
-       teams.color_1 as color, 
-       teams.color_2 AS secondary_color, 
-       territory_ownership_without_neighbors.owner as tname, 
-       territory_ownership_without_neighbors.prev_owner as prev_owner,
-        territory_ownership_without_neighbors.mvp as mvp 
-        from territory_stats 
-        inner join territories on territories.id = territory_stats.territory 
-        inner join teams on teams.id = territory_stats.team 
-        inner join territory_ownership_without_neighbors on 
-        (((territory_ownership_without_neighbors.name = territories.name) 
-        AND (territory_ownership_without_neighbors.season = territory_stats.season) 
-        AND (territory_ownership_without_neighbors.day = territory_stats.day + 1)));
-
 
 --
 -- Name: past_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -635,7 +601,7 @@ CREATE VIEW public.players AS
     users.awards,
     teams.tname
    FROM (public.users
-     LEFT JOIN public.teams ON ((teams.id = users.current_team)));
+     JOIN public.teams ON ((teams.id = users.current_team)));
 
 
 ALTER TABLE public.players OWNER TO postgres;
@@ -692,9 +658,9 @@ CREATE TABLE public.stats (
     territorycount integer,
     playercount integer,
     merccount integer,
-    starpower integer,
-    efficiency integer,
-    effectivepower integer,
+    starpower double precision,
+    efficiency double precision,
+    effectivepower double precision,
     ones integer,
     twos integer,
     threes integer,
@@ -728,8 +694,7 @@ CREATE VIEW public.statistics AS
     stats.fours,
     stats.fives,
     teams.tname,
-    --(('img/logo/'::text || teams.id) || '.png'::text) AS logo
-    teams.logo AS logo
+    teams.logo
    FROM (public.stats
      JOIN public.teams ON ((teams.id = stats.team)));
 
@@ -789,7 +754,7 @@ ALTER SEQUENCE public.teams_id_seq OWNED BY public.teams.id;
 --
 
 CREATE TABLE public.territory_adjacency (
-    id integer NOT NULL,
+    id integer,
     territory_id integer,
     adjacent_id integer
 );
@@ -882,6 +847,28 @@ CREATE VIEW public.territory_ownership_with_neighbors AS
 ALTER TABLE public.territory_ownership_with_neighbors OWNER TO postgres;
 
 --
+-- Name: territory_stats_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.territory_stats_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.territory_stats_id_seq OWNER TO postgres;
+
+--
+-- Name: territory_stats_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.territory_stats_id_seq OWNED BY public.territory_stats.id;
+
+
+--
 -- Name: turninfo_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -926,6 +913,43 @@ ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
+-- Name: webhooks; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.webhooks (
+    id integer NOT NULL,
+    uri character varying(100) NOT NULL,
+    user_id integer NOT NULL,
+    subscriptions character varying(100) DEFAULT 'image'::character varying NOT NULL,
+    failed boolean NOT NULL
+);
+
+
+ALTER TABLE public.webhooks OWNER TO postgres;
+
+--
+-- Name: webhooks_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.webhooks_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.webhooks_id_seq OWNER TO postgres;
+
+--
+-- Name: webhooks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.webhooks_id_seq OWNED BY public.webhooks.id;
+
+
+--
 -- Name: captchas id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -961,6 +985,13 @@ ALTER TABLE ONLY public.territory_ownership ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
+-- Name: territory_stats id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.territory_stats ALTER COLUMN id SET DEFAULT nextval('public.territory_stats_id_seq'::regclass);
+
+
+--
 -- Name: turninfo id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -972,6 +1003,13 @@ ALTER TABLE ONLY public.turninfo ALTER COLUMN id SET DEFAULT nextval('public.tur
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- Name: webhooks id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.webhooks ALTER COLUMN id SET DEFAULT nextval('public.webhooks_id_seq'::regclass);
 
 
 --
