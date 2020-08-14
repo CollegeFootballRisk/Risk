@@ -29,7 +29,7 @@ pub fn leaderboard(
         _ => {
             match Latest::latest(&conn) {
                 Ok(current) => {
-                    dbg!(&current.day - 1);
+                    //dbg!(&current.day - 1);
                     let leaderboard = StatLeaderboard::load(current.season, current.day - 1, &conn);
                     match leaderboard {
                         Ok(strength) => std::result::Result::Ok(Json(strength)),

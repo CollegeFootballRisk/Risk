@@ -28,3 +28,5 @@ server/migrations
 server/src/security
 
 Rocket.toml
+
+**/*.log
