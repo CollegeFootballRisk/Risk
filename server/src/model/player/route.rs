@@ -50,27 +50,27 @@ pub fn me(
         None => std::result::Result::Err(Status::Unauthorized),
     }
 }
-   /* let player: String = cookies
-        .get("username")
-        .and_then(|cookie| cookie.value().parse().ok());
-        let player: String = cookies
-        .get("username")
-        .and_then(|cookie| cookie.value().parse())
-        .unwrap_or_else(|| "".to_string());
-        match cookies
-        .get("username") {
-            Some(user) => {
-                let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player.clone()], false, &conn);
-                if users.name.to_lowercase() == player.to_lowercase() {
-                    std::result::Result::Ok(Json(users))
-                } else {
-                    std::result::Result::Err(Status::NotFound)
-                }
-            }
-            None => {
-                std::result::Result::Err(Status::Unauthorized)
-            }
-        }*/
+/* let player: String = cookies
+.get("username")
+.and_then(|cookie| cookie.value().parse().ok());
+let player: String = cookies
+.get("username")
+.and_then(|cookie| cookie.value().parse())
+.unwrap_or_else(|| "".to_string());
+match cookies
+.get("username") {
+    Some(user) => {
+        let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player.clone()], false, &conn);
+        if users.name.to_lowercase() == player.to_lowercase() {
+            std::result::Result::Ok(Json(users))
+        } else {
+            std::result::Result::Err(Status::NotFound)
+        }
+    }
+    None => {
+        std::result::Result::Err(Status::Unauthorized)
+    }
+}*/
 //}
 
 #[get("/players/batch?<players>")]

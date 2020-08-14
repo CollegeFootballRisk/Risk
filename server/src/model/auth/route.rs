@@ -131,84 +131,93 @@ pub fn make_move(
     conn: DbConn,
     remote_addr: SocketAddr,
     key: State<String>,
-    latest: State<Latest>,
 ) -> Result<Json<String>, Status> {
-    //get cookie, verify it -> Claims (id, user, refresh_token)
-    match cookies.get_private("jwt") {
-        Some(cookie) => {
-            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
-                Ok(mut c) => {
-                    let _cinfo = ClientInfo {
-                        claims: c.0.clone(),
-                        ip: remote_addr.to_string(),
-                    };
-                    // id, name Json(c.0.user)
-                    //get user's team information, and whether they can make that move
-                    match handle_territory_info(
-                        &c.0,
-                        target,
-                        Latest {
-                            season: latest.season,
-                            day: latest.day,
-                        },
-                        &conn,
-                    ) {
-                        Ok((user, multiplier)) => {
-                            //get user's current award information from CFBRisk
-                            let awards = get_cfb_points(c.0.user.clone());
-                            //get user's current information from Reddit to ensure they still exist
-                            c.0.user.push_str(&awards.to_string());
-                            //at this point we know the user is authorized to make the action, so let's go ahead and make it
-                            let user_stats = Stats {
-                                totalTurns: user.3.unwrap_or(0),
-                                gameTurns: user.4.unwrap_or(0),
-                                mvps: user.5.unwrap_or(0),
-                                streak: user.6.unwrap_or(0),
-                                awards: awards as i32,
+    match Latest::latest(&conn) {
+        Ok(latest) => {
+            //get cookie, verify it -> Claims (id, user, refresh_token)
+            match cookies.get_private("jwt") {
+                Some(cookie) => {
+                    match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                        Ok(mut c) => {
+                            let _cinfo = ClientInfo {
+                                claims: c.0.clone(),
+                                ip: remote_addr.to_string(),
                             };
-                            let user_ratings = Ratings::load(&user_stats);
-                            let user_weight: f32 = match user_ratings.overall {
-                                1 => 1.0,
-                                2 => 2.0,
-                                3 => 6.0,
-                                4 => 12.0,
-                                5 => 24.0,
-                                _ => 1.0,
-                            };
-                            let user_power: f32 = multiplier * user_weight as f32;
-                            let mut merc: bool = false;
-                            if user.0 != user.8 {
-                                merc = true;
-                            }
-                            match insert_turn(
-                                &user,
-                                user_ratings,
-                                latest,
+                            // id, name Json(c.0.user)
+                            //get user's team information, and whether they can make that move
+                            match handle_territory_info(
+                                &c.0,
                                 target,
-                                multiplier,
-                                user_weight,
-                                user_power,
-                                merc,
+                                Latest {
+                                    season: latest.season,
+                                    day: latest.day,
+                                },
                                 &conn,
                             ) {
-                                Ok(_ok) => {
-                                    //now we go update the user
-                                    match UpdateUser::do_update(
-                                        UpdateUser {
-                                            id: user.1,
-                                            overall: user_power as i32,
-                                            turns: user_stats.totalTurns,
-                                            game_turns: user_stats.gameTurns,
-                                            mvps: user_stats.mvps,
-                                            streak: user_stats.streak,
-                                            awards: user_stats.awards,
-                                        },
+                                Ok((user, multiplier)) => {
+                                    //get user's current award information from CFBRisk
+                                    let awards = get_cfb_points(c.0.user.clone());
+                                    //get user's current information from Reddit to ensure they still exist
+                                    c.0.user.push_str(&awards.to_string());
+                                    //at this point we know the user is authorized to make the action, so let's go ahead and make it
+                                    let user_stats = Stats {
+                                        totalTurns: user.3.unwrap_or(0),
+                                        gameTurns: user.4.unwrap_or(0),
+                                        mvps: user.5.unwrap_or(0),
+                                        streak: user.6.unwrap_or(0),
+                                        awards: awards as i32,
+                                    };
+                                    let user_ratings = Ratings::load(&user_stats);
+                                    let user_weight: f32 = match user_ratings.overall {
+                                        1 => 1.0,
+                                        2 => 2.0,
+                                        3 => 6.0,
+                                        4 => 12.0,
+                                        5 => 24.0,
+                                        _ => 1.0,
+                                    };
+                                    let user_power: f32 = multiplier * user_weight as f32;
+                                    let mut merc: bool = false;
+                                    if user.0 != user.8 {
+                                        merc = true;
+                                    }
+                                    match insert_turn(
+                                        &user,
+                                        user_ratings,
+                                        latest,
+                                        target,
+                                        multiplier,
+                                        user_weight,
+                                        user_power,
+                                        merc,
                                         &conn,
                                     ) {
-                                        Ok(_oka) => {
-                                            std::result::Result::Ok(Json(String::from("Okay")))
+                                        Ok(_ok) => {
+                                            //now we go update the user
+                                            match UpdateUser::do_update(
+                                                UpdateUser {
+                                                    id: user.1,
+                                                    overall: user_power as i32,
+                                                    turns: user_stats.totalTurns,
+                                                    game_turns: user_stats.gameTurns,
+                                                    mvps: user_stats.mvps,
+                                                    streak: user_stats.streak,
+                                                    awards: user_stats.awards,
+                                                },
+                                                &conn,
+                                            ) {
+                                                Ok(_oka) => {
+                                                    std::result::Result::Ok(Json(String::from(
+                                                        "Okay",
+                                                    )))
+                                                }
+                                                Err(_e) => std::result::Result::Err(Status::Found),
+                                            }
                                         }
-                                        Err(_e) => std::result::Result::Err(Status::Found),
+                                        Err(_e) => {
+                                            dbg!(_e);
+                                            std::result::Result::Err(Status::ImATeapot)
+                                        }
                                     }
                                 }
                                 Err(_e) => {
@@ -217,16 +226,13 @@ pub fn make_move(
                                 }
                             }
                         }
-                        Err(_e) => {
-                            dbg!(_e);
-                            std::result::Result::Err(Status::ImATeapot)
-                        }
+                        Err(_err) => std::result::Result::Err(Status::Unauthorized),
                     }
                 }
-                Err(_err) => std::result::Result::Err(Status::Unauthorized),
+                None => std::result::Result::Err(Status::Unauthorized),
             }
         }
-        None => std::result::Result::Err(Status::Unauthorized),
+        _ => std::result::Result::Err(Status::BadRequest),
     }
 }
 
@@ -361,7 +367,7 @@ fn insert_turn(
         i32,
     ),
     user_ratings: Ratings,
-    latest: State<Latest>,
+    latest: Latest,
     target: i32,
     multiplier: f32,
     user_weight: f32,
