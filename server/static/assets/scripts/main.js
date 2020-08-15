@@ -429,7 +429,7 @@ function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
         }
         turn = turnsObject.length - turnb - 1;
         sel = (turnsObject[turn].day == day || (day == 0 && turn == turnsObject.length - 1)) ? "selected" : "";
-        days += opt.replaceAll(/{{val}}/gi, turnsObject[turn].season + "." + turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, turnsObject[turn].season).replace(/{{day}}/, turnsObject[turn].day);
+        days += opt.replace(/{{val}}/gi, turnsObject[turn].season + "." + turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, turnsObject[turn].season).replace(/{{day}}/, turnsObject[turn].day);
     }
     days += "</select>";
     if (autoup == false) {
@@ -771,9 +771,9 @@ function page_territory_cover(contentTag, tname) {
             territoryHistoryObject = JSON.parse(territoryResponse.response);
             for (obj in territoryHistoryObject) {
                 var objr = territoryHistoryObject.length - obj - 1;
-                str += box.innerHTML.replaceAll(/{{day}}/gi, territoryHistoryObject[objr].day).replace(/{{team}}/, territoryHistoryObject[objr].owner).replace(/{{season}}/, territoryHistoryObject[objr].season);
+                str += box.innerHTML.replace(/{{day}}/gi, territoryHistoryObject[objr].day).replace(/{{team}}/, territoryHistoryObject[objr].owner).replace(/{{season}}/, territoryHistoryObject[objr].season);
             }
-            contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replaceAll(/{{TerritoryName}}/gi, decodeURIComponent(tname));
+            contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replace(/{{TerritoryName}}/gi, decodeURIComponent(tname));
         }, console.log)
     });
 }
@@ -852,8 +852,8 @@ function drawOddsPage(junk) {
                 chance_min = oddsObject[i];
         }
         let chance_mm = [chance_max, chance_min];
-        document.getElementById('heat-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="heatmap_');
-        document.getElementById('odds-map').innerHTML = window.mapTemplate.replaceAll('id="', 'id="oddmap_');
+        document.getElementById('heat-map').innerHTML = window.mapTemplate.replace(/id="/gi, 'id="heatmap_');
+        document.getElementById('odds-map').innerHTML = window.mapTemplate.replace(/id="/gi, 'id="oddmap_');
         for (i in oddsObject) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
