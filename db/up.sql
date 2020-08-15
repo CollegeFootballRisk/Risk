@@ -316,15 +316,7 @@ ALTER TABLE public.territories OWNER TO postgres;
 --
 
 CREATE VIEW public.heat AS
- SELECT territories.name,
-    past_turns.season,
-    past_turns.day,
-    count(past_turns.territory) AS cumulative_players,
-    sum(past_turns.power) AS cumulative_power
-   FROM (public.past_turns
-     JOIN public.territories ON ((territories.id = past_turns.territory)))
-  GROUP BY territories.name, past_turns.season, past_turns.day
-  ORDER BY territories.name;
+ select territories.name, rd.season, rd.day, count(past_turns.territory) as cumulative_players, count(past_turns.power) as cumulative_power from territories cross join (select season, day from turninfo where complete = true) rd left join past_turns on (rd.season = past_turns.season and rd.day = past_turns.day and territories.id = past_turns.territory) group by territories.name, rd.season, rd.day order by territories.name, rd.season desc, rd.day desc;
 
 
 ALTER TABLE public.heat OWNER TO postgres;
