@@ -257,6 +257,13 @@ header nav li:last-child {
     }
 }
 
+@supports (-webkit-touch-callout: none) {
+    header .brand-image {
+        position: relative;
+        right: 109px;
+    }
+}
+
 
 /*----------------
  	map-wrap Section
