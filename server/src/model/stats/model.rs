@@ -74,7 +74,7 @@ pub struct Odds {
     pub territory: String,
     pub owner: String,
     pub winner: String,
-    pub mvp: String,
+    pub mvp: Option<String>,
     pub players: i32,
     pub starBreakdown: StarBreakdown64,
     pub teamPower: f64,

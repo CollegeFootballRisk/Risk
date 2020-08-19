@@ -316,7 +316,7 @@ ALTER TABLE public.territories OWNER TO postgres;
 --
 
 CREATE VIEW public.heat AS
- select territories.name, rd.season, rd.day, count(past_turns.territory) as cumulative_players, count(past_turns.power) as cumulative_power from territories cross join (select season, day from turninfo where complete = true) rd left join past_turns on (rd.season = past_turns.season and rd.day = past_turns.day and territories.id = past_turns.territory) group by territories.name, rd.season, rd.day order by territories.name, rd.season desc, rd.day desc;
+ select territories.name, rd.season, rd.day, count(past_turns.territory) as cumulative_players, sum(past_turns.power) as cumulative_power from territories cross join (select season, day from turninfo where complete = true) rd left join past_turns on (rd.season = past_turns.season and rd.day = past_turns.day and territories.id = past_turns.territory) group by territories.name, rd.season, rd.day order by territories.name, rd.season desc, rd.day desc;
 
 
 ALTER TABLE public.heat OWNER TO postgres;
@@ -386,8 +386,7 @@ ALTER TABLE public.users OWNER TO postgres;
 -- Name: territory_ownership_without_neighbors; Type: VIEW; Schema: public; Owner: postgres
 --
 
-CREATE VIEW public.territory_ownership_without_neighbors AS
- SELECT territory_ownership.territory_id,
+ CREATE VIEW territory_ownership_without_neighbors as SELECT territory_ownership.territory_id,
     territory_ownership.day,
     territory_ownership.season,
     territories.name,
@@ -397,11 +396,11 @@ CREATE VIEW public.territory_ownership_without_neighbors AS
     territory_ownership.random_number,
     users.uname AS mvp
    FROM ((((public.territory_ownership
-     JOIN public.teams ON ((teams.id = territory_ownership.owner_id)))
-     JOIN public.teams tex ON ((tex.id = territory_ownership.previous_owner_id)))
-     JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
+     LEFT JOIN public.teams ON ((teams.id = territory_ownership.owner_id)))
+     LEFT JOIN public.teams tex ON ((tex.id = territory_ownership.previous_owner_id)))
+     LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
      LEFT JOIN public.users ON ((users.id = territory_ownership.mvp)))
-  ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
+ where territory_id = 2  ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
 
 
 ALTER TABLE public.territory_ownership_without_neighbors OWNER TO postgres;

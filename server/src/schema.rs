@@ -213,7 +213,7 @@ table! {
         territory_name -> Text,
         tname -> Text,
         prev_owner -> Text,
-        mvp -> Text,
+        mvp -> Nullable<Text>,
         color -> Text,
         secondary_color -> Text,
         team_name -> Text,
