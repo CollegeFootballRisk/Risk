@@ -861,8 +861,8 @@ function drawOddsPage(junk) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
-            player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players));
-            odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance));
+            player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 0;
+            odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 0;
             document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + player_red + ", " + player_red + ", " + player_red + ", 0.5)";
             document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + odds_red + ", " + odds_red + ", " + odds_red + ", 0.5)";
             obj.data.push([oddsObject[i]['territory'],
