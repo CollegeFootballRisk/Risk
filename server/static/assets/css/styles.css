@@ -567,6 +567,11 @@ header nav li:last-child {
     appearance: none;
 }
 
+#team_select option,
+#day_select option {
+    color: black;
+}
+
 h3[selectitem]::after {
     content: '↓';
     color: var(--theme-fg);
