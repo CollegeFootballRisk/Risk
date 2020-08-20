@@ -400,7 +400,7 @@ ALTER TABLE public.users OWNER TO postgres;
      LEFT JOIN public.teams tex ON ((tex.id = territory_ownership.previous_owner_id)))
      LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
      LEFT JOIN public.users ON ((users.id = territory_ownership.mvp)))
- where territory_id = 2  ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
+       ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
 
 
 ALTER TABLE public.territory_ownership_without_neighbors OWNER TO postgres;

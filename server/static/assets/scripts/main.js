@@ -4,7 +4,7 @@ var outstandingRequests = [];
 var errorNotifications = [];
 var now = new Date();
 var rollTime = new Date();
-var burger = false;
+window.hamburger = false;
 
 rollTime.setUTCHours(3, 0, 0, 0);
 if (rollTime < now) {
@@ -29,6 +29,11 @@ document.addEventListener('click', function(event) {
             return;
     }
 }, false);
+
+document.getElementById('burger').addEventListener('click', function(event) {
+    window.burger = !window.burger;
+    document.getElementById('nav').style.display = (window.burger) ? 'flex' : 'none';
+});
 
 
 //request handling

@@ -151,6 +151,10 @@ header h2 {
     font-family: 'Quicksand', sans-serif;
 }
 
+.hamburger {
+    display: none;
+}
+
 header img {
     height: 32px;
 }
@@ -194,6 +198,31 @@ header nav li:last-child {
     }
     header h2 {
         margin-bottom: 15px;
+    }
+    .hamburger {
+        display: flex;
+        float: left;
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        padding-left: 5px;
+        border-radius: 3px;
+    }
+    .hamburger:hover {
+        background: var(--theme-bg-05);
+    }
+    header nav {
+        flex-direction: column;
+        justify-content: center;
+        display: none;
+    }
+    header nav li {
+        margin: 0 15px !important;
+        display: flex !important;
+        justify-content: center;
+        padding: 20px;
     }
     .loader {
         position: relative;
@@ -833,6 +862,16 @@ footer p a {
 
 #defend-list button {
     background: var(--theme-accent-2);
+}
+
+@media (max-width: 700px) {
+    .gradient-border {
+        display: block;
+        max-width: 90% !important;
+        max-height: 100% !important;
+        top: 0px !important;
+        overflow-y: scroll !important;
+    }
 }
 
 
