@@ -284,6 +284,7 @@ function getUserInfo(resolve, reject) {
             function() {
                 //display reddit login info
                 document.getElementById("playerCard").classList.add("redditlogin");
+                document.getElementById("reddit-login-top").style.display = "flex";
                 document.getElementById("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
                 resolve("Okay");
             });
