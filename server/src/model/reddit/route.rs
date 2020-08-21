@@ -99,7 +99,7 @@ pub fn reddit_callback(
                         Err(_e) => std::result::Result::Err(Status::BadRequest),
                     }
                 }
-                Err(_ex) => std::result::Result::Err(Status::PaymentRequired),
+                Err(_ex) => std::result::Result::Err(Status::BadRequest),
             }
         }
         _ => std::result::Result::Err(Status::Gone),
