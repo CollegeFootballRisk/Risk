@@ -9,7 +9,7 @@ use hyper::{
 };
 
 use rocket::http::{Cookie, Cookies, SameSite, Status};
-use rocket::response::Redirect;
+use rocket::response::{Flash, Redirect};
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 use serde_json::{self};
@@ -25,7 +25,7 @@ pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) ->
 }
 
 #[get("/logout")]
-pub fn reddit_logout(mut cookies: Cookies) -> Redirect {
+pub fn reddit_logout(mut cookies: Cookies) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -42,7 +42,7 @@ pub fn reddit_logout(mut cookies: Cookies) -> Redirect {
         .context("failed to send request to API");*/
     cookies.remove_private(Cookie::named("jwt"));
     cookies.remove_private(Cookie::named("username"));
-    Redirect::to("/")
+    Flash::success(Redirect::to("/"), "Successfully logged out.")
     //TODO: Implement a deletion call to reddit.
 }
 
