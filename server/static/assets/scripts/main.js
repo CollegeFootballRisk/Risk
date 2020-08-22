@@ -462,8 +462,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
-                        red = Math.round(255 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 0;
-                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "rgba(" + red + ", " + red + ", " + red + ", 0.5)";
+                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("map-county-info").innerHTML = "Leaderboard";
                         document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, "page_leaderboard_update", window.turnsObject);
@@ -867,10 +867,10 @@ function drawOddsPage(junk) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
-            player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 0;
-            odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 0;
-            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + player_red + ", " + player_red + ", " + player_red + ", 0.5)";
-            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + odds_red + ", " + odds_red + ", " + odds_red + ", 0.5)";
+            player_red = Math.round(260 + 200 * (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 60;
+            odds_red = Math.round(260 + 200 * (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 60;
+            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + player_red + ",100%, 50%, 0.5)";
+            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + odds_red + ", 100%, 50%, 0.5)";
             obj.data.push([oddsObject[i]['territory'],
                 oddsObject[i]["owner"],
                 oddsObject[i]["mvp"],
