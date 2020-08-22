@@ -124,6 +124,7 @@ fn process_territories(
             }
             1 => {
                 let mvp = getmvp(territory_players.clone());
+                mvps.push(mvp.clone());
                 new_owners.push(TerritoryOwnersInsert {
                     territory_id: territory.territory_id,
                     territory_name: None,
