@@ -462,7 +462,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
-                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
+                        red = Math.round(260 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("map-county-info").innerHTML = "Leaderboard";
