@@ -312,11 +312,43 @@ CREATE TABLE public.territories (
 ALTER TABLE public.territories OWNER TO postgres;
 
 --
+-- Name: turninfo; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.turninfo (
+    id integer NOT NULL,
+    season integer,
+    day integer,
+    complete boolean,
+    active boolean,
+    finale boolean,
+    chaosrerolls integer DEFAULT 0,
+    chaosweight integer DEFAULT 1,
+    rollendtime timestamp without time zone,
+    rollstarttime timestamp without time zone
+);
+
+
+ALTER TABLE public.turninfo OWNER TO postgres;
+
+--
 -- Name: heat; Type: VIEW; Schema: public; Owner: postgres
 --
 
 CREATE VIEW public.heat AS
- select territories.name, rd.season, rd.day, count(past_turns.territory) as cumulative_players, sum(past_turns.power) as cumulative_power from territories cross join (select season, day from turninfo where complete = true) rd left join past_turns on (rd.season = past_turns.season and rd.day = past_turns.day and territories.id = past_turns.territory) group by territories.name, rd.season, rd.day order by territories.name, rd.season desc, rd.day desc;
+ SELECT territories.name,
+    rd.season,
+    rd.day,
+    count(past_turns.territory) AS cumulative_players,
+    COALESCE(sum(past_turns.power), (0)::double precision) AS cumulative_power
+   FROM ((public.territories
+     CROSS JOIN ( SELECT turninfo.season,
+            turninfo.day
+           FROM public.turninfo
+          WHERE (turninfo.complete = true)) rd)
+     LEFT JOIN public.past_turns ON (((rd.season = past_turns.season) AND (rd.day = past_turns.day) AND (territories.id = past_turns.territory))))
+  GROUP BY territories.name, rd.season, rd.day
+  ORDER BY territories.name, rd.season DESC, rd.day DESC;
 
 
 ALTER TABLE public.heat OWNER TO postgres;
@@ -364,11 +396,11 @@ ALTER TABLE public.territory_ownership OWNER TO postgres;
 
 CREATE TABLE public.users (
     id integer NOT NULL,
-    uname text NOT NULL,
-    platform text NOT NULL,
+    uname public.citext NOT NULL,
+    platform public.citext NOT NULL,
     join_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    current_team integer DEFAULT 0 NOT NULL,
-    auth_key text,
+    current_team integer DEFAULT '-1'::integer NOT NULL,
+    auth_key public.citext,
     overall integer DEFAULT 1,
     turns integer DEFAULT 0,
     game_turns integer DEFAULT 0,
@@ -376,7 +408,7 @@ CREATE TABLE public.users (
     streak integer DEFAULT 0,
     awards integer DEFAULT 0,
     role_id integer DEFAULT 0,
-    playing_for integer
+    playing_for integer DEFAULT '-1'::integer
 );
 
 
@@ -386,7 +418,8 @@ ALTER TABLE public.users OWNER TO postgres;
 -- Name: territory_ownership_without_neighbors; Type: VIEW; Schema: public; Owner: postgres
 --
 
- CREATE VIEW territory_ownership_without_neighbors as SELECT territory_ownership.territory_id,
+CREATE VIEW public.territory_ownership_without_neighbors AS
+ SELECT territory_ownership.territory_id,
     territory_ownership.day,
     territory_ownership.season,
     territories.name,
@@ -400,7 +433,7 @@ ALTER TABLE public.users OWNER TO postgres;
      LEFT JOIN public.teams tex ON ((tex.id = territory_ownership.previous_owner_id)))
      LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
      LEFT JOIN public.users ON ((users.id = territory_ownership.mvp)))
-       ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
+  ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
 
 
 ALTER TABLE public.territory_ownership_without_neighbors OWNER TO postgres;
@@ -596,26 +629,6 @@ CREATE VIEW public.players AS
 
 
 ALTER TABLE public.players OWNER TO postgres;
-
---
--- Name: turninfo; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.turninfo (
-    id integer NOT NULL,
-    season integer,
-    day integer,
-    complete boolean,
-    active boolean,
-    finale boolean,
-    chaosrerolls integer DEFAULT 0,
-    chaosweight integer DEFAULT 1,
-    rollendtime timestamp without time zone,
-    rollstarttime timestamp without time zone
-);
-
-
-ALTER TABLE public.turninfo OWNER TO postgres;
 
 --
 -- Name: rollinfo; Type: VIEW; Schema: public; Owner: postgres
@@ -880,6 +893,30 @@ ALTER TABLE public.turninfo_id_seq OWNER TO postgres;
 
 ALTER SEQUENCE public.turninfo_id_seq OWNED BY public.turninfo.id;
 
+
+--
+-- Name: users_bak; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.users_bak (
+    id integer,
+    uname text,
+    platform text,
+    join_date timestamp without time zone,
+    current_team integer,
+    auth_key text,
+    overall integer,
+    turns integer,
+    game_turns integer,
+    mvps integer,
+    streak integer,
+    awards integer,
+    role_id integer,
+    playing_for integer
+);
+
+
+ALTER TABLE public.users_bak OWNER TO postgres;
 
 --
 -- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres

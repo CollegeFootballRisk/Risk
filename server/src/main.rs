@@ -80,6 +80,12 @@ fn js_api_team(_data: Option<String>) -> NamedFile {
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
+#[get("/team/<_data>/players", rank = 1)]
+fn js_api_team_players(_data: Option<String>) -> NamedFile {
+    NamedFile::open("static/index.html").ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
 #[get("/player/<_data>", rank = 1)]
 fn js_api_player(_data: Option<String>) -> NamedFile {
     NamedFile::open("static/index.html").ok().unwrap()
@@ -141,6 +147,7 @@ fn start() {
             js_api_territory,
             js_api_territories,
             js_api_team,
+            js_api_team_players,
             js_api_player
         ])
         .launch();

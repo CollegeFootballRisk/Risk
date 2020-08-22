@@ -735,7 +735,7 @@ function page_territory(contentTag, t_object) {
                             if (p == 'team') {
                                 obj_players.data[i].push("<a href=\"/team/{{team}}\" >{{team}}</a>".replace(/{{team}}/gi, territoryTurn.players[i][p]));
                             } else if (p == 'player') {
-                                obj_players.data[i].push("<a href=\"/player/{{player}}\" >{{player}}</a>".replace(/{{player}}/gi, territoryTurn.players[i][p]));
+                                obj_players.data[i].push("<a href=\"/player/{{player}}\" {{star_style}}>{{star}}{{player}}</a>".replace(/{{player}}/gi, territoryTurn.players[i][p]).replace(/{{star_style}}/, (territoryTurn.players[i]['mvp'] == true) ? "style=\"color:var(--theme-accent-1);\"" : "").replace(/{{star}}/, (territoryTurn.players[i]['mvp'] == true) ? '✯' : ''));
                             } else {
                                 obj_players.data[i].push(territoryTurn.players[i][p]);
                             }
@@ -942,8 +942,8 @@ function drawTeamPage(teamsObject, teamTurnsObject, team) {
 
     teamTurnsObject = JSON.parse(teamTurnsObject.response);
     var lastTeamTurn = teamTurnsObject[teamTurnsObject.length - 1];
-    document.getElementById('team-prev-players').innerHTML = "Players:" + lastTeamTurn.players;
-    document.getElementById('team-prev-stars').innerHTML = "Star power:" + lastTeamTurn.starPower;
+    document.getElementById('team-prev-players').innerHTML = "Players: " + lastTeamTurn.players;
+    document.getElementById('team-prev-stars').innerHTML = "Star power: " + lastTeamTurn.starPower;
     let display_headings = ["season", "day", "territories", "players", "starPower", "effectivePower"];
 
     var power_data = [];
@@ -1083,8 +1083,68 @@ function drawTeamPage(teamsObject, teamTurnsObject, team) {
         });
     }
     //then we fill the header
+
+    document.getElementById('teamPlayerHint').innerHTML = "<center><a href = \"/team/{{team}}/players\"> See all of {{team_c}}'s players </a></center>".replace(/{{team}}/gi, team).replace(/{{team_c}}/gi, decodeURIComponent(team));
 }
 
+function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
+    teamPlayersObject = JSON.parse(teamPlayersObject.response);
+    let display_headings = ["player", "turnsPlayed", "mvps"];
+
+    var obj = {
+        // Quickly get the headings
+        headings: ["Player", "Turns Played", "MVPs", "Last Turn"],
+
+        // data array
+        data: []
+    };
+
+    for (var i = 0; i < teamPlayersObject.length; i++) {
+
+        obj.data[i] = [];
+
+        for (var p in teamPlayersObject[i]) {
+            if (teamPlayersObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
+                obj.data[i].push(teamPlayersObject[i][p]);
+            }
+        }
+        obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
+    }
+
+    console.log(obj);
+
+    try {
+        window.datatable.destroy();
+    } catch {
+        // don't do anything, nor output to table ;)
+    } finally {
+        window.datatable = new DataTable("#team-turns-table", {
+            data: obj,
+            columns: obj.columns,
+            searchable: true,
+            perPageSelect: false,
+            footer: false,
+            labels: {
+                info: "",
+            }
+        });
+    }
+}
+
+function page_team_players(contentTag, team) {
+    var templateTeam = document.getElementById("templateTeamPlayers");
+    contentTag.innerHTML += templateTeam.innerHTML;
+    document.getElementById('team-header').innerHTML = "<h1>" + decodeURIComponent(team) + "</h1>";
+    var templateTeamPage = document.getElementById("templateTeamPage");
+    let team_page_2 = new Promise((resolve, reject) => {
+            getTeamInfo(resolve, reject);
+        })
+        .then((values) => {
+            doAjaxGetRequest('/api/players?team=' + team.replace('&', '%26'), 'TeamPlayersFetch', function(data) {
+                drawTeamPlayersPage(values, data, team);
+            });
+        })
+}
 
 function page_team(contentTag, team) {
     // load the teams info and save to tag
@@ -1253,6 +1313,9 @@ router
     })
     .add('/info', () => {
         handleNewPage('Information', contentTag, page_info);
+    })
+    .add(/team\/(.*)\/players/, (team) => {
+        handleNewPage(team, contentTag, page_team_players, team.replace('#', ''));
     })
     .add('/team/(.*)', (team) => {
         handleNewPage(team, contentTag, page_team, team.replace('#', ''));

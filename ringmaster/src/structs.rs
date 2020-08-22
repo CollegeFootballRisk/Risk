@@ -37,9 +37,9 @@ pub struct Stats {
     pub territorycount: i32,
     pub playercount: i32,
     pub merccount: i32,
-    pub starpower: i32,
-    pub efficiency: i32,
-    pub effectivepower: i32,
+    pub starpower: f64,
+    pub efficiency: f64,
+    pub effectivepower: f64,
     pub ones: i32,
     pub twos: i32,
     pub threes: i32,
@@ -193,7 +193,7 @@ impl Stats {
                 playercount: i.playercount,
                 merccount: i.merccount,
                 starpower: i.starpower,
-                efficiency: i.starpower / i.territorycount,
+                efficiency: i.starpower / i.territorycount as f64,
                 effectivepower: i.effectivepower,
                 ones: i.ones,
                 twos: i.twos,
@@ -202,9 +202,7 @@ impl Stats {
                 fives: i.fives,
             });
         }
-        diesel::insert_into(stats::table)
-            .values(amended_stats)
-            .execute(conn)
+        diesel::insert_into(stats::table).values(amended_stats).execute(conn)
     }
 
     pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
@@ -217,9 +215,9 @@ impl Stats {
             territorycount: 0,
             playercount: 0,
             merccount: 0,
-            starpower: 0,
-            efficiency: 0,
-            effectivepower: 0,
+            starpower: 0.0,
+            efficiency: 0.0,
+            effectivepower: 0.0,
             ones: 0,
             twos: 0,
             threes: 0,
@@ -237,9 +235,7 @@ impl Team {
 
 impl TerritoryStats {
     pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(territory_stats::table)
-            .values(stats)
-            .execute(conn)
+        diesel::insert_into(territory_stats::table).values(stats).execute(conn)
     }
 }
 
@@ -259,9 +255,7 @@ impl TerritoryOwners {
 impl TerritoryOwnersInsert {
     pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::*;
-        insert_into(territory_ownership)
-            .values(*&owners)
-            .execute(conn)
+        insert_into(territory_ownership).values(*&owners).execute(conn)
     }
 }
 

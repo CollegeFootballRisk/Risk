@@ -35,10 +35,7 @@ pub fn establish_connection() -> PgConnection {
 }
 
 fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
-    let mut teams = territory_players
-        .iter()
-        .map(|x| x.team)
-        .collect::<Vec<i32>>();
+    let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
     teams.sort();
     teams.dedup();
     teams
@@ -70,12 +67,7 @@ fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
-) -> (
-    Vec<TerritoryOwnersInsert>,
-    Vec<PlayerMoves>,
-    HashMap<i32, Stats>,
-    Vec<TerritoryStats>,
-) {
+) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>, Vec<TerritoryStats>) {
     dbg!("process_territories");
     dbg!(territories.len());
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
@@ -143,7 +135,7 @@ fn process_territories(
                     mvp: Some(mvp.user_id),
                 });
                 stats
-                    .entry(territory.owner_id)
+                    .entry(teams[0])
                     .or_insert_with(|| {
                         Stats::new(
                             territory.season * 1000 + territory.season + 1,
@@ -154,7 +146,7 @@ fn process_territories(
                     })
                     .territorycount += 1;
                 stats
-                    .entry(territory.owner_id)
+                    .entry(teams[0])
                     .or_insert_with(|| {
                         Stats::new(
                             territory.season * 1000 + territory.season + 1,
@@ -163,14 +155,12 @@ fn process_territories(
                             teams[0],
                         )
                     })
-                    .starpower += territory_players
-                    .iter()
-                    .map(|mover| mover.power.round() as i32)
-                    .sum::<i32>();
+                    .starpower +=
+                    territory_players.iter().map(|mover| mover.power.round()).sum::<f64>();
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
-                    team: territory.owner_id,
+                    team: teams[0],
                     season: territory.season,
                     day: territory.day,
                     ones: territory_players.iter().filter(|player| player.stars == 1).count()
@@ -185,13 +175,13 @@ fn process_territories(
                         as i32,
                     teampower: territory_players
                         .iter()
-                        .map(|mover| mover.power.round() as f64)
+                        .map(|mover| mover.power as f64)
                         .sum::<f64>(),
                     chance: 1.00,
                     territory: territory.territory_id,
                     territory_power: territory_players
                         .iter()
-                        .map(|mover| mover.power.round() as f64)
+                        .map(|mover| mover.power as f64)
                         .sum::<f64>(),
                 });
                 continue;
@@ -268,10 +258,8 @@ fn process_territories(
                     })
                     .territorycount += 1;
 
-                let total_power = territory_players
-                    .iter()
-                    .map(|mover| mover.power.round() as f64)
-                    .sum::<f64>();
+                let total_power =
+                    territory_players.iter().map(|mover| mover.power as f64).sum::<f64>();
                 handleteamstats(&mut stats, territory_players);
                 for (key, val) in map.iter() {
                     territory_stats.push(TerritoryStats {
@@ -322,7 +310,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     i.team,
                 )
             })
-            .starpower += i.stars;
+            .starpower += i.power;
 
         stats
             .entry(i.team)
@@ -334,7 +322,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     i.team,
                 )
             })
-            .effectivepower += i.power.round() as i32;
+            .effectivepower += i.power.round() as f64;
 
         if i.merc {
             stats
