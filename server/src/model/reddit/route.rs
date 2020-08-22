@@ -18,7 +18,7 @@ extern crate chrono;
 use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
 use chrono::Duration;
-
+use diesel_citext::types::CiString;
 #[get("/reddit")]
 pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
     oauth2.get_redirect(&mut cookies, &["identity"]).unwrap()
@@ -56,7 +56,7 @@ pub fn reddit_callback(
     match getRedditUserInfo(&token) {
         Ok(user_info) => {
             let new_user = UpsertableUser {
-                uname: user_info.name.clone(),
+                uname: CiString::from(user_info.name.clone()),
                 platform: "reddit".to_string(),
             };
             match UpsertableUser::upsert(new_user, &conn) {

@@ -29,7 +29,7 @@ table! {
 table! {
     users (id) {
         id -> Int4,
-        uname -> Text,
+        uname -> diesel_citext::sql_types::Citext,
         platform -> Text,
         join_date -> Nullable<Timestamp>,
         current_team -> Int4,

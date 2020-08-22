@@ -4,6 +4,8 @@ use crate::model::{Colors, Ratings, Stats, Team, Turn};
 use crate::schema::*;
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_citext::types::CiString;
+
 #[derive(Serialize)]
 pub struct Player {
     pub id: i32,
@@ -78,8 +80,9 @@ impl PlayerWithTurnsAndAdditionalTeam {
             true => 0,
             false => -1,
         };
+        let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
         let results = users::table
-            .filter(users::uname.eq_any(name))
+            .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
             .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
@@ -128,8 +131,9 @@ impl PlayerWithTurns {
             true => 0,
             false => -1,
         };
+        let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
         let results = users::table
-            .filter(users::uname.eq_any(name))
+            .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::current_team)))
             .select((
@@ -234,7 +238,7 @@ impl PlayerInTurns {
 impl User {
     pub fn load(name: String, platform: String, conn: &PgConnection) -> Result<User, Error> {
         users::table
-            .filter(users::uname.eq(name))
+            .filter(users::uname.eq(CiString::from(name)))
             .filter(users::platform.eq(platform))
             .select((
                 users::id,

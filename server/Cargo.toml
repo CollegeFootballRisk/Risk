@@ -9,6 +9,7 @@ base64 = "0.12.3"
 captcha = "0.0.7"
 chrono = "0.4.12"
 diesel = { version = "1.4.4", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
+diesel-citext = "0.3.0"
 diesel_migrations = "1.4"
 dotenv = "0.15.0"
 hyper = "0.10"
