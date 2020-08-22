@@ -6,7 +6,7 @@ use diesel_citext::types::CiString;
 #[table_name = "users"]
 pub struct UpsertableUser {
     pub uname: CiString,
-    pub platform: String,
+    pub platform: CiString,
 }
 
 impl UpsertableUser {

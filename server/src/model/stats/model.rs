@@ -1,6 +1,7 @@
 use crate::schema::{heat_full, odds, statistics};
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_citext::types::CiString;
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Stats {
     pub totalTurns: i32,
@@ -13,7 +14,7 @@ pub struct Stats {
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct StatLeaderboard {
     pub rank: i32, //determined by number of territories desc
-    pub name: String,
+    pub name: CiString,
     pub logo: String,
     pub territoryCount: i32,
     pub playerCount: i32,
@@ -54,8 +55,8 @@ pub struct StarBreakdown {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Heat {
-    pub territory: String,
-    pub winner: String,
+    pub territory: CiString,
+    pub winner: CiString,
     pub players: i64,
     pub power: f64,
 }
@@ -71,10 +72,10 @@ pub struct StarBreakdown64 {
 
 #[derive(Queryable, Serialize, Deserialize, Debug)]
 pub struct Odds {
-    pub territory: String,
-    pub owner: String,
-    pub winner: String,
-    pub mvp: Option<String>,
+    pub territory: CiString,
+    pub owner: CiString,
+    pub winner: CiString,
+    pub mvp: Option<CiString>,
     pub players: i32,
     pub starBreakdown: StarBreakdown64,
     pub teamPower: f64,
@@ -101,7 +102,7 @@ impl Heat {
 impl StatHistory {
     pub fn load(team: String, conn: &PgConnection) -> Vec<StatHistory> {
         statistics::table
-            .filter(statistics::tname.eq(team))
+            .filter(statistics::tname.eq(CiString::from(team)))
             .select((
                 statistics::sequence,
                 statistics::season,
@@ -133,7 +134,7 @@ impl CurrentStrength {
                 statistics::starpower,
                 statistics::territorycount,
             ))
-            .filter(statistics::tname.eq(team))
+            .filter(statistics::tname.eq(CiString::from(team)))
             .order(statistics::season.desc())
             .order(statistics::day.desc())
             .first::<CurrentStrength>(conn)
@@ -196,7 +197,7 @@ impl Odds {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::team_name.eq(team))
+            .filter(odds::team_name.eq(CiString::from(team)))
             .load::<Odds>(conn)
     }
 }

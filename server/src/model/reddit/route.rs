@@ -19,6 +19,7 @@ use crate::{db::DbConn, model::User};
 use chrono::prelude::*;
 use chrono::Duration;
 use diesel_citext::types::CiString;
+
 #[get("/reddit")]
 pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
     oauth2.get_redirect(&mut cookies, &["identity"]).unwrap()
@@ -57,7 +58,7 @@ pub fn reddit_callback(
         Ok(user_info) => {
             let new_user = UpsertableUser {
                 uname: CiString::from(user_info.name.clone()),
-                platform: "reddit".to_string(),
+                platform: CiString::from("reddit"),
             };
             match UpsertableUser::upsert(new_user, &conn) {
                 Ok(_n) => {
@@ -68,7 +69,7 @@ pub fn reddit_callback(
                             let timestamp: usize = 604800 + datetime.timestamp() as usize;
                             let new_claims = Claims {
                                 id: user.id,
-                                user: user.uname,
+                                user: user.uname.to_string(),
                                 token: Some(token.refresh_token().unwrap().to_string()),
                                 refresh_token: Some(token.access_token().to_string()),
                                 exp: timestamp,
