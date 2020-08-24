@@ -501,7 +501,7 @@ function drawUserTurnHistory(playerObject) {
 
     var obj = {
         // Quickly get the headings
-        headings: ["Season", "Day", "Stars", "Team", "Territory", "MVP"],
+        headings: ["Season", "Day", "Stars", "MVP", "Territory", "Team"],
 
         // data array
         data: []
@@ -514,7 +514,13 @@ function drawUserTurnHistory(playerObject) {
 
         for (var p in turnHistoryObject[i]) {
             if (turnHistoryObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
-                obj.data[i].push(turnHistoryObject[i][p]);
+                if (p == 'territory') {
+                    obj.data[i].push("<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, turnHistoryObject[i][p]));
+                } else if (p == 'team') {
+                    obj.data[i].push("<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, turnHistoryObject[i][p]));
+                } else {
+                    obj.data[i].push(turnHistoryObject[i][p]);
+                }
             }
         }
     }
@@ -559,6 +565,8 @@ function drawLeaderboard(season, day) {
                 if (leaderboardObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
                     if (p == 'name') {
                         obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
+                    } else if (p == 'efficiency') {
+                        obj.data[i].push(leaderboardObject[i][p].toFixed(2));
                     } else {
                         obj.data[i].push(leaderboardObject[i][p]);
                     }
@@ -871,9 +879,9 @@ function drawOddsPage(junk) {
             odds_red = Math.round(160 + 200 * (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 60;
             document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + player_red + ",100%, 50%, 0.5)";
             document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + odds_red + ", 100%, 50%, 0.5)";
-            obj.data.push([oddsObject[i]['territory'],
-                oddsObject[i]["owner"],
-                oddsObject[i]["mvp"],
+            obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
+                "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
+                "<a href=\"/player/{{player}}\">{{player}}</a>".replace(/{{player}}/gi, oddsObject[i]["mvp"]),
                 oddsObject[i]["players"],
                 oddsObject[i]["starBreakdown"]["ones"],
                 oddsObject[i]["starBreakdown"]["twos"],
@@ -1105,7 +1113,11 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
 
         for (var p in teamPlayersObject[i]) {
             if (teamPlayersObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
-                obj.data[i].push(teamPlayersObject[i][p]);
+                if (p == 'player') {
+                    obj.data[i].push("<a href=\"/player/{{player}}\">{{player}}</a>".replace(/{{player}}/gi, teamPlayersObject[i][p]));
+                } else {
+                    obj.data[i].push(teamPlayersObject[i][p]);
+                }
             }
         }
         obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
