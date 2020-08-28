@@ -384,37 +384,45 @@ function makeMove(id) {
 
 function drawActionBoard(resolve, reject) {
     let territories = window.territories;
-    try {
-        console.log("oh dear");
-        let userteam = window.userObject.active_team.name;
-        console.log(userteam);
-        let attackable_territories = {};
-        let defendable_territories = {};
-        console.log(territories);
-        for (i in territories) {
-            if (territories[i].owner == userteam) {
-                defendable_territories[territories[i].id] = territories[i];
-                for (j in territories[i].neighbors) {
-                    if (territories[i].neighbors[j].owner != userteam) {
-                        attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+    if (window.turnsObject[window.turnsObject.length - 1].finale == true) {
+        document.getElementById('last-day-notice').innerHTML = 'Today is the final roll! Make it count!';
+    }
+    if (window.turnsObject[window.turnsObject.length - 1].active == false) {
+        document.getElementById('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
+        document.getElementById('action-container').innerHTML = '<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+    } else {
+        try {
+            console.log("oh dear");
+            let userteam = window.userObject.active_team.name;
+            console.log(userteam);
+            let attackable_territories = {};
+            let defendable_territories = {};
+            console.log(territories);
+            for (i in territories) {
+                if (territories[i].owner == userteam) {
+                    defendable_territories[territories[i].id] = territories[i];
+                    for (j in territories[i].neighbors) {
+                        if (territories[i].neighbors[j].owner != userteam) {
+                            attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                        }
                     }
                 }
             }
+            document.getElementById('action-container').style.display = "flex";
+            let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
+            for (k in attackable_territories) {
+                document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, attackable_territories[k].name).replace(/{{id}}/, attackable_territories[k].id);
+            }
+            for (l in defendable_territories) {
+                document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, defendable_territories[l].name).replace(/{{id}}/, defendable_territories[l].id);
+            }
+            console.log("Territory actions drawn");
+            resolve("Okay");
+        } catch (error) {
+            console.log('could not do territory analysis');
+            console.log(error);
+            reject("Error");
         }
-        document.getElementById('action-container').style.display = "flex";
-        let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
-        for (k in attackable_territories) {
-            document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, attackable_territories[k].name).replace(/{{id}}/, attackable_territories[k].id);
-        }
-        for (l in defendable_territories) {
-            document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, defendable_territories[l].name).replace(/{{id}}/, defendable_territories[l].id);
-        }
-        console.log("Territory actions drawn");
-        resolve("Okay");
-    } catch (error) {
-        console.log('could not do territory analysis');
-        console.log(error);
-        reject("Error");
     }
 }
 
@@ -822,12 +830,16 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
+                getTurns(resolve, reject);
+            })
+        })
+        .then(() => {
+            return new Promise((resolve, reject) => {
                 drawActionBoard(resolve, reject);
             })
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                getTurns(resolve, reject);
                 setUpCounter();
             })
         })
@@ -1217,13 +1229,6 @@ function handleNewPage(title, contentTag, call, vari) {
 }
 
 class Router {
-    /*constructor() {
-        routes = [];
-
-        mode = null;
-
-        root = '/';
-    }*/
 
     constructor(options) {
         this.routes = [];
