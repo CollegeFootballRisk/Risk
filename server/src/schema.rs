@@ -175,7 +175,6 @@ table! {
         playercount -> Int4,
         merccount -> Int4,
         starpower -> Double,
-        stars -> Int4,
         efficiency -> Double,
         effectivepower -> Double,
         ones -> Int4,

@@ -183,6 +183,10 @@ impl Stats {
                 rankings += 1;
             }
             territories = i.territorycount;
+            let teamefficiency: f64 = match territories {
+               0 =>  0.0,
+                _ =>  i.starpower / i.territorycount as f64,
+            };
             amended_stats.push(Stats {
                 sequence,
                 season: i.season,
@@ -193,7 +197,7 @@ impl Stats {
                 playercount: i.playercount,
                 merccount: i.merccount,
                 starpower: i.starpower,
-                efficiency: i.starpower / i.territorycount as f64,
+                efficiency: teamefficiency,
                 effectivepower: i.effectivepower,
                 ones: i.ones,
                 twos: i.twos,

@@ -75,14 +75,15 @@ fn process_territories(
     let mut stats: HashMap<i32, Stats> = HashMap::new();
     let mut territory_stats: Vec<TerritoryStats> = Vec::new();
     for territory in territories {
-        //dbg!(&territory.territory_id);
+        dbg!(&territory.territory_id);
         let territory_players = players
             .drain_filter(|player| player.territory == territory.territory_id)
             .collect::<Vec<_>>();
-        //dbg!(&territory_players.len());
+        dbg!(&territory_players.len());
         let teams = getteams(territory_players.clone());
         match teams.len() {
             0 => {
+                dbg!("Zero Team");
                 new_owners.push(TerritoryOwnersInsert {
                     territory_id: territory.territory_id,
                     territory_name: None,
@@ -123,6 +124,7 @@ fn process_territories(
                 continue;
             }
             1 => {
+                dbg!("One Team");
                 let mvp = getmvp(territory_players.clone());
                 mvps.push(mvp.clone());
                 new_owners.push(TerritoryOwnersInsert {
@@ -157,7 +159,7 @@ fn process_territories(
                         )
                     })
                     .starpower +=
-                    territory_players.iter().map(|mover| mover.power.round()).sum::<f64>();
+                    territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
@@ -188,6 +190,7 @@ fn process_territories(
                 continue;
             }
             _ => {
+                 dbg!(&teams);
                 let mut map = HashMap::new();
                 for team in teams {
                     map.insert(team, (0, 0f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
@@ -311,7 +314,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     i.team,
                 )
             })
-            .starpower += i.power;
+            .starpower += i.power / i.multiplier.unwrap_or(1.0);
 
         stats
             .entry(i.team)
