@@ -164,8 +164,8 @@ header .brand-image {
     right: 104px;
 }
 
-@media screen and (-webkit-min-device-pixel-ratio:0) and (min-resolution:.001dpcm) {
-    .brand-image {
+@media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
+    .selector:not(*: root), .brand-image {
         right: 103px !important;
     }
 }
