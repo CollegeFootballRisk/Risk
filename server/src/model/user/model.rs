@@ -1,11 +1,12 @@
 use crate::schema::*;
 use diesel::prelude::*;
+use diesel_citext::types::CiString;
 
 #[derive(Insertable, Queryable, Serialize, Deserialize, AsChangeset)]
 #[table_name = "users"]
 pub struct UpsertableUser {
-    pub uname: String,
-    pub platform: String,
+    pub uname: CiString,
+    pub platform: CiString,
 }
 
 impl UpsertableUser {

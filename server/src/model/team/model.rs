@@ -2,6 +2,8 @@ use crate::model::StarBreakdown64;
 use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_citext::types::CiString;
+
 #[derive(Queryable, Serialize, Deserialize, Associations)]
 #[table_name = "teams"]
 pub struct Team {
@@ -29,7 +31,7 @@ pub struct TeamInfo {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct TeamInTurns {
-    pub team: String,
+    pub team: CiString,
     pub color: String,
     pub secondaryColor: String,
     pub players: i32,
@@ -82,6 +84,7 @@ impl TeamPlayerMoves {
     ) -> Vec<TeamPlayerMoves> {
         match team {
             Some(team_seek) => {
+                let ciTeam_seek = CiString::from(team_seek);
                 team_player_moves::table
                     .select((
                         team_player_moves::id,
@@ -96,7 +99,7 @@ impl TeamPlayerMoves {
                     ))
                     .filter(team_player_moves::season.eq(season_seek))
                     .filter(team_player_moves::day.eq(day_seek))
-                    .filter(team_player_moves::team.eq(team_seek))
+                    .filter(team_player_moves::team.eq(ciTeam_seek))
                     .load::<TeamPlayerMoves>(conn)
                     .expect("Error loading moves")
             }
@@ -141,7 +144,7 @@ impl TeamInTurns {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::territory_name.eq(territory))
+            .filter(odds::territory_name.eq(CiString::from(territory)))
             .load::<TeamInTurns>(conn)
     }
 }

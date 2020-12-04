@@ -3,6 +3,7 @@ use crate::schema::{territory_ownership_with_neighbors, territory_ownership_with
 use diesel::prelude::*;
 use serde_json::Value;
 use std::result::Result;
+use diesel_citext::types::CiString;
 
 #[derive(Serialize, Queryable, Deserialize)]
 pub struct Territory {
@@ -54,7 +55,7 @@ impl TerritoryWithNeighbors {
 impl TerritoryHistory {
     pub fn load(name: String, season: i32, conn: &PgConnection) -> Vec<TerritoryHistory> {
         territory_ownership_without_neighbors::table
-            .filter(territory_ownership_without_neighbors::name.eq(name))
+            .filter(territory_ownership_without_neighbors::name.eq(CiString::from(name)))
             .filter(territory_ownership_without_neighbors::season.eq(season))
             .select((
                 territory_ownership_without_neighbors::season,
@@ -81,11 +82,11 @@ impl TerritoryTurn {
             ))
             .filter(territory_ownership_without_neighbors::day.eq(&day))
             .filter(territory_ownership_without_neighbors::season.eq(&season))
-            .filter(territory_ownership_without_neighbors::name.eq(&territory))
-            .first::<(String, String)>(conn);
+            .filter(territory_ownership_without_neighbors::name.eq(CiString::from(territory.clone())))
+            .first::<(CiString, CiString)>(conn);
         let (owner, previous) = match result {
             Ok(duo) => duo,
-            _ => ("NotFound".to_string(), "NotFound".to_string()),
+            _ => (CiString::from("NotFound"), CiString::from("NotFound")),
         };
         let teams = TeamInTurns::load(&season, &day, &territory, &conn);
         let players = PlayerInTurns::load(&season, &day, &territory, &conn);
@@ -94,8 +95,8 @@ impl TerritoryTurn {
                 match players {
                     Ok(players) => {
                         Ok(TerritoryTurn {
-                            occupier: owner,
-                            winner: previous,
+                            occupier: owner.into(),
+                            winner: previous.into(),
                             teams,
                             players,
                         })

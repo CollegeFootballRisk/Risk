@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.3
--- Dumped by pg_dump version 12.3
+-- Dumped from database version 10.8 (Ubuntu 10.8-0ubuntu0.18.10.1)
+-- Dumped by pg_dump version 10.8 (Ubuntu 10.8-0ubuntu0.18.10.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,7 +17,21 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: citext; Type: EXTENSION; Schema: -; Owner: -
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
+
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
+
+
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+--
+-- Name: citext; Type: EXTENSION; Schema: -; Owner: 
 --
 
 CREATE EXTENSION IF NOT EXISTS citext WITH SCHEMA public;
@@ -31,7 +45,7 @@ COMMENT ON EXTENSION citext IS 'data type for case-insensitive character strings
 
 
 --
--- Name: _final_median(numeric[]); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: _final_median(numeric[]); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public._final_median(numeric[]) RETURNS numeric
@@ -48,10 +62,10 @@ CREATE FUNCTION public._final_median(numeric[]) RETURNS numeric
 $_$;
 
 
-ALTER FUNCTION public._final_median(numeric[]) OWNER TO postgres;
+ALTER FUNCTION public._final_median(numeric[]) OWNER TO risk;
 
 --
--- Name: diesel_manage_updated_at(regclass); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: diesel_manage_updated_at(regclass); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public.diesel_manage_updated_at(_tbl regclass) RETURNS void
@@ -64,10 +78,10 @@ END;
 $$;
 
 
-ALTER FUNCTION public.diesel_manage_updated_at(_tbl regclass) OWNER TO postgres;
+ALTER FUNCTION public.diesel_manage_updated_at(_tbl regclass) OWNER TO risk;
 
 --
--- Name: diesel_set_updated_at(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: diesel_set_updated_at(); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public.diesel_set_updated_at() RETURNS trigger
@@ -85,10 +99,10 @@ END;
 $$;
 
 
-ALTER FUNCTION public.diesel_set_updated_at() OWNER TO postgres;
+ALTER FUNCTION public.diesel_set_updated_at() OWNER TO risk;
 
 --
--- Name: do_user_update(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: do_user_update(); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public.do_user_update() RETURNS boolean
@@ -141,10 +155,10 @@ BEGIN
     $$;
 
 
-ALTER FUNCTION public.do_user_update() OWNER TO postgres;
+ALTER FUNCTION public.do_user_update() OWNER TO risk;
 
 --
--- Name: do_user_update(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: do_user_update(integer, integer); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public.do_user_update(day integer, season integer) RETURNS boolean
@@ -155,53 +169,64 @@ BEGIN
     UPDATE users SET streak = 0 WHERE id NOT IN (SELECT user_id FROM past_turns WHERE past_turns.day = do_user_update.day AND past_turns.season = do_user_update.season);
     UPDATE users SET mvps = mvps.mvps, turns = mvps.turns FROM (SELECT user_id, SUM(case when mvp=true THEN 1 ELSE 0 END) as mvps, count(*) as turns FROM past_turns GROUP BY user_id) as mvps WHERE mvps.user_id = users.id;
     UPDATE users SET game_turns = game_turns.game_turns FROM (SELECT user_id, count(*) as game_turns FROM past_turns WHERE past_turns.season = do_user_update.season GROUP BY user_id) as game_turns WHERE game_turns.user_id = users.id;
-    UPDATE users SET overall = overall.overall FROM (SELECT id, 
-        _final_median(array[
-            (case 
+    UPDATE users SET overall = overall.overall FROM (select id
+    , median(power) as overall
+from (
+    select id
+        , case
             when mvps >= 25 then 5
-            when mvps >=10 then 4
-            when mvps>=5 THEN 3
-            when mvps >= 1 THEN 2
-            when mvps = 0 THEN 1
-            else 0 end),
-            (case 
-            when turns >= 100 then 5 
-            when turns >= 50 then 4 
-            when turns >= 25 then 3 
-            when turns >= 10 then 2 
-            when turns >= 0 then 1 
-            else 0 end),
-            (case
+            when mvps >= 10 then 4
+            when mvps >= 5 then 3
+            when mvps >= 1 then 2
+            else 1 end as power
+    from users
+    union all
+    select id
+        , case
+            when turns >= 100 then 5
+            when turns >= 50 then 4
+            when turns >= 25 then 3
+            when turns >= 10 then 2
+            else 1 end as power
+    from users
+    union all
+    select id
+        , case
             when game_turns >= 40 then 5
             when game_turns >= 25 then 4
             when game_turns >= 10 then 3
             when game_turns >= 5 then 2
-            when game_turns >= 0 then 1
-            else 0 end),
-            (case
+            else 1 end as power
+    from users
+    union all
+    select id
+        , case
             when awards >= 4 then 5
             when awards >= 3 then 4
             when awards >= 2 then 3
             when awards >= 1 then 2
-            when awards >= 0 then 1
-            else 0 end),
-            (case
+            else 1 end as power
+    from users
+    union all
+    select id
+        , case
             when streak >= 25 then 5
             when streak >= 10 then 4
             when streak >= 5 then 3
             when streak >= 3 then 2
-            when streak >= 0 then 1
-            else 0 end)
-            ]) as overall FROM users GROUP BY id) as overall where overall.id= users.id;
+            else 1 end as power
+    from users
+    ) t
+group by 1) as overall where overall.id= users.id;
     return FOUND;
     END;
     $$;
 
 
-ALTER FUNCTION public.do_user_update(day integer, season integer) OWNER TO postgres;
+ALTER FUNCTION public.do_user_update(day integer, season integer) OWNER TO risk;
 
 --
--- Name: territorypower(integer, integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: territorypower(integer, integer, integer); Type: FUNCTION; Schema: public; Owner: risk
 --
 
 CREATE FUNCTION public.territorypower(integer, integer, integer) RETURNS bigint
@@ -209,10 +234,10 @@ CREATE FUNCTION public.territorypower(integer, integer, integer) RETURNS bigint
     AS $_$SELECT sum(power) FROM past_turns WHERE season = $1 AND day = $2 AND territory = $3 limit 1;$_$;
 
 
-ALTER FUNCTION public.territorypower(integer, integer, integer) OWNER TO postgres;
+ALTER FUNCTION public.territorypower(integer, integer, integer) OWNER TO risk;
 
 --
--- Name: median(numeric); Type: AGGREGATE; Schema: public; Owner: postgres
+-- Name: median(numeric); Type: AGGREGATE; Schema: public; Owner: risk
 --
 
 CREATE AGGREGATE public.median(numeric) (
@@ -223,14 +248,14 @@ CREATE AGGREGATE public.median(numeric) (
 );
 
 
-ALTER AGGREGATE public.median(numeric) OWNER TO postgres;
+ALTER AGGREGATE public.median(numeric) OWNER TO risk;
 
 SET default_tablespace = '';
 
-SET default_table_access_method = heap;
+SET default_with_oids = false;
 
 --
--- Name: __diesel_schema_migrations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: __diesel_schema_migrations; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.__diesel_schema_migrations (
@@ -239,10 +264,10 @@ CREATE TABLE public.__diesel_schema_migrations (
 );
 
 
-ALTER TABLE public.__diesel_schema_migrations OWNER TO postgres;
+ALTER TABLE public.__diesel_schema_migrations OWNER TO risk;
 
 --
--- Name: captchas; Type: TABLE; Schema: public; Owner: postgres
+-- Name: captchas; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.captchas (
@@ -252,10 +277,10 @@ CREATE TABLE public.captchas (
 );
 
 
-ALTER TABLE public.captchas OWNER TO postgres;
+ALTER TABLE public.captchas OWNER TO risk;
 
 --
--- Name: captchas_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: captchas_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.captchas_id_seq
@@ -267,17 +292,17 @@ CREATE SEQUENCE public.captchas_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.captchas_id_seq OWNER TO postgres;
+ALTER TABLE public.captchas_id_seq OWNER TO risk;
 
 --
--- Name: captchas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: captchas_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.captchas_id_seq OWNED BY public.captchas.id;
 
 
 --
--- Name: past_turns; Type: TABLE; Schema: public; Owner: postgres
+-- Name: past_turns; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.past_turns (
@@ -297,22 +322,22 @@ CREATE TABLE public.past_turns (
 );
 
 
-ALTER TABLE public.past_turns OWNER TO postgres;
+ALTER TABLE public.past_turns OWNER TO risk;
 
 --
--- Name: territories; Type: TABLE; Schema: public; Owner: postgres
+-- Name: territories; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.territories (
     id integer NOT NULL,
-    name text
+    name public.citext
 );
 
 
-ALTER TABLE public.territories OWNER TO postgres;
+ALTER TABLE public.territories OWNER TO risk;
 
 --
--- Name: turninfo; Type: TABLE; Schema: public; Owner: postgres
+-- Name: turninfo; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.turninfo (
@@ -329,10 +354,10 @@ CREATE TABLE public.turninfo (
 );
 
 
-ALTER TABLE public.turninfo OWNER TO postgres;
+ALTER TABLE public.turninfo OWNER TO risk;
 
 --
--- Name: heat; Type: VIEW; Schema: public; Owner: postgres
+-- Name: heat; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.heat AS
@@ -351,16 +376,16 @@ CREATE VIEW public.heat AS
   ORDER BY territories.name, rd.season DESC, rd.day DESC;
 
 
-ALTER TABLE public.heat OWNER TO postgres;
+ALTER TABLE public.heat OWNER TO risk;
 
 --
--- Name: teams; Type: TABLE; Schema: public; Owner: postgres
+-- Name: teams; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.teams (
     id integer NOT NULL,
-    tname text,
-    tshortname text,
+    tname public.citext,
+    tshortname public.citext,
     creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     color_1 text,
     color_2 text,
@@ -368,16 +393,16 @@ CREATE TABLE public.teams (
 );
 
 
-ALTER TABLE public.teams OWNER TO postgres;
+ALTER TABLE public.teams OWNER TO risk;
 
 --
--- Name: territory_ownership; Type: TABLE; Schema: public; Owner: postgres
+-- Name: territory_ownership; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.territory_ownership (
     id integer NOT NULL,
     territory_id integer,
-    territory_name text,
+    territory_name public.citext,
     owner_id integer,
     day integer,
     season integer,
@@ -388,10 +413,10 @@ CREATE TABLE public.territory_ownership (
 );
 
 
-ALTER TABLE public.territory_ownership OWNER TO postgres;
+ALTER TABLE public.territory_ownership OWNER TO risk;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.users (
@@ -412,10 +437,10 @@ CREATE TABLE public.users (
 );
 
 
-ALTER TABLE public.users OWNER TO postgres;
+ALTER TABLE public.users OWNER TO risk;
 
 --
--- Name: territory_ownership_without_neighbors; Type: VIEW; Schema: public; Owner: postgres
+-- Name: territory_ownership_without_neighbors; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.territory_ownership_without_neighbors AS
@@ -436,10 +461,10 @@ CREATE VIEW public.territory_ownership_without_neighbors AS
   ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
 
 
-ALTER TABLE public.territory_ownership_without_neighbors OWNER TO postgres;
+ALTER TABLE public.territory_ownership_without_neighbors OWNER TO risk;
 
 --
--- Name: heat_full; Type: VIEW; Schema: public; Owner: postgres
+-- Name: heat_full; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.heat_full AS
@@ -450,13 +475,13 @@ CREATE VIEW public.heat_full AS
     heat.cumulative_power,
     territory_ownership_without_neighbors.owner
    FROM (public.heat
-     LEFT JOIN public.territory_ownership_without_neighbors ON (((territory_ownership_without_neighbors.name = heat.name) AND (territory_ownership_without_neighbors.day = heat.day) AND (territory_ownership_without_neighbors.season = heat.season))));
+     LEFT JOIN public.territory_ownership_without_neighbors ON ((((territory_ownership_without_neighbors.name)::text = (heat.name)::text) AND (territory_ownership_without_neighbors.day = heat.day) AND (territory_ownership_without_neighbors.season = heat.season))));
 
 
-ALTER TABLE public.heat_full OWNER TO postgres;
+ALTER TABLE public.heat_full OWNER TO risk;
 
 --
--- Name: moves; Type: VIEW; Schema: public; Owner: postgres
+-- Name: moves; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.moves AS
@@ -484,10 +509,10 @@ CREATE VIEW public.moves AS
   ORDER BY users.uname;
 
 
-ALTER TABLE public.moves OWNER TO postgres;
+ALTER TABLE public.moves OWNER TO risk;
 
 --
--- Name: new_turns; Type: TABLE; Schema: public; Owner: postgres
+-- Name: new_turns; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.new_turns (
@@ -507,10 +532,10 @@ CREATE TABLE public.new_turns (
 );
 
 
-ALTER TABLE public.new_turns OWNER TO postgres;
+ALTER TABLE public.new_turns OWNER TO risk;
 
 --
--- Name: new_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: new_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.new_turns_id_seq
@@ -522,17 +547,17 @@ CREATE SEQUENCE public.new_turns_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.new_turns_id_seq OWNER TO postgres;
+ALTER TABLE public.new_turns_id_seq OWNER TO risk;
 
 --
--- Name: new_turns_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: new_turns_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.new_turns_id_seq OWNED BY public.new_turns.id;
 
 
 --
--- Name: territory_stats; Type: TABLE; Schema: public; Owner: postgres
+-- Name: territory_stats; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.territory_stats (
@@ -552,10 +577,10 @@ CREATE TABLE public.territory_stats (
 );
 
 
-ALTER TABLE public.territory_stats OWNER TO postgres;
+ALTER TABLE public.territory_stats OWNER TO risk;
 
 --
--- Name: odds; Type: VIEW; Schema: public; Owner: postgres
+-- Name: odds; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.odds AS
@@ -581,13 +606,13 @@ CREATE VIEW public.odds AS
    FROM (((public.territory_stats
      JOIN public.territories ON ((territories.id = territory_stats.territory)))
      JOIN public.teams ON ((teams.id = territory_stats.team)))
-     JOIN public.territory_ownership_without_neighbors ON (((territory_ownership_without_neighbors.name = territories.name) AND (territory_ownership_without_neighbors.season = territory_stats.season) AND (territory_ownership_without_neighbors.day = (territory_stats.day + 1)))));
+     JOIN public.territory_ownership_without_neighbors ON ((((territory_ownership_without_neighbors.name)::text = (territories.name)::text) AND (territory_ownership_without_neighbors.season = territory_stats.season) AND (territory_ownership_without_neighbors.day = (territory_stats.day + 1)))));
 
 
-ALTER TABLE public.odds OWNER TO postgres;
+ALTER TABLE public.odds OWNER TO risk;
 
 --
--- Name: past_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: past_turns_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.past_turns_id_seq
@@ -599,17 +624,17 @@ CREATE SEQUENCE public.past_turns_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.past_turns_id_seq OWNER TO postgres;
+ALTER TABLE public.past_turns_id_seq OWNER TO risk;
 
 --
--- Name: past_turns_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: past_turns_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.past_turns_id_seq OWNED BY public.past_turns.id;
 
 
 --
--- Name: players; Type: VIEW; Schema: public; Owner: postgres
+-- Name: players; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.players AS
@@ -628,10 +653,10 @@ CREATE VIEW public.players AS
      JOIN public.teams ON ((teams.id = users.current_team)));
 
 
-ALTER TABLE public.players OWNER TO postgres;
+ALTER TABLE public.players OWNER TO risk;
 
 --
--- Name: rollinfo; Type: VIEW; Schema: public; Owner: postgres
+-- Name: rollinfo; Type: VIEW; Schema: public; Owner: risk
 --
 CREATE VIEW public.rollinfo AS
  SELECT (turninfo.rollstarttime)::text AS rollstarttime,
@@ -646,13 +671,13 @@ CREATE VIEW public.rollinfo AS
   GROUP BY territory_ownership_without_neighbors.day, territory_ownership_without_neighbors.season, turninfo.chaosrerolls, turninfo.rollstarttime, turninfo.rollendtime, turninfo.chaosweight;
 
 
-ALTER TABLE public.rollinfo OWNER TO postgres;
+ALTER TABLE public.rollinfo OWNER TO risk;
 
 
 
 
 --
--- Name: stats; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stats; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.stats (
@@ -675,10 +700,10 @@ CREATE TABLE public.stats (
 );
 
 
-ALTER TABLE public.stats OWNER TO postgres;
+ALTER TABLE public.stats OWNER TO risk;
 
 --
--- Name: statistics; Type: VIEW; Schema: public; Owner: postgres
+-- Name: statistics; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.statistics AS
@@ -704,10 +729,10 @@ CREATE VIEW public.statistics AS
      JOIN public.teams ON ((teams.id = stats.team)));
 
 
-ALTER TABLE public.statistics OWNER TO postgres;
+ALTER TABLE public.statistics OWNER TO risk;
 
 --
--- Name: team_player_moves; Type: VIEW; Schema: public; Owner: postgres
+-- Name: team_player_moves; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.team_player_moves AS
@@ -730,10 +755,10 @@ CREATE VIEW public.team_player_moves AS
   ORDER BY territories.name, past_turns.team;
 
 
-ALTER TABLE public.team_player_moves OWNER TO postgres;
+ALTER TABLE public.team_player_moves OWNER TO risk;
 
 --
--- Name: teams_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: teams_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.teams_id_seq
@@ -745,17 +770,17 @@ CREATE SEQUENCE public.teams_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.teams_id_seq OWNER TO postgres;
+ALTER TABLE public.teams_id_seq OWNER TO risk;
 
 --
--- Name: teams_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: teams_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.teams_id_seq OWNED BY public.teams.id;
 
 
 --
--- Name: territory_adjacency; Type: TABLE; Schema: public; Owner: postgres
+-- Name: territory_adjacency; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.territory_adjacency (
@@ -765,10 +790,10 @@ CREATE TABLE public.territory_adjacency (
 );
 
 
-ALTER TABLE public.territory_adjacency OWNER TO postgres;
+ALTER TABLE public.territory_adjacency OWNER TO risk;
 
 --
--- Name: territory_adjacency_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: territory_adjacency_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.territory_adjacency_id_seq
@@ -780,17 +805,17 @@ CREATE SEQUENCE public.territory_adjacency_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.territory_adjacency_id_seq OWNER TO postgres;
+ALTER TABLE public.territory_adjacency_id_seq OWNER TO risk;
 
 --
--- Name: territory_adjacency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: territory_adjacency_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.territory_adjacency_id_seq OWNED BY public.territory_adjacency.id;
 
 
 --
--- Name: territory_neighbor_history; Type: VIEW; Schema: public; Owner: postgres
+-- Name: territory_neighbor_history; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.territory_neighbor_history AS
@@ -807,10 +832,10 @@ CREATE VIEW public.territory_neighbor_history AS
   ORDER BY territory_adjacency.territory_id;
 
 
-ALTER TABLE public.territory_neighbor_history OWNER TO postgres;
+ALTER TABLE public.territory_neighbor_history OWNER TO risk;
 
 --
--- Name: territory_ownership_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: territory_ownership_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.territory_ownership_id_seq
@@ -822,17 +847,17 @@ CREATE SEQUENCE public.territory_ownership_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.territory_ownership_id_seq OWNER TO postgres;
+ALTER TABLE public.territory_ownership_id_seq OWNER TO risk;
 
 --
--- Name: territory_ownership_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: territory_ownership_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.territory_ownership_id_seq OWNED BY public.territory_ownership.id;
 
 
 --
--- Name: territory_ownership_with_neighbors; Type: VIEW; Schema: public; Owner: postgres
+-- Name: territory_ownership_with_neighbors; Type: VIEW; Schema: public; Owner: risk
 --
 
 CREATE VIEW public.territory_ownership_with_neighbors AS
@@ -849,10 +874,10 @@ CREATE VIEW public.territory_ownership_with_neighbors AS
   WHERE ((territory_ownership.day = territory_neighbor_history.day) AND (territory_ownership.season = territory_neighbor_history.season));
 
 
-ALTER TABLE public.territory_ownership_with_neighbors OWNER TO postgres;
+ALTER TABLE public.territory_ownership_with_neighbors OWNER TO risk;
 
 --
--- Name: territory_stats_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: territory_stats_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.territory_stats_id_seq
@@ -864,17 +889,17 @@ CREATE SEQUENCE public.territory_stats_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.territory_stats_id_seq OWNER TO postgres;
+ALTER TABLE public.territory_stats_id_seq OWNER TO risk;
 
 --
--- Name: territory_stats_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: territory_stats_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.territory_stats_id_seq OWNED BY public.territory_stats.id;
 
 
 --
--- Name: turninfo_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: turninfo_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.turninfo_id_seq
@@ -886,10 +911,10 @@ CREATE SEQUENCE public.turninfo_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.turninfo_id_seq OWNER TO postgres;
+ALTER TABLE public.turninfo_id_seq OWNER TO risk;
 
 --
--- Name: turninfo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: turninfo_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.turninfo_id_seq OWNED BY public.turninfo.id;
@@ -901,11 +926,11 @@ ALTER SEQUENCE public.turninfo_id_seq OWNED BY public.turninfo.id;
 
 CREATE TABLE public.users_bak (
     id integer,
-    uname text,
-    platform text,
+    uname public.citext,
+    platform public.citext,
     join_date timestamp without time zone,
     current_team integer,
-    auth_key text,
+    auth_key public.citext,
     overall integer,
     turns integer,
     game_turns integer,
@@ -920,7 +945,7 @@ CREATE TABLE public.users_bak (
 ALTER TABLE public.users_bak OWNER TO postgres;
 
 --
--- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.users_id_seq
@@ -932,17 +957,17 @@ CREATE SEQUENCE public.users_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.users_id_seq OWNER TO postgres;
+ALTER TABLE public.users_id_seq OWNER TO risk;
 
 --
--- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.users_id_seq OWNED BY public.users.id;
 
 
 --
--- Name: webhooks; Type: TABLE; Schema: public; Owner: postgres
+-- Name: webhooks; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.webhooks (
@@ -954,10 +979,10 @@ CREATE TABLE public.webhooks (
 );
 
 
-ALTER TABLE public.webhooks OWNER TO postgres;
+ALTER TABLE public.webhooks OWNER TO risk;
 
 --
--- Name: webhooks_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+-- Name: webhooks_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
 --
 
 CREATE SEQUENCE public.webhooks_id_seq
@@ -969,80 +994,80 @@ CREATE SEQUENCE public.webhooks_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.webhooks_id_seq OWNER TO postgres;
+ALTER TABLE public.webhooks_id_seq OWNER TO risk;
 
 --
--- Name: webhooks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+-- Name: webhooks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
 --
 
 ALTER SEQUENCE public.webhooks_id_seq OWNED BY public.webhooks.id;
 
 
 --
--- Name: captchas id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: captchas id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.captchas ALTER COLUMN id SET DEFAULT nextval('public.captchas_id_seq'::regclass);
 
 
 --
--- Name: new_turns id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: new_turns id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.new_turns ALTER COLUMN id SET DEFAULT nextval('public.new_turns_id_seq'::regclass);
 
 
 --
--- Name: past_turns id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: past_turns id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.past_turns ALTER COLUMN id SET DEFAULT nextval('public.past_turns_id_seq'::regclass);
 
 
 --
--- Name: teams id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: teams id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.teams ALTER COLUMN id SET DEFAULT nextval('public.teams_id_seq'::regclass);
 
 
 --
--- Name: territory_ownership id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: territory_ownership id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.territory_ownership ALTER COLUMN id SET DEFAULT nextval('public.territory_ownership_id_seq'::regclass);
 
 
 --
--- Name: territory_stats id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: territory_stats id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.territory_stats ALTER COLUMN id SET DEFAULT nextval('public.territory_stats_id_seq'::regclass);
 
 
 --
--- Name: turninfo id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: turninfo id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.turninfo ALTER COLUMN id SET DEFAULT nextval('public.turninfo_id_seq'::regclass);
 
 
 --
--- Name: users id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: users id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
 
 
 --
--- Name: webhooks id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: webhooks id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.webhooks ALTER COLUMN id SET DEFAULT nextval('public.webhooks_id_seq'::regclass);
 
 
 --
--- Name: __diesel_schema_migrations __diesel_schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: __diesel_schema_migrations __diesel_schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.__diesel_schema_migrations
@@ -1050,7 +1075,7 @@ ALTER TABLE ONLY public.__diesel_schema_migrations
 
 
 --
--- Name: captchas captchas_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: captchas captchas_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.captchas
@@ -1058,7 +1083,7 @@ ALTER TABLE ONLY public.captchas
 
 
 --
--- Name: new_turns new_turns_user_id_season_day_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: new_turns new_turns_user_id_season_day_key; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.new_turns
@@ -1066,15 +1091,15 @@ ALTER TABLE ONLY public.new_turns
 
 
 --
--- Name: past_turns past_turns_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: past_turns past_turns_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
-ALTER TABLE ONLY public.past_turns
+ALTER TABLE ONLY public.past_turnsc
     ADD CONSTRAINT past_turns_pkey PRIMARY KEY (id);
 
 
 --
--- Name: teams teams_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: teams teams_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.teams
@@ -1082,7 +1107,7 @@ ALTER TABLE ONLY public.teams
 
 
 --
--- Name: territories territories_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: territories territories_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.territories
@@ -1090,7 +1115,7 @@ ALTER TABLE ONLY public.territories
 
 
 --
--- Name: territory_adjacency territory_adjacency_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: territory_adjacency territory_adjacency_id_key; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.territory_adjacency
@@ -1098,7 +1123,7 @@ ALTER TABLE ONLY public.territory_adjacency
 
 
 --
--- Name: territory_ownership territory_ownership_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: territory_ownership territory_ownership_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.territory_ownership
@@ -1106,7 +1131,7 @@ ALTER TABLE ONLY public.territory_ownership
 
 
 --
--- Name: turninfo turninfo_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: turninfo turninfo_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.turninfo
@@ -1114,7 +1139,7 @@ ALTER TABLE ONLY public.turninfo
 
 
 --
--- Name: users unique_table; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users unique_table; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.users
@@ -1122,7 +1147,7 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
 ALTER TABLE ONLY public.users
@@ -1130,6 +1155,12 @@ ALTER TABLE ONLY public.users
 
 
 --
--- PostgreSQL database dump complete
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: postgres
 --
 
+GRANT ALL ON SCHEMA public TO risk;
+
+
+--
+-- PostgreSQL database dump complete
+--

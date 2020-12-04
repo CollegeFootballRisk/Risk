@@ -4,10 +4,12 @@ use crate::model::{Colors, Ratings, Stats, Team, Turn};
 use crate::schema::*;
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_citext::types::CiString;
+
 #[derive(Serialize)]
 pub struct Player {
     pub id: i32,
-    pub name: String,
+    pub name: CiString,
     pub team: Team,
     pub ratings: Ratings,
     pub stats: Stats,
@@ -16,8 +18,8 @@ pub struct Player {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct TeamPlayer {
-    pub team: Option<String>,
-    pub player: Option<String>,
+    pub team: Option<CiString>,
+    pub player: Option<CiString>,
     pub turnsPlayed: Option<i32>,
     pub mvps: Option<i32>,
     pub lastTurn: LastTurn,
@@ -25,8 +27,8 @@ pub struct TeamPlayer {
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
 pub struct User {
     pub id: i32,
-    pub uname: String,
-    pub platform: String,
+    pub uname: CiString,
+    pub platform: CiString,
     pub turns: Option<i32>,
     pub game_turns: Option<i32>,
     pub mvps: Option<i32>,
@@ -36,9 +38,9 @@ pub struct User {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct PlayerWithTurns {
-    pub name: String,
+    pub name: CiString,
     pub team: Option<TeamWithColors>,
-    pub platform: String,
+    pub platform: CiString,
     pub ratings: Ratings,
     pub stats: Stats,
     pub turns: Vec<PastTurn>,
@@ -46,8 +48,8 @@ pub struct PlayerWithTurns {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct PlayerInTurns {
-    pub team: Option<String>,
-    pub player: Option<String>,
+    pub team: Option<CiString>,
+    pub player: Option<CiString>,
     pub stars: Option<i32>,
     pub weight: i32,
     pub multiplier: f64,
@@ -57,10 +59,10 @@ pub struct PlayerInTurns {
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct PlayerWithTurnsAndAdditionalTeam {
-    pub name: String,
+    pub name: CiString,
     pub team: Option<TeamWithColors>,
     pub active_team: Option<TeamWithColors>,
-    pub platform: String,
+    pub platform: CiString,
     pub ratings: Ratings,
     pub stats: Stats,
     pub turns: Vec<PastTurn>,
@@ -78,8 +80,9 @@ impl PlayerWithTurnsAndAdditionalTeam {
             true => 0,
             false => -1,
         };
+        let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
         let results = users::table
-            .filter(users::uname.eq_any(name))
+            .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
             .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
@@ -128,8 +131,9 @@ impl PlayerWithTurns {
             true => 0,
             false => -1,
         };
+        let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
         let results = users::table
-            .filter(users::uname.eq_any(name))
+            .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
             .left_join(teams::table.on(teams::id.eq(users::current_team)))
             .select((
@@ -193,8 +197,9 @@ impl PlayerWithTurns {
 
 impl TeamPlayer {
     pub fn load(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamPlayer> {
+        let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         moves::table
-            .filter(moves::tname.eq_any(tname))
+            .filter(moves::tname.eq_any(ciTname))
             .select((
                 moves::tname,
                 moves::uname,
@@ -214,6 +219,7 @@ impl PlayerInTurns {
         territory: &str,
         conn: &PgConnection,
     ) -> Result<Vec<PlayerInTurns>, Error> {
+        let ciTerritory = CiString::from(territory.to_owned());
         team_player_moves::table
             .select((
                 team_player_moves::team,
@@ -226,7 +232,7 @@ impl PlayerInTurns {
             ))
             .filter(team_player_moves::day.eq(day))
             .filter(team_player_moves::season.eq(season))
-            .filter(team_player_moves::territory.eq(territory))
+            .filter(team_player_moves::territory.eq(ciTerritory))
             .load::<PlayerInTurns>(conn)
     }
 }
@@ -234,8 +240,8 @@ impl PlayerInTurns {
 impl User {
     pub fn load(name: String, platform: String, conn: &PgConnection) -> Result<User, Error> {
         users::table
-            .filter(users::uname.eq(name))
-            .filter(users::platform.eq(platform))
+            .filter(users::uname.eq(CiString::from(name)))
+            .filter(users::platform.eq(CiString::from(platform)))
             .select((
                 users::id,
                 users::uname,

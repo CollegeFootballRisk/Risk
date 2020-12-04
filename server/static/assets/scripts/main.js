@@ -660,7 +660,7 @@ function page_territory(contentTag, t_object) {
                 territoryTurn = JSON.parse(territoryData.response);
                 territoryCompleteHeader = document.getElementById('templateTerritoryCompleteHeader').innerHTML;
                 document.getElementById('territoryCompleteHeader').innerHTML = territoryCompleteHeader
-                    .replace(/{{TerritoryName}}/, decodeURIComponent(territory))
+                    .replace(/{{TerritoryName}}/, decodeURIComponent(territory).replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase()))
                     .replace(/{{owner}}/, territoryTurn.occupier)
                     .replace(/{{winner}}/, territoryTurn.winner)
                 let display_headings = ["team", "players", "power", "chance"];
@@ -798,7 +798,11 @@ function page_territory_cover(contentTag, tname) {
                 var objr = territoryHistoryObject.length - obj - 1;
                 str += box.innerHTML.replace(/{{day}}/gi, territoryHistoryObject[objr].day).replace(/{{team}}/, territoryHistoryObject[objr].owner).replace(/{{season}}/, territoryHistoryObject[objr].season);
             }
-            contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replace(/{{TerritoryName}}/gi, decodeURIComponent(tname));
+            if (typeof territoryHistoryObject[0].territory === 'undefined' || territoryHistoryObject[0].territory === null) {
+                contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replace(/{{TerritoryName}}/gi, decodeURIComponent(tname));
+            } else {
+                contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replace(/{{TerritoryName}}/gi, territoryHistoryObject[0].territory); // use the first element to capitalize if the url requires it. otherwise territoryHistoryObject[objr].day
+            }
         }, console.log)
     });
 }
@@ -952,10 +956,13 @@ function page_odds(contentTag) {
 
 
 function drawTeamPage(teamsObject, teamTurnsObject, team) {
+    var capname = decodeURIComponent(team);
     for (x in teamsObject) {
         console.log(team, teamsObject[x].name);
-        if (teamsObject[x].name.replace(/\W/g, '') == decodeURIComponent(team).replace(/\W/g, '')) {
+        if (teamsObject[x].name.replace(/\W/g, '').toLowerCase() == capname.replace(/\W/g, '').toLowerCase()) {
             document.getElementById("team-logo").setAttribute('src', teamsObject[x].logo);
+            capname = teamsObject[x].name.replace(/\W/g, '');
+            document.getElementById('team-header').innerHTML = "<h1>" + capname + "</h1>";
             break;
         }
     }
@@ -1104,7 +1111,7 @@ function drawTeamPage(teamsObject, teamTurnsObject, team) {
     }
     //then we fill the header
 
-    document.getElementById('teamPlayerHint').innerHTML = "<center><a href = \"/team/{{team}}/players\"> See all of {{team_c}}'s players </a></center>".replace(/{{team}}/gi, team).replace(/{{team_c}}/gi, decodeURIComponent(team));
+    document.getElementById('teamPlayerHint').innerHTML = "<center><a href = \"/team/{{team}}/players\"> See all of {{team_c}}'s players </a></center>".replace(/{{team}}/gi, team).replace(/{{team_c}}/gi, capname);
 }
 
 function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
@@ -1136,6 +1143,12 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
     }
 
     console.log(obj);
+
+    try {
+        document.getElementById('team-header').innerHTML = "<h1>" + teamPlayersObject[0]['team'] + "</h1>";
+    } catch {
+        // eh
+    }
 
     try {
         window.datatable.destroy();
