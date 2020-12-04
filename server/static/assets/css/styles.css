@@ -1128,3 +1128,19 @@ footer p a {
     cursor: pointer;
     cursor: url('../../images/cur117.cur'), auto !important;
 }
+
+.map-animated-highlight {
+    animation: fading 4s infinite
+}
+
+@keyframes fading {
+    0% {
+        opacity: 0.2
+    }
+    50% {
+        opacity: 1
+    }
+    100% {
+        opacity: 0.2
+    }
+}

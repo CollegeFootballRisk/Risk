@@ -1,5 +1,9 @@
 // @license magnet:?xt=urn:btih:3877d6d54b3accd4bc32f8a48bf32ebc0901502a&dn=mpl-2.0.txt Mozilla-Public-2.0
 //initialize globals
+// if .ml, redirect to .com
+if (window.location.hostname === "aggierisk.ml") {
+    window.location = 'https://aggierisk.com/';
+}
 var outstandingRequests = [];
 var errorNotifications = [];
 var now = new Date();
@@ -363,23 +367,27 @@ function makeMove(id) {
     document.documentElement.style.setProperty("--theme-bg-05", "rgba(255,0,255,0.5)");
     var timeStamp = Math.floor(Date.now() / 1000); //use timestamp to override cache
     doAjaxGetRequest("/auth/move?target=".concat(id, '&timestamp=', timeStamp.toString()), 'Make Move', function() {
-        document.documentElement.style.setProperty('--theme-bg', endCycleColor);
-        document.documentElement.style.setProperty('--theme-bg-05', endCycleColor05);
-        errorNotif('Move Submitted', 'Your move has been submitted and received succesfully.', {
-            text: "Okay"
-        }, {
-            display: "none"
+            document.documentElement.style.setProperty('--theme-bg', endCycleColor);
+            document.documentElement.style.setProperty('--theme-bg-05', endCycleColor05);
+            doAjaxGetRequest("/auth/my_move", 'Load Move', function(data) {
+                highlightTerritory(data.response.replace(/"/g, ''));
+                errorNotif('Move Submitted', 'Your move was on territory <b>{{Territory}}</b>.'.replace(/{{Territory}}/, data.response.replace(/"/g, '')), {
+                    text: "Okay"
+                }, {
+                    display: "none"
+                });
+            });
+            return 0;
+        },
+        function() {
+            document.documentElement.style.setProperty('--theme-bg', 'rgba(255,0,0,1)');
+            document.documentElement.style.setProperty('--theme-bg-05', 'rgba(255,0,0,0.5)');
+            errorNotif('Could not make move', 'Hmm, couldn\'t set that as your move for the day.', {
+                text: "Okay"
+            }, {
+                display: "none"
+            });
         });
-        return 0;
-    }, function() {
-        document.documentElement.style.setProperty('--theme-bg', 'rgba(255,0,0,1)');
-        document.documentElement.style.setProperty('--theme-bg-05', 'rgba(255,0,0,0.5)');
-        errorNotif('Could not make move', 'Hmm, couldn\'t set that as your move for the day.', {
-            text: "Okay"
-        }, {
-            display: "none"
-        });
-    });
 }
 
 function drawActionBoard(resolve, reject) {
@@ -392,7 +400,7 @@ function drawActionBoard(resolve, reject) {
         document.getElementById('action-container').innerHTML = '<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
-            console.log("oh dear");
+            console.log("Drawing Actions.");
             let userteam = window.userObject.active_team.name;
             console.log(userteam);
             let attackable_territories = {};
@@ -574,9 +582,9 @@ function drawLeaderboard(season, day) {
                     if (p == 'name') {
                         obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
                     } else if (p == 'efficiency') {
-                        obj.data[i].push(leaderboardObject[i][p].toFixed(2));
+                        obj.data[i].push((leaderboardObject[i][p] || 0).toFixed(2));
                     } else {
-                        obj.data[i].push(leaderboardObject[i][p]);
+                        obj.data[i].push(leaderboardObject[i][p] || 0);
                     }
                 }
             }
@@ -844,7 +852,12 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                setUpCounter();
+                setUpCounter(resolve, reject);
+            })
+        })
+        .then(() => {
+            return new Promise((resolve, reject) => {
+                doPrettyMap(resolve, reject);
             })
         })
         .catch((values) => { console.log(values) });
@@ -1564,8 +1577,25 @@ function doDate() {
 
 /*** UTILITIES ***/
 
-function setUpCounter() {
+function setUpCounter(resolve, reject) {
     window.pulse = setInterval(doDate, 1000);
+    resolve();
+}
+
+function doPrettyMap() {
+    console.log("Making request for current move.");
+    doAjaxGetRequest('/auth/my_move', 'Plotting Pretty Map', function(data) {
+        highlightTerritory(data.response.replace(/"/g, ''));
+    });
+}
+
+function highlightTerritory(territory) {
+    console.log("Highlighting {{Territory}}".replace(/{{Territory}}/, territory));
+    let highlighted = document.getElementsByClassName('map-animated-highlight');
+    for (i = 0; i < highlighted.length; i++) {
+        highlighted[i].classList.remove('map-animated-highlight');
+    }
+    document.getElementById('map').getElementById(territory.replace(/ /, '')).classList = 'map-animated-highlight';
 }
 
 function pad(number, notion, final, next, prev) {

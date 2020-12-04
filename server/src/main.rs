@@ -138,6 +138,7 @@ fn start() {
             reddit::route::reddit_logout,
             captchasvc::route::captchaServe,
             auth::route::make_move,
+            auth::route::my_move,
             auth::route::join_team,
         ])
         .mount("/login", routes![reddit::route::reddit_login,])

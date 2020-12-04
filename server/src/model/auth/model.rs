@@ -1,3 +1,5 @@
+use crate::schema::{new_turns, territories};
+use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
@@ -25,6 +27,11 @@ pub struct Move {
     pub information: DebuggingInformation,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct MoveInfo {
+    pub territory: Option<String>,
+}
+
 impl Claims {
     pub fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
         encode(&Header::default(), &user_claims, &EncodingKey::from_secret(key))
@@ -37,6 +44,24 @@ impl Claims {
         match decode::<Claims>(&token, &DecodingKey::from_secret(key), &validation) {
             Ok(c) => Ok((c.claims, c.header)),
             Err(err) => Err(err.to_string()),
+        }
+    }
+}
+
+impl MoveInfo {
+    pub fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
+        let r = new_turns::table
+            .filter(new_turns::user_id.eq(user_id))
+            .filter(new_turns::season.eq(season))
+            .filter(new_turns::day.eq(day))
+            .inner_join(territories::table.on(new_turns::territory.eq(territories::id)))
+            .select(territories::name)
+            .first(conn);
+        MoveInfo {
+            territory: match r {
+                Ok(n) => Some(n),
+                Err(_E) => None,
+            },
         }
     }
 }

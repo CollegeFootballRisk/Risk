@@ -8,8 +8,8 @@ use hyper::{
 //use rocket::response::{Debug, Redirect};
 //hyper::header::{Authorization, Bearer, UserAgent},
 use crate::model::{
-    Claims, ClientInfo, CurrentStrength, Latest, PlayerWithTurnsAndAdditionalTeam, Ratings, Stats,
-    TeamInfo, TeamWithColors, UpdateUser,
+    Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam,
+    Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
 };
 use crate::schema::{new_turns, territory_adjacency, territory_ownership, users};
 use diesel::prelude::*;
@@ -120,6 +120,42 @@ pub fn join_team(
             }
         }
         None => std::result::Result::Err(Status::Unauthorized),
+    }
+}
+
+#[get("/my_move")]
+//#[cfg(feature = "risk_security")]
+pub fn my_move(
+    mut cookies: Cookies,
+    conn: DbConn,
+    remote_addr: SocketAddr,
+    key: State<String>,
+) -> Result<Json<String>, Status> {
+    match Latest::latest(&conn) {
+        Ok(latest) => {
+            //get cookie, verify it -> Claims (id, user, refresh_token)
+            match cookies.get_private("jwt") {
+                Some(cookie) => {
+                    match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                        Ok(c) => {
+                            let _cinfo = ClientInfo {
+                                claims: c.0.clone(),
+                                ip: remote_addr.to_string(),
+                            };
+                            // get the territory the user has attacked
+                            std::result::Result::Ok(Json(
+                                MoveInfo::get(latest.season, latest.day, c.0.id, &conn)
+                                    .territory
+                                    .unwrap_or_else(|| String::from("")),
+                            ))
+                        }
+                        Err(_err) => std::result::Result::Err(Status::Unauthorized),
+                    }
+                }
+                None => std::result::Result::Err(Status::Unauthorized),
+            }
+        }
+        _ => std::result::Result::Err(Status::BadRequest),
     }
 }
 
@@ -342,10 +378,7 @@ fn get_cfb_points(name: String) -> i64 {
             match serde_json::from_str(&body[0..]) {
                 Ok(v) => {
                     let v: serde_json::Value = v;
-                    match v["ratings"]["overall"].as_i64() {
-                        Some(number) => number,
-                        None => 1,
-                    }
+                    v["ratings"]["overall"].as_i64().unwrap_or(1)
                 }
                 _ => 1,
             }

@@ -1,9 +1,9 @@
 use crate::model::*;
 use crate::schema::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
 use diesel::prelude::*;
+use diesel_citext::types::CiString;
 use serde_json::Value;
 use std::result::Result;
-use diesel_citext::types::CiString;
 
 #[derive(Serialize, Queryable, Deserialize)]
 pub struct Territory {
@@ -82,7 +82,9 @@ impl TerritoryTurn {
             ))
             .filter(territory_ownership_without_neighbors::day.eq(&day))
             .filter(territory_ownership_without_neighbors::season.eq(&season))
-            .filter(territory_ownership_without_neighbors::name.eq(CiString::from(territory.clone())))
+            .filter(
+                territory_ownership_without_neighbors::name.eq(CiString::from(territory.clone())),
+            )
             .first::<(CiString, CiString)>(conn);
         let (owner, previous) = match result {
             Ok(duo) => duo,

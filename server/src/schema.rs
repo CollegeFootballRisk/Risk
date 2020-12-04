@@ -243,3 +243,5 @@ allow_tables_to_appear_in_same_query!(
     territory_adjacency,
     territories
 );
+
+allow_tables_to_appear_in_same_query!(new_turns, territories);
