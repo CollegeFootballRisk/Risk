@@ -17,8 +17,8 @@ table! {
 table! {
     teams (id) {
         id -> Int4,
-        tname -> Nullable<Text>,
-        tshortname -> Nullable<Text>,
+        tname -> Nullable<diesel_citext::sql_types::Citext>,
+        tshortname -> Nullable<diesel_citext::sql_types::Citext>,
         creation_date -> Nullable<Timestamp>,
         logo -> Nullable<Text>,
         color_1 -> Nullable<Text>,
@@ -110,8 +110,8 @@ table! {
         territory_id -> Int4,
         season -> Int4,
         day -> Int4,
-        name -> Text,
-        tname -> Text,
+        name -> diesel_citext::sql_types::Citext,
+        tname -> diesel_citext::sql_types::Citext,
         neighbors -> Json,
     }
 }
