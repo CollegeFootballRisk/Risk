@@ -384,37 +384,45 @@ function makeMove(id) {
 
 function drawActionBoard(resolve, reject) {
     let territories = window.territories;
-    try {
-        console.log("oh dear");
-        let userteam = window.userObject.active_team.name;
-        console.log(userteam);
-        let attackable_territories = {};
-        let defendable_territories = {};
-        console.log(territories);
-        for (i in territories) {
-            if (territories[i].owner == userteam) {
-                defendable_territories[territories[i].id] = territories[i];
-                for (j in territories[i].neighbors) {
-                    if (territories[i].neighbors[j].owner != userteam) {
-                        attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+    if (window.turnsObject[window.turnsObject.length - 1].finale == true) {
+        document.getElementById('last-day-notice').innerHTML = 'Today is the final roll! Make it count!';
+    }
+    if (window.turnsObject[window.turnsObject.length - 1].active == false) {
+        document.getElementById('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
+        document.getElementById('action-container').innerHTML = '<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+    } else {
+        try {
+            console.log("oh dear");
+            let userteam = window.userObject.active_team.name;
+            console.log(userteam);
+            let attackable_territories = {};
+            let defendable_territories = {};
+            console.log(territories);
+            for (i in territories) {
+                if (territories[i].owner == userteam) {
+                    defendable_territories[territories[i].id] = territories[i];
+                    for (j in territories[i].neighbors) {
+                        if (territories[i].neighbors[j].owner != userteam) {
+                            attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                        }
                     }
                 }
             }
+            document.getElementById('action-container').style.display = "flex";
+            let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
+            for (k in attackable_territories) {
+                document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, attackable_territories[k].name).replace(/{{id}}/, attackable_territories[k].id);
+            }
+            for (l in defendable_territories) {
+                document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, defendable_territories[l].name).replace(/{{id}}/, defendable_territories[l].id);
+            }
+            console.log("Territory actions drawn");
+            resolve("Okay");
+        } catch (error) {
+            console.log('could not do territory analysis');
+            console.log(error);
+            reject("Error");
         }
-        document.getElementById('action-container').style.display = "flex";
-        let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
-        for (k in attackable_territories) {
-            document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, attackable_territories[k].name).replace(/{{id}}/, attackable_territories[k].id);
-        }
-        for (l in defendable_territories) {
-            document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, defendable_territories[l].name).replace(/{{id}}/, defendable_territories[l].id);
-        }
-        console.log("Territory actions drawn");
-        resolve("Okay");
-    } catch (error) {
-        console.log('could not do territory analysis');
-        console.log(error);
-        reject("Error");
     }
 }
 
@@ -462,8 +470,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
-                        red = Math.round(255 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 0;
-                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "rgba(" + red + ", " + red + ", " + red + ", 0.5)";
+                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("map-county-info").innerHTML = "Leaderboard";
                         document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, "page_leaderboard_update", window.turnsObject);
@@ -501,7 +509,7 @@ function drawUserTurnHistory(playerObject) {
 
     var obj = {
         // Quickly get the headings
-        headings: ["Season", "Day", "Stars", "Team", "Territory", "MVP"],
+        headings: ["Season", "Day", "Stars", "MVP", "Territory", "Team"],
 
         // data array
         data: []
@@ -514,7 +522,13 @@ function drawUserTurnHistory(playerObject) {
 
         for (var p in turnHistoryObject[i]) {
             if (turnHistoryObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
-                obj.data[i].push(turnHistoryObject[i][p]);
+                if (p == 'territory') {
+                    obj.data[i].push("<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, turnHistoryObject[i][p]));
+                } else if (p == 'team') {
+                    obj.data[i].push("<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, turnHistoryObject[i][p]));
+                } else {
+                    obj.data[i].push(turnHistoryObject[i][p]);
+                }
             }
         }
     }
@@ -559,6 +573,8 @@ function drawLeaderboard(season, day) {
                 if (leaderboardObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
                     if (p == 'name') {
                         obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
+                    } else if (p == 'efficiency') {
+                        obj.data[i].push(leaderboardObject[i][p].toFixed(2));
                     } else {
                         obj.data[i].push(leaderboardObject[i][p]);
                     }
@@ -818,12 +834,16 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
+                getTurns(resolve, reject);
+            })
+        })
+        .then(() => {
+            return new Promise((resolve, reject) => {
                 drawActionBoard(resolve, reject);
             })
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                getTurns(resolve, reject);
                 setUpCounter();
             })
         })
@@ -871,13 +891,13 @@ function drawOddsPage(junk) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
-            player_red = Math.round((oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 0;
-            odds_red = Math.round((oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 0;
-            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + player_red + ", " + player_red + ", " + player_red + ", 0.5)";
-            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "rgba(" + odds_red + ", " + odds_red + ", " + odds_red + ", 0.5)";
-            obj.data.push([oddsObject[i]['territory'],
-                oddsObject[i]["owner"],
-                oddsObject[i]["mvp"],
+            player_red = Math.round(160 + 200 * (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 60;
+            odds_red = Math.round(160 + 200 * (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 60;
+            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + player_red + ",100%, 50%, 0.5)";
+            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + odds_red + ", 100%, 50%, 0.5)";
+            obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
+                "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
+                "<a href=\"/player/{{player}}\">{{player}}</a>".replace(/{{player}}/gi, oddsObject[i]["mvp"]),
                 oddsObject[i]["players"],
                 oddsObject[i]["starBreakdown"]["ones"],
                 oddsObject[i]["starBreakdown"]["twos"],
@@ -1112,7 +1132,11 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
 
         for (var p in teamPlayersObject[i]) {
             if (teamPlayersObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
-                obj.data[i].push(teamPlayersObject[i][p]);
+                if (p == 'player') {
+                    obj.data[i].push("<a href=\"/player/{{player}}\">{{player}}</a>".replace(/{{player}}/gi, teamPlayersObject[i][p]));
+                } else {
+                    obj.data[i].push(teamPlayersObject[i][p]);
+                }
             }
         }
         obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
@@ -1218,13 +1242,6 @@ function handleNewPage(title, contentTag, call, vari) {
 }
 
 class Router {
-    /*constructor() {
-        routes = [];
-
-        mode = null;
-
-        root = '/';
-    }*/
 
     constructor(options) {
         this.routes = [];

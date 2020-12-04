@@ -658,7 +658,6 @@ ALTER TABLE public.players OWNER TO risk;
 --
 -- Name: rollinfo; Type: VIEW; Schema: public; Owner: risk
 --
-
 CREATE VIEW public.rollinfo AS
  SELECT (turninfo.rollstarttime)::text AS rollstarttime,
     (turninfo.rollendtime)::text AS rollendtime,
@@ -673,6 +672,9 @@ CREATE VIEW public.rollinfo AS
 
 
 ALTER TABLE public.rollinfo OWNER TO risk;
+
+
+
 
 --
 -- Name: stats; Type: TABLE; Schema: public; Owner: risk
@@ -714,7 +716,6 @@ CREATE VIEW public.statistics AS
     stats.playercount,
     stats.merccount,
     stats.starpower,
-    stats.starpower AS stars,
     stats.efficiency,
     stats.effectivepower,
     stats.ones,

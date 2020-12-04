@@ -161,7 +161,13 @@ header img {
 
 header .brand-image {
     position: relative;
-    right: 103px;
+    right: 104px;
+}
+
+@media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
+    .selector:not(*: root), .brand-image {
+        right: 103px !important;
+    }
 }
 
 header nav {

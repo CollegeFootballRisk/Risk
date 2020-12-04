@@ -9,7 +9,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>Aggie Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=0.1.4-rc2">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js">
     </script>
@@ -48,7 +48,7 @@
             <li><a href="/odds/">Odds</a></li>
             <li><a href="/info">Info</a></li>
             <li><a href="https://github.com/mautamu/Risk/blob/stable/documentation/API.md">API</a></li>
-            <li><a href="/bug">&#128027;</a></li>
+            <li><a href="/bug">Bugs</a></li>
         </nav>
     </header>
     <ul class="ugrid redditlogin" id="reddit-login-top" style="background: var(--theme-bg-05); display:none;">
@@ -72,6 +72,7 @@
             <a href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> this website are <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a>            (public domain) or <a href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
                 v2.</a>
         </p>
+        <p>It's more fun playing with others. Join us on <a href="https://tx.ag/AggieDiscord">Discord</a> or <a href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
     </footer>
     <script id="templateTerritoryHistory" type="text/template">
         <section class="grid-history">
@@ -165,6 +166,7 @@
             <hr>
             <div id="rollInfo"></div>
             <hr>
+            <h2><text style="color:red;" id="last-day-notice"></text></h2>
             <ul class="grid" id="action-container">
                 <li>
                     <h4>Attack</h4>
@@ -208,7 +210,7 @@
                 <li class="small p20">
                     <h2>Territories</h2><br/>Expected: <text id="odds-expect"></text><br/> Actual: <text id="odds-actual"></text></li>
             </ul>
-            <h3 class="title">Players</h3>
+            <h3 class="title">Territories</h3>
 
             <div id="odds-players">
                 <table id="odds-players-table">
