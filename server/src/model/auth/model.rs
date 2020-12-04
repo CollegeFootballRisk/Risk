@@ -1,4 +1,4 @@
-use crate::schema::{new_turns, territories};
+use crate::schema::{continuation_polls, continuation_responses, new_turns, territories};
 use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
@@ -32,6 +32,23 @@ pub struct MoveInfo {
     pub territory: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Queryable)]
+pub struct Poll {
+    pub id: i32,
+    pub season: i32,
+    pub day: i32,
+    pub question: String,
+    pub incrment: i32,
+}
+
+#[derive(Serialize, Deserialize, Queryable)]
+pub struct PollResponse {
+    pub id: i32,
+    pub poll: i32,
+    pub user_id: i32,
+    pub response: bool,
+}
+
 impl Claims {
     pub fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
         encode(&Header::default(), &user_claims, &EncodingKey::from_secret(key))
@@ -63,5 +80,44 @@ impl MoveInfo {
                 Err(_E) => None,
             },
         }
+    }
+}
+
+impl Poll {
+    pub fn get(
+        season: i32,
+        day: i32,
+        conn: &PgConnection,
+    ) -> Result<Vec<Poll>, diesel::result::Error> {
+        continuation_polls::table
+            .filter(continuation_polls::season.eq(season))
+            .filter(continuation_polls::day.gt(day))
+            .load::<Poll>(conn)
+    }
+}
+
+impl PollResponse {
+    pub fn get(
+        poll_id: i32,
+        user_id: i32,
+        conn: &PgConnection,
+    ) -> Result<Vec<PollResponse>, diesel::result::Error> {
+        continuation_responses::table
+            .filter(continuation_responses::poll_id.eq(poll_id))
+            .filter(continuation_responses::user_id.eq(user_id))
+            .load::<PollResponse>(conn)
+    }
+
+    pub fn upsert(response: PollResponse, conn: &PgConnection) -> QueryResult<usize> {
+        diesel::insert_into(continuation_responses::table)
+            .values((
+                continuation_responses::poll_id.eq(response.poll),
+                continuation_responses::user_id.eq(response.user_id),
+                continuation_responses::response.eq(response.response),
+            ))
+            .on_conflict((continuation_responses::poll_id, continuation_responses::user_id))
+            .do_update()
+            .set(continuation_responses::response.eq(response.response))
+            .execute(conn)
     }
 }

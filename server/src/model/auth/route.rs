@@ -8,8 +8,8 @@ use hyper::{
 //use rocket::response::{Debug, Redirect};
 //hyper::header::{Authorization, Bearer, UserAgent},
 use crate::model::{
-    Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam,
-    Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
+    Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
+    PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
 };
 use crate::schema::{new_turns, territory_adjacency, territory_ownership, users};
 use diesel::prelude::*;
@@ -269,6 +269,86 @@ pub fn make_move(
             }
         }
         _ => std::result::Result::Err(Status::BadRequest),
+    }
+}
+
+#[get("/polls")]
+//#[cfg(feature = "risk_security")]
+pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
+    match Latest::latest(&conn) {
+        Ok(latest) => {
+            match Poll::get(latest.season, latest.day, &conn) {
+                Ok(polls) => std::result::Result::Ok(Json(polls)),
+                Err(_E) => std::result::Result::Err(Status::InternalServerError),
+            }
+        }
+        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+    }
+}
+
+#[get("/poll/respond?<poll>&<response>")]
+//#[cfg(feature = "risk_security")]
+pub fn submit_poll(
+    mut cookies: Cookies,
+    conn: DbConn,
+    key: State<String>,
+    poll: i32,
+    response: bool,
+) -> Result<Json<bool>, Status> {
+    // get user id
+    match cookies.get_private("jwt") {
+        Some(cookie) => {
+            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                Ok(c) => {
+                    // id, name Json(c.0.user)
+                    match PollResponse::upsert(
+                        PollResponse {
+                            id: -1,
+                            poll,
+                            user_id: c.0.id,
+                            response,
+                        },
+                        &conn,
+                    ) {
+                        Ok(inner) => {
+                            match inner {
+                                1 => std::result::Result::Ok(Json(true)),
+                                _ => std::result::Result::Err(Status::InternalServerError),
+                            }
+                        }
+                        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+                    }
+                }
+                Err(_err) => std::result::Result::Err(Status::Unauthorized),
+            }
+        }
+        None => std::result::Result::Err(Status::Unauthorized),
+    }
+}
+
+#[get("/poll/response?<poll>")]
+//#[cfg(feature = "risk_security")]
+pub fn view_response(
+    mut cookies: Cookies,
+    conn: DbConn,
+    key: State<String>,
+    poll: i32,
+) -> Result<Json<Vec<PollResponse>>, Status> {
+    // get user id
+    match cookies.get_private("jwt") {
+        Some(cookie) => {
+            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                Ok(c) => {
+                    // id, name Json(c.0.user)
+                    match PollResponse::get(poll, c.0.id, &conn) {
+                        Ok(responses) => std::result::Result::Ok(Json(responses)),
+                        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+                    }
+                }
+                Err(_err) => std::result::Result::Err(Status::Unauthorized),
+            }
+        }
+        None => std::result::Result::Err(Status::Unauthorized),
     }
 }
 

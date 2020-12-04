@@ -81,6 +81,7 @@ impl TurnInfo {
                 turninfo::active,
                 turninfo::finale,
             ))
+            .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }
@@ -95,6 +96,7 @@ impl Latest {
                 let day = turninfo::table
                     .select(max(turninfo::day))
                     .filter(turninfo::season.eq(season))
+                    .filter(turninfo::complete.eq(true))
                     .first::<Option<i32>>(conn);
                 match day {
                     Ok(day) => {

@@ -235,6 +235,23 @@ table! {
         merc -> Bool,
     }
 }
+table! {
+    continuation_polls (id){
+        id -> Int4,
+        season -> Int4,
+        day -> Int4,
+        question -> Text,
+        incrment -> Int4,
+    }
+}
+table! {
+    continuation_responses (id){
+        id -> Int4,
+        poll_id -> Int4,
+        user_id -> Int4,
+        response -> Bool,
+    }
+}
 allow_tables_to_appear_in_same_query!(
     past_turns,
     teams,

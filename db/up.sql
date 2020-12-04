@@ -1164,3 +1164,7 @@ GRANT ALL ON SCHEMA public TO risk;
 --
 -- PostgreSQL database dump complete
 --
+create table continuation_polls (id serial, season int, day int, question text default 'Should this season be extended by seven more days?', incrment int default 7);
+create table continuation_responses (id serial, poll_id int, user_id int, response bool);
+ALTER TABLE ONLY public.continuation_responses
+    ADD CONSTRAINT continuation_responses_poll_id_user_id_key UNIQUE (user_id, poll_id);

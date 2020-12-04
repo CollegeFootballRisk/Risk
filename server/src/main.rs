@@ -140,6 +140,9 @@ fn start() {
             auth::route::make_move,
             auth::route::my_move,
             auth::route::join_team,
+            auth::route::view_response,
+            auth::route::submit_poll,
+            auth::route::get_polls,
         ])
         .mount("/login", routes![reddit::route::reddit_login,])
         .mount("/", StaticFiles::from("static").rank(2))
