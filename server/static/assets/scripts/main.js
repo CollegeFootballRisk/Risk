@@ -7,10 +7,10 @@ if (window.location.hostname === "aggierisk.ml") {
 var outstandingRequests = [];
 var errorNotifications = [];
 var now = new Date();
-var rollTime = new Date();
+var rollTime = new Date("December 12, 2020 04:00:00 ");
 window.hamburger = false;
 
-rollTime.setUTCHours(3, 0, 0, 0);
+rollTime.setUTCHours(4, 0, 0, 0);
 if (rollTime < now) {
     rollTime.setUTCDate(rollTime.getUTCDate() + 1)
 }
