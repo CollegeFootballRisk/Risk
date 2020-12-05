@@ -89,14 +89,15 @@ impl TurnInfo {
 
 impl Latest {
     pub fn latest(conn: &PgConnection) -> Result<Latest, &str> {
-        use diesel::dsl::max;
+        use diesel::dsl::{min,max};
         let season = turninfo::table.select(max(turninfo::season)).first::<Option<i32>>(conn);
         match season {
             Ok(season) => {
                 let day = turninfo::table
-                    .select(max(turninfo::day))
-                    .filter(turninfo::season.eq(season))
-                    .filter(turninfo::complete.eq(true))
+                    .select(min(turninfo::day))
+                    .filter(turninfo::season.eq(season.unwrap_or(0)))
+                    .filter(turninfo::complete.eq(false))
+                    .filter(turninfo::active.eq(true))
                     .first::<Option<i32>>(conn);
                 match day {
                     Ok(day) => {
