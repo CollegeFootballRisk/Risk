@@ -1,18 +1,26 @@
 // @license magnet:?xt=urn:btih:3877d6d54b3accd4bc32f8a48bf32ebc0901502a&dn=mpl-2.0.txt Mozilla-Public-2.0
-//initialize globals
 // if .ml, redirect to .com
 if (window.location.hostname === "aggierisk.ml") {
     window.location = 'https://aggierisk.com/';
 }
-var outstandingRequests = [];
-var errorNotifications = [];
-var now = new Date();
-var rollTime = new Date("December 12, 2020 04:00:00 ");
-window.hamburger = false;
+//initialize globals
+var appInfo = {
+    outstandingRequests: [],
+    errorNotifications: [],
+    rollTime: new Date("December 12, 2020 04:00:00"),
+    loadTime: new Date(),
+    burger: false,
+    teamsObject: null,
+    userObject: null
+}
 
-rollTime.setUTCHours(4, 0, 0, 0);
-if (rollTime < now) {
-    rollTime.setUTCDate(rollTime.getUTCDate() + 1)
+appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+
+if (appInfo.rollTime < new Date()) {
+    appInfo.rollTime = new Date();
+    if (appInfo.rollTime < new Date()) {
+        appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
+    }
 }
 
 // JS is enabled, so hide that notif
@@ -35,8 +43,8 @@ document.addEventListener('click', function(event) {
 }, false);
 
 document.getElementById('burger').addEventListener('click', function(event) {
-    window.burger = !window.burger;
-    document.getElementById('nav').style.display = (window.burger) ? 'flex' : 'none';
+    appInfo.burger = !appInfo.burger;
+    document.getElementById('nav').style.display = (appInfo.burger) ? 'flex' : 'none';
 });
 
 
@@ -65,27 +73,27 @@ function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNot
 }
 
 function addUrlFromRequests(source, url) {
-    var index = outstandingRequests.push({ source: source, url: url, state: 0 }) - 1;
+    var index = appInfo.outstandingRequests.push({ source: source, url: url, state: 0 }) - 1;
     updateLoaderVisibility();
     return index;
 }
 
 function updateUrlFromRequests(index, status) {
     if (index > -1) {
-        outstandingRequests[index].state = status;
+        appInfo.outstandingRequests[index].state = status;
     }
     updateLoaderVisibility();
 }
 
 function updateLoaderVisibility(forceHide = false) {
     let pending = false;
-    for (i in outstandingRequests) {
-        if (outstandingRequests[i].state == 0) {
+    for (i in appInfo.outstandingRequests) {
+        if (appInfo.outstandingRequests[i].state == 0) {
             pending = true;
             break;
         }
     }
-    if (pending == false && forceHide === false) {
+    if (!pending && !forceHide) {
         //stop loader
         document.getElementById("loadicon").classList.remove("spin");
     } else {
@@ -99,9 +107,9 @@ function updateLoaderVisibility(forceHide = false) {
 
 function errorNotif(title, body, button1, button2, resolveself = true, skipnotifcheck = false, errorIndex = 0) {
     if (skipnotifcheck != true) {
-        errorIndex = errorNotifications.push({ title: title, body: body, button1: button1, button2: button2, status: 1, resolveself: resolveself }) - 1;
+        errorIndex = appInfo.errorNotifications.push({ title: title, body: body, button1: button1, button2: button2, status: 1, resolveself: resolveself }) - 1;
     }
-    let vset = errorNotifications[errorIndex - 1] || { status: 0 };
+    let vset = appInfo.errorNotifications[errorIndex - 1] || { status: 0 };
     if (vset.status == 0) {
         document.getElementById('error-notif').style.display = "block";
         document.getElementById('error-notif-title').innerHTML = title || "General Error";
@@ -113,8 +121,8 @@ function errorNotif(title, body, button1, button2, resolveself = true, skipnotif
                 if (typeof button1.action == "function") {
                     button1.action();
                 }
-                if (resolveself == true) {
-                    errorNotifications[errorIndex].status = 0;
+                if (resolveself) {
+                    appInfo.errorNotifications[errorIndex].status = 0;
                 }
             } finally {
                 errorOver(errorIndex);
@@ -127,8 +135,8 @@ function errorNotif(title, body, button1, button2, resolveself = true, skipnotif
                 if (typeof button2.action == "function") {
                     button2.action();
                 }
-                if (resolveself == true) {
-                    errorNotifications[errorIndex].status = 0;
+                if (resolveself) {
+                    appInfo.errorNotifications[errorIndex].status = 0;
                 }
             } finally {
                 errorOver(errorIndex);
@@ -138,17 +146,17 @@ function errorNotif(title, body, button1, button2, resolveself = true, skipnotif
 }
 
 function errorOver(errorIndex) {
-    if (errorNotifications[errorIndex].status == 0) {
+    if (appInfo.errorNotifications[errorIndex].status == 0) {
         //move to next one or hide
         let pending = false;
-        for (i in errorNotifications) {
-            if (errorNotifications[i].status != 0) {
+        for (i in appInfo.errorNotifications) {
+            if (appInfo.errorNotifications[i].status != 0) {
                 pending = true;
-                errorNotif(errorNotifications[i].title, errorNotifications[i].body, errorNotifications[i].button1, errorNotifications[i].button2, errorNotifications[i].resolveself, true, i);
+                errorNotif(appInfo.errorNotifications[i].title, appInfo.errorNotifications[i].body, appInfo.errorNotifications[i].button1, appInfo.errorNotifications[i].button2, appInfo.errorNotifications[i].resolveself, true, i);
                 break;
             }
         }
-        if (pending == false) {
+        if (!pending) {
             document.getElementById('error-notif').style.display = "none";
         }
     } else {
@@ -176,8 +184,8 @@ function drawPlayerCard(userObject, teamObject) {
 
     var listHtml = "";
     var index = 0;
-    for (i in window.teamsObject) {
-        if (window.teamsObject[i].name == teamObject.team) {
+    for (i in appInfo.teamsObject) {
+        if (appInfo.teamsObject[i].name == teamObject.team) {
             index = i;
         }
     }
@@ -200,7 +208,7 @@ function drawPlayerCard(userObject, teamObject) {
         .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
         .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")
         .replace(/{{team_territories_yesterday}}/g, teamObject.territories || "0")
-        .replace(/{{team_logo}}/g, window.teamsObject[index].logo || "0");
+        .replace(/{{team_logo}}/g, appInfo.teamsObject[index].logo || "0");
     document.getElementById("playerCard").innerHTML = listHtml;
 }
 
@@ -208,17 +216,17 @@ function drawPlayerCard(userObject, teamObject) {
 function getUserInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/me', 'UserLoader', function(userObject) {
-                window.userObject = JSON.parse(userObject.response);
+                appInfo.userObject = JSON.parse(userObject.response);
                 //see if user has a team, if not, prompt them and halt
-                let active_team = window.userObject.active_team || {
+                let active_team = appInfo.userObject.active_team || {
                     name: null
                 };
                 if (active_team.name == null) {
                     //select a new team 4 the season! whoohoo!
-                    if (window.userObject.team == null) {
+                    if (appInfo.userObject.team == null) {
                         //select a team in general!! whoohoo!
                         select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
-                        teamsObject.forEach(function(team) {
+                        appInfo.teamsObject.forEach(function(team) {
                             select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
                         });
                         select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
@@ -247,7 +255,7 @@ function getUserInfo(resolve, reject) {
                     } else {
                         //oh no! your team has been e l i m i n a t e d 
                         select_team = "<p>Oh no! Your team has been <b>eliminated.</b> Select a new one to play as: </p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
-                        teamsObject.forEach(function(team) {
+                        appInfo.teamsObject.forEach(function(team) {
                             select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
                         });
                         select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
@@ -275,10 +283,8 @@ function getUserInfo(resolve, reject) {
                     }
                     reject("No team");
                 } else {
-                    doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(window.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(teamObject) {
-                        teamObject = JSON.parse(teamObject.response);
-                        userObject = window.userObject;
-                        drawPlayerCard(userObject, teamObject);
+                    doAjaxGetRequest(encodeURI('/api/stats/team?team='.concat(appInfo.userObject.team.name)).replace(/&/, '%26'), 'TeamLoader', function(teamObject) {
+                        drawPlayerCard(appInfo.userObject, JSON.parse(teamObject.response));
                         resolve("Okay");
                     }, function() {
                         reject("Error");
@@ -333,15 +339,15 @@ function removeMapHover(resolve, reject) {
 function getTeamInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/teams', 'Teams', function(team_data) {
-            window.teamsObject = JSON.parse(team_data.response);
-            //console.log(window.teamsObject);
-            for (team in window.teamsObject) {
+            appInfo.teamsObject = JSON.parse(team_data.response);
+            //console.log(appInfo.teamsObject);
+            for (team in appInfo.teamsObject) {
                 document.documentElement.style
-                    .setProperty('--'.concat(teamsObject[team].name.replace(/\W/g, '')).concat('-primary'), teamsObject[team].colors.primary);
+                    .setProperty('--'.concat(appInfo.teamsObject[team].name.replace(/\W/g, '')).concat('-primary'), appInfo.teamsObject[team].colors.primary);
                 document.documentElement.style
-                    .setProperty('--'.concat(teamsObject[team].name.replace(/\W/g, '')).concat('-secondary'), teamsObject[team].colors.secondary);
+                    .setProperty('--'.concat(appInfo.teamsObject[team].name.replace(/\W/g, '')).concat('-secondary'), appInfo.teamsObject[team].colors.secondary);
             }
-            resolve(window.teamsObject);
+            resolve(appInfo.teamsObject);
         }, function() { reject("Error"); });
     } catch {
         reject("Error loading team info");
@@ -392,16 +398,16 @@ function makeMove(id) {
 
 function drawActionBoard(resolve, reject) {
     let territories = window.territories;
-    if (window.turnsObject[window.turnsObject.length - 1].finale == true) {
+    if (window.turnsObject[window.turnsObject.length - 1].finale) {
         document.getElementById('last-day-notice').innerHTML = 'Today is the final roll! Make it count!';
     }
-    if (window.turnsObject[window.turnsObject.length - 1].active == false) {
+    if (!window.turnsObject[window.turnsObject.length - 1].active) {
         document.getElementById('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
         document.getElementById('action-container').innerHTML = '<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
             console.log("Drawing Actions.");
-            let userteam = window.userObject.active_team.name;
+            let userteam = appInfo.userObject.active_team.name;
             console.log(userteam);
             let attackable_territories = {};
             let defendable_territories = {};
@@ -759,7 +765,7 @@ function page_territory(contentTag, t_object) {
                             if (p == 'team') {
                                 obj_players.data[i].push("<a href=\"/team/{{team}}\" >{{team}}</a>".replace(/{{team}}/gi, territoryTurn.players[i][p]));
                             } else if (p == 'player') {
-                                obj_players.data[i].push("<a href=\"/player/{{player}}\" {{star_style}}>{{star}}{{player}}</a>".replace(/{{player}}/gi, territoryTurn.players[i][p]).replace(/{{star_style}}/, (territoryTurn.players[i]['mvp'] == true) ? "style=\"color:var(--theme-accent-1);\"" : "").replace(/{{star}}/, (territoryTurn.players[i]['mvp'] == true) ? '✯' : ''));
+                                obj_players.data[i].push("<a href=\"/player/{{player}}\" {{star_style}}>{{star}}{{player}}</a>".replace(/{{player}}/gi, territoryTurn.players[i][p]).replace(/{{star_style}}/, (territoryTurn.players[i]['mvp']) ? "style=\"color:var(--theme-accent-1);\"" : "").replace(/{{star}}/, (territoryTurn.players[i]['mvp']) ? '✯' : ''));
                             } else {
                                 obj_players.data[i].push(territoryTurn.players[i][p]);
                             }
@@ -857,7 +863,8 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                doPrettyMap(resolve, reject);
+                getAndHighlightMove(resolve, reject);
+                document.getElementById('map-note').style.display = 'unset';
             })
         })
         .catch((values) => { console.log(values) });
@@ -1243,134 +1250,11 @@ function page_player(contentTag, pid) {
         function() {
             document.getElementById('playerCard').innerHTML = "Hmm, user does not exist";
         });
-
-
 }
 
-function handleNewPage(title, contentTag, call, vari) {
-    contentTag.innerHTML = "";
-    document.title = "Aggie Risk | " + title;
-    clearInterval(window.pulse);
-    call(contentTag, vari);
-}
-
-class Router {
-
-    constructor(options) {
-        this.routes = [];
-
-        this.mode = null;
-
-        this.root = '/';
-        this.mode = window.history.pushState ? 'history' : 'hash';
-        if (options.mode) this.mode = options.mode;
-        if (options.root) this.root = options.root;
-
-
-
-        this.add = (path, cb) => {
-            this.routes.push({ path, cb });
-            return this;
-        };
-
-        this.remove = path => {
-            for (let i = 0; i < this.routes.length; i += 1) {
-                if (this.routes[i].path === path) {
-                    this.routes.slice(i, 1);
-                    return this;
-                }
-            }
-            return this;
-        };
-
-        this.flush = () => {
-            this.routes = [];
-            return this;
-        };
-
-        this.clearSlashes = path =>
-            path
-            .toString();
-        //  .replace(/\/$/, '')
-        // .replace(/^\//, '');
-
-        this.getFragment = () => {
-            let fragment = '';
-            if (this.mode === 'history') {
-                fragment = this.clearSlashes(decodeURI(window.location.pathname + window.location.search));
-                console.log(fragment);
-                fragment = fragment.replace(/\?(.*)$/, '');
-                fragment = this.root !== '/' ? fragment.replace(this.root, '') : fragment;
-            } else {
-                const match = window.location.href.match(/(.*)$/);
-                fragment = match ? match[1] : '';
-            }
-            return this.clearSlashes(fragment);
-        };
-
-        this.navigate = (path = '') => {
-            if (this.mode === 'history') {
-                window.history.pushState(null, null, this.root + this.clearSlashes(path));
-            } else {
-                window.location.href = `${window.location.href.replace(/(.*)$/, '')}#${path}`;
-            }
-            return this;
-        };
-
-        this.listen = () => {
-            clearInterval(this.interval);
-            this.interval = setInterval(this.interval, 50);
-        };
-
-        this.interval = () => {
-            if (this.current === this.getFragment() || this.current + "#" === this.getFragment()) return;
-            this.current = this.getFragment();
-
-            this.routes.some(route => {
-                const match = this.current.match(route.path);
-                if (match) {
-                    match.shift();
-                    route.cb.apply({}, match);
-                    return match;
-                }
-                return false;
-            });
-        };
-        this.listen();
-    }
-}
-
-const router = new Router({
-    mode: 'hash',
-    root: '/'
-});
-
-var contentTag = document.getElementById('content-wrapper');
-
-router
-    .add('/leaderboard', () => {
-        handleNewPage('Leaderboard', contentTag, page_leaderboard);
-    })
-    .add('/odds', () => {
-        handleNewPage('Odds', contentTag, page_odds);
-    })
-    .add('/info', () => {
-        handleNewPage('Information', contentTag, page_info);
-    })
-    .add(/team\/(.*)\/players/, (team) => {
-        handleNewPage(team, contentTag, page_team_players, team.replace('#', ''));
-    })
-    .add('/team/(.*)', (team) => {
-        handleNewPage(team, contentTag, page_team, team.replace('#', ''));
-    })
-    .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
-        console.log(territoryName, season, day);
-        handleNewPage(territoryName, contentTag, page_territory, { name: territoryName, season: season.replace('#', ''), day: day.replace('#', '') });
-    })
-    .add('/territory/(.*)', (territoryName) => {
-        handleNewPage(territoryName, contentTag, page_territory_cover, territoryName);
-    })
-    .add('/bug', () => {
+function page_bug() {
+    console.log("buggy!");
+    if (typeof BrowserInfo === "undefined") {
         var Browserinfo = {
             init: function() {
                 this.browser = this.searchString(this.dataBrowser) || "An unknown browser";
@@ -1525,20 +1409,199 @@ router
             useragent: Browserinfo.useragent,
             cookies: document.cookie
         };
+    }
 
-        bug_form = document.getElementById("bug_form");
-        bug_form = bug_form.innerHTML;
-        bug_form = bug_form.replace(/{{uinf}}/, encodeURI(JSON.stringify(BrowserInfo)))
-            .replace(/{{errors}}/, encodeURI(JSON.stringify(errorNotifications))).replace(/{{pending}}/, encodeURI(JSON.stringify(outstandingRequests)));
-        errorNotif('Bug Report', bug_form, {
-            text: "Okay",
-            action: function() {
-                console.log("Submit");
-            },
-        }, {
-            display: "none",
-            action: function() {}
-        });
+    bug_form = document.getElementById("bug_form");
+    bug_form = bug_form.innerHTML;
+    bug_form = bug_form.replace(/{{uinf}}/, encodeURI(JSON.stringify(BrowserInfo)))
+        .replace(/{{errors}}/, encodeURI(JSON.stringify(appInfo.errorNotifications))).replace(/{{pending}}/, encodeURI(JSON.stringify(appInfo.outstandingRequests)));
+    errorNotif('Bug Report', bug_form, {
+        text: "Okay",
+        action: function() {
+            console.log("Submit");
+            window.history.back();
+        },
+    }, {
+        display: "none",
+        action: function() { window.history.back(); }
+    });
+}
+
+function page_map(content, data = { season: 0, day: 0 }) {
+    //collect turninfo if it does not yet exist
+    //draw <- Season: # Day: # ->
+    //draw map
+    //apply filters if requested by user
+    var templateMap = document.getElementById("templateMap");
+    templateMap = templateMap.innerHTML;
+    content.innerHTML += templateMap;
+    let map = new Promise((resolve, reject) => {
+        getTurns(resolve, reject);
+        getTeamInfo(resolve, reject);
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            drawMap(resolve, reject, "territories", data.season, data.day);
+        })
+    }).then(() => {
+        return new Promise((resolve, reject) => {
+            setupMapHover(resolve, reject);
+            // find the turn element
+            const dayId = !(data.season == 0) ? window.turnsObject.find(el => el.season == data.season && el.day == data.day).id : window.turnsObject[window.turnsObject.length - 1].id;
+            console.log(dayId);
+            var tagtemplate = '';
+            if (typeof window.turnsObject.find(el => el.id == dayId - 1) != "undefined") {
+                tagtemplate += '<a href="/map/{{pseason}}/{{pday}}">&#11160;</a>'
+                    .replace(/{{pseason}}/, window.turnsObject.find(el => el.id == dayId - 1).season)
+                    .replace(/{{pday}}/, window.turnsObject.find(el => el.id == dayId - 1).day);
+            }
+            tagtemplate += '  Season {{season}}, Day {{day}}  '
+                .replace(/{{season}}/, window.turnsObject.find(el => el.id == dayId).season)
+                .replace(/{{day}}/, window.turnsObject.find(el => el.id == dayId).day);
+            if (typeof window.turnsObject.find(el => el.id == dayId + 1) != "undefined") {
+                tagtemplate += '<a href="/map/{{nseason}}/{{nday}}">&#11162;</a>'
+                    .replace(/{{nseason}}/, window.turnsObject.find(el => el.id == dayId + 1).season)
+                    .replace(/{{nday}}/, window.turnsObject.find(el => el.id == dayId + 1).day);
+            }
+            document.getElementById('map-day-info').innerHTML = tagtemplate;
+            document.getElementById('map-day-info').style.display = 'unset';
+        })
+    });
+}
+
+function handleNewPage(title, contentTag, call, vari) {
+    contentTag.innerHTML = "";
+    document.title = "Aggie Risk | " + title;
+    clearInterval(window.pulse);
+    call(contentTag, vari);
+}
+
+class Router {
+
+    constructor(options) {
+        this.routes = [];
+
+        this.mode = null;
+
+        this.root = '/';
+        this.mode = window.history.pushState ? 'history' : 'hash';
+        if (options.mode) this.mode = options.mode;
+        if (options.root) this.root = options.root;
+
+
+
+        this.add = (path, cb) => {
+            this.routes.push({ path, cb });
+            return this;
+        };
+
+        this.remove = path => {
+            for (let i = 0; i < this.routes.length; i += 1) {
+                if (this.routes[i].path === path) {
+                    this.routes.slice(i, 1);
+                    return this;
+                }
+            }
+            return this;
+        };
+
+        this.flush = () => {
+            this.routes = [];
+            return this;
+        };
+
+        this.clearSlashes = path =>
+            path
+            .toString();
+        //  .replace(/\/$/, '')
+        // .replace(/^\//, '');
+
+        this.getFragment = () => {
+            let fragment = '';
+            if (this.mode === 'history') {
+                fragment = this.clearSlashes(decodeURI(window.location.pathname + window.location.search));
+                console.log(fragment);
+                fragment = fragment.replace(/\?(.*)$/, '');
+                fragment = this.root !== '/' ? fragment.replace(this.root, '') : fragment;
+            } else {
+                const match = window.location.href.match(/(.*)$/);
+                fragment = match ? match[1] : '';
+            }
+            return this.clearSlashes(fragment);
+        };
+
+        this.navigate = (path = '') => {
+            if (this.mode === 'history') {
+                window.history.pushState(null, null, this.root + this.clearSlashes(path));
+            } else {
+                window.location.href = `${window.location.href.replace(/(.*)$/, '')}#${path}`;
+            }
+            return this;
+        };
+
+        this.listen = () => {
+            clearInterval(this.interval);
+            this.interval = setInterval(this.interval, 50);
+        };
+
+        this.interval = () => {
+            if (this.current === this.getFragment() || this.current + "#" === this.getFragment()) return;
+            this.current = this.getFragment();
+
+            this.routes.some(route => {
+                const match = this.current.match(route.path);
+                if (match) {
+                    match.shift();
+                    route.cb.apply({}, match);
+                    return match;
+                }
+                return false;
+            });
+        };
+        this.listen();
+    }
+}
+
+const router = new Router({
+    mode: 'hash',
+    root: '/'
+});
+
+var contentTag = document.getElementById('content-wrapper');
+
+router
+    .add('/leaderboard', () => {
+        handleNewPage('Leaderboard', contentTag, page_leaderboard);
+    })
+    .add('/odds', () => {
+        handleNewPage('Odds', contentTag, page_odds);
+    })
+    .add('/info', () => {
+        handleNewPage('Information', contentTag, page_info);
+    })
+    .add(/team\/(.*)\/players/, (team) => {
+        handleNewPage(team, contentTag, page_team_players, team.replace('#', ''));
+    })
+    .add('/team/(.*)', (team) => {
+        handleNewPage(team, contentTag, page_team, team.replace('#', ''));
+    })
+    .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
+        console.log(territoryName, season, day);
+        handleNewPage(territoryName, contentTag, page_territory, { name: territoryName, season: season.replace('#', ''), day: day.replace('#', '') });
+    })
+    .add('/territory/(.*)', (territoryName) => {
+        handleNewPage(territoryName, contentTag, page_territory_cover, territoryName);
+    })
+    .add('/map/(.*)/(.*)', (season, day) => {
+        console.log("Loading map: season {{season}} day {{day}}".replace(/{{season}}/, season).replace(/{{day}}/, day));
+        handleNewPage('Map', contentTag, page_map, { season: season.replace('#', ''), day: day.replace('#', '') });
+    })
+    .add('/map', () => {
+        console.log("Loading map");
+        handleNewPage('Map', contentTag, page_map);
+    })
+    .add('/bug', () => {
+        console.log("Loading Bug Page");
+        page_bug();
     })
     .add('/player/(.*)', (pid) => {
         handleNewPage(pid, contentTag, page_player, pid);
@@ -1556,7 +1619,7 @@ function doDate() {
     templateRollInfo = templateRollInfo.innerHTML;
     var now = new Date();
     var str = ""
-    var difference = rollTime - now;
+    var difference = appInfo.rollTime - now;
     var days = 0;
     var days = Math.floor(difference / 1000 / 24 / 60 / 60)
     difference -= days * 1000 * 24 * 60 * 60;
@@ -1582,7 +1645,7 @@ function setUpCounter(resolve, reject) {
     resolve();
 }
 
-function doPrettyMap() {
+function getAndHighlightMove() {
     console.log("Making request for current move.");
     doAjaxGetRequest('/auth/my_move', 'Plotting Pretty Map', function(data) {
         highlightTerritory(data.response.replace(/"/g, ''));
@@ -1605,7 +1668,7 @@ function pad(number, notion, final, next, prev) {
         return '';
     }
     if (prev == 0 && number == 0) {
-        rollTime.setUTCDate(rollTime.getUTCDate() + 1)
+        appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
     }
 }
 
@@ -1618,6 +1681,7 @@ function resizeGlobal() {
         resizeMap();
     } catch {
         //we're not on the main page. :shrug:
+        console.log("Could not resize map. Not on main page.");
     }
 }
 

@@ -92,6 +92,13 @@ fn js_api_player(_data: Option<String>) -> NamedFile {
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
+#[get("/map/<_data>/<_data2>", rank = 1)]
+fn js_api_map(_data: Option<String>, _data2: Option<String>) -> NamedFile {
+    NamedFile::open("static/index.html").ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
+
 #[get("/territory/<_territory>/<_data>/<_data2>", rank = 1)]
 fn js_api_territories(
     _data: Option<String>,
@@ -151,6 +158,7 @@ fn start() {
             js_api_territory,
             js_api_territories,
             js_api_team,
+            js_api_map,
             js_api_team_players,
             js_api_player
         ])
