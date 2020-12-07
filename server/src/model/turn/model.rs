@@ -53,6 +53,7 @@ pub struct TurnInfo {
     pub complete: Option<bool>,
     pub active: Option<bool>,
     pub finale: Option<bool>,
+    pub rollTime: Option<chrono::NaiveDateTime>
 }
 
 #[derive(Queryable, Serialize, Deserialize)]
@@ -80,8 +81,24 @@ impl TurnInfo {
                 turninfo::complete,
                 turninfo::active,
                 turninfo::finale,
+                turninfo::rollstarttime
             ))
             .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
+            .load::<TurnInfo>(conn)
+            .expect("Error loading TurnInfo")
+    }
+    pub fn loadall(conn: &PgConnection) -> Vec<TurnInfo> {
+        turninfo::table
+            .select((
+                turninfo::id,
+                turninfo::season,
+                turninfo::day,
+                turninfo::complete,
+                turninfo::active,
+                turninfo::finale,
+                turninfo::rollstarttime
+            ))
+            .order_by(turninfo::id)
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }

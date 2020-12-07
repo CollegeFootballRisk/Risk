@@ -77,6 +77,7 @@ table! {
         complete -> Nullable<Bool>,
         active -> Nullable<Bool>,
         finale -> Nullable<Bool>,
+        rollstarttime -> Nullable<Timestamp>,
     }
 }
 
