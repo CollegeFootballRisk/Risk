@@ -296,6 +296,7 @@ function getUserInfo(resolve, reject) {
                 document.getElementById("playerCard").classList.add("redditlogin");
                 document.getElementById("reddit-login-top").style.display = "flex";
                 document.getElementById("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
+                document.getElementById("roll-container").innerHTML = document.getElementById("playerCard").outerHTML;
                 resolve("Okay");
             });
     } catch {
@@ -310,13 +311,13 @@ function mapHover(event) {
         case 'mouseover':
             event.preventDefault();
             document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
             event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
             break;
         case 'mouseout':
             event.preventDefault();
             document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-            document.getElementById("map-owner-info").innerHTML = event.target.attributes["owner"].value;
+            document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
             event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
             break;
         default:
@@ -950,6 +951,9 @@ function drawOddsPage(junk) {
         document.getElementById('odds-survival').innerHTML = Math.floor(100 * (1 - survival_odds)) + "%";
         document.getElementById('odds-expect').innerHTML = territory_expected.toFixed(2);
         document.getElementById('odds-actual').innerHTML = territory_count.toFixed(2);
+        document.getElementById('leaderboard-wrapper').style.display = 'flex';
+        document.getElementById('action-container').style.display = 'flex';
+
     });
 }
 

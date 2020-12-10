@@ -161,7 +161,6 @@ header img {
 
 header .brand-image {
     position: relative;
-    right: 104px;
 }
 
 @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
@@ -808,7 +807,7 @@ footer p a {
     z-index: -1;
     width: calc(100% + var(--border-width) * 2);
     height: calc(100% + var(--border-width) * 2);
-    background: linear-gradient(60deg, rgba(95, 134, 242, 0.5), rgba(166, 95, 242, 0.5), rgba(242, 95, 208, 0.5), rgba(242, 95, 97, 0.5), rgba(242, 203, 95, 0.5), rgba(171, 242, 95, 0.5), rgba(95, 242, 129, 0.5), rgba(95, 242, 240, 0.5));
+    background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));
     background-size: 300% 300%;
     background-position: 0 50%;
     border-radius: calc(2 * var(--border-width));
