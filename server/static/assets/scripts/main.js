@@ -55,7 +55,11 @@ function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNot
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             if (typeof callback == 'function') {
-                callback(this);
+                try {
+                    callback(this);
+                } catch {
+                    console.log("Error with callback function");
+                }
             } else {
                 return JSON.parse(this.response);
             }
@@ -247,7 +251,7 @@ function getUserInfo(resolve, reject) {
                                         //team has no territories!
                                         document.getElementById('team-submit-form-error').innerHTML = "<br/><br/> <b style=\"color:red;\">Sorry, but this team is out of the running. Try another.</b>";
                                     } else {
-                                        document.getElementsById('team-submit-form-error').innerHTML = "<br/><br/><b style=\"red\">Hmm, something went wrong. Try again?</b>";
+                                        document.getElementById('team-submit-form-error').innerHTML = "<br/><br/><b style=\"red\">Hmm, something went wrong. Try again?</b>";
                                     }
                                 });
                             }
@@ -1498,6 +1502,110 @@ function handleNewPage(title, contentTag, call, vari) {
     document.title = "Aggie Risk | " + title;
     clearInterval(window.pulse);
     call(contentTag, vari);
+}
+
+function paintPoll() {
+    if (appInfo.pollResponses.length == appInfo.pollData.length) {
+        //whoop!
+        console.log("Okay.");
+        //present them with the poll machine!
+        askPoll(0);
+    } else {
+        console.log("Shoot! Couldn't get poll responses.");
+    }
+}
+
+function askPoll(number) {
+    numberp1 = number + 1;
+    early = (appInfo.pollData[0].day + 7).toString();
+    late = (appInfo.pollData[0].day + 14).toString();
+    appInfo.currentPoll = appInfo.pollData[0].id;
+    currResp = "Not responded";
+    for (j = 0; j < appInfo.pollResponses.length; j++) {
+        if (appInfo.pollResponses[j].length > 0) {
+            if (appInfo.pollResponses[j][0].response == true) {
+                currResp = "Yes";
+            } else {
+                currResp = "No";
+            }
+        }
+    }
+    errorNotif('Polls ' + numberp1 +
+        ' of ' + appInfo.pollData.length, appInfo.pollData[0].question + "<br />This would take the season from " + early + " to " + late + " days. <br/><br/> Your current response is: <b>" + currResp + " </b><div id='pollResponseError'></div>", {
+            text: "Yes",
+            action: function() {
+                doAjaxGetRequest('/auth/poll/respond?poll=' + appInfo.currentPoll + '&response=' + true, 'Poll Responder', function(data) {
+                    if (data.status == 200) {
+                        for (ei = 0; ei < appInfo.errorNotifications.length; ei++) {
+                            if (appInfo.errorNotifications[ei].status == 1 && appInfo.errorNotifications[ei].title.includes("Poll")) {
+                                appInfo.errorNotifications[ei].status = 0;
+                                errorOver(ei);
+                            }
+                        }
+                    } else {
+                        document.getElementById('pollResponseError').innerHTML = "<br/><br/><b style=\"red\">1 Hmm, something went wrong. Try again.</b>";
+                    }
+                }, function() {
+                    document.getElementById('pollResponseError').innerHTML = "<br/><br/><b style=\"red\">2 Hmm, something went wrong. Try again.</b>";
+                });
+            }
+        }, {
+            text: "No",
+            action: function() {
+                doAjaxGetRequest('/auth/poll/respond?poll=' + appInfo.currentPoll + '&response=' + false, 'Poll Responder', function(data) {
+                    if (data.status == 200) {
+                        for (ei = 0; ei < appInfo.errorNotifications.length; ei++) {
+                            if (appInfo.errorNotifications[ei].status == 1 && appInfo.errorNotifications[ei].title.includes("Poll")) {
+                                appInfo.errorNotifications[ei].status = 0;
+                                errorOver(ei);
+                            }
+                        }
+                    } else {
+                        document.getElementById('pollResponseError').innerHTML = "<br/><br/><b style=\"red\">1 Hmm, something went wrong. Try again.</b>";
+                    }
+                }, function() {
+                    document.getElementById('pollResponseError').innerHTML = "<br/><br/><b style=\"red\">2 Hmm, something went wrong. Try again.</b>";
+                });
+            }
+        },
+        false);
+}
+
+function doPoll() {
+    doAjaxGetRequest('/auth/polls', 'Poll Requests', function(pollData) {
+        try {
+            pollData = JSON.parse(pollData.response);
+            appInfo.pollData = pollData;
+            console.log(pollData);
+            appInfo.pollResponses = [];
+            for (i = 0; i < pollData.length; i++) {
+                doAjaxGetRequest('/auth/poll/response?poll=' + pollData[i].id, 'Poll Response Requests', function(data) {
+                    appInfo.pollResponses.push(JSON.parse(data.response));
+                    paintPoll();
+                }, function() {
+                    appInfo.pollResponses.push([]);
+                    errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
+                        text: "Okay"
+                    }, {
+                        display: "none"
+                    });
+                });
+            }
+            var startDate = new Date();
+        } catch {
+            errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
+                text: "Okay"
+            }, {
+                display: "none"
+            });
+        }
+    }, function() {
+        errorNotif('Could Not Fetch Polls', 'We could not fetch the polls. Try again?', {
+            text: "Okay"
+        }, {
+            display: "none"
+        });
+    });
 }
 
 class Router {
