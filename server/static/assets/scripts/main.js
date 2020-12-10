@@ -226,8 +226,11 @@ function getUserInfo(resolve, reject) {
                     if (appInfo.userObject.team == null) {
                         //select a team in general!! whoohoo!
                         select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
+                        season = window.turnsObject[window.turnsObject.length - 1].season;
                         appInfo.teamsObject.forEach(function(team) {
-                            select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                            if (season in team.seasons && team.name != "Unjoinable Placeholder") {
+                                select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                            }
                         });
                         select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
                         errorNotif('Select a Team', select_team, {
@@ -844,12 +847,12 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                getUserInfo(resolve, reject);
+                getTurns(resolve, reject);
             })
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                getTurns(resolve, reject);
+                getUserInfo(resolve, reject);
             })
         })
         .then(() => {
@@ -877,7 +880,7 @@ function hideUnselectableTeams(season) {
             option_element.style.display = "none";
         } else {
             console.log(option_element);
-            option_element.style.display = "unset";
+            option_element.style.display = "flex";
         }
     });
 }
