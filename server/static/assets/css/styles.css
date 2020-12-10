@@ -161,6 +161,7 @@ header img {
 
 header .brand-image {
     position: relative;
+    top: -2px !important;
 }
 
 @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {

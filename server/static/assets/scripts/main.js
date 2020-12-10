@@ -871,6 +871,17 @@ function page_index(contentTag) {
         .catch((values) => { console.log(values) });
 }
 
+function hideUnselectableTeams(season) {
+    Array.from(document.querySelector("#team_select").options).forEach(function(option_element) {
+        if (option_element.getAttribute("season") != season || option_element.value == "Unjoinable Placeholder") {
+            option_element.style.display = "none";
+        } else {
+            console.log(option_element);
+            option_element.style.display = "unset";
+        }
+    });
+}
+
 function drawOddsPage(junk) {
     // get value of team_select
     // get value of day_select and break into season, day
@@ -882,6 +893,8 @@ function drawOddsPage(junk) {
     var seasonday = document.getElementById('day_select').value.split('.');
     var day = seasonday[1];
     var season = seasonday[0];
+    //update the team select to only have this season's teams!
+    hideUnselectableTeams(season);
     document.getElementById("heat-notif").innerHTML = "Where " + team + " deployed forces";
     document.getElementById("odds-notif").innerHTML = "Where " + team + " had the highest odds";
     doAjaxGetRequest('/api/team/odds?team=' + team.replace('&', '%26') + '&day=' + day + '&season=' + season, 'oddsfetch', function(oddsObject) {
@@ -968,12 +981,17 @@ function page_odds(contentTag) {
         .then((values) => {
             //make pretty thingy 
             str = '<select onchange="drawOddsPage(this.value); " name="team_select" id="team_select">';
+            maxSeason = 0;
             for (i in values[0]) {
-                str += "<option name=\"team_select\" value=\"" + values[0][i].name + "\">" + values[0][i].name + "</option>";
+                str += "<option name=\"team_select\" season = \"" + values[0][i].seasons[0] + "\" value=\"" + values[0][i].name + "\">" + values[0][i].name + "</option>";
+                if (values[0][i].seasons[0] > maxSeason) {
+                    maxSeason = values[0][i].seasons[0];
+                }
             }
             document.getElementById("map-owner-info").innerHTML = seasonDayObject(0, 0, autoup = false, 'drawOddsPage', values[1]);
             document.getElementById("map-owner-teams").innerHTML = str;
-            document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
+            document.getElementById("map-owner-info").setAttribute('selectitem', 'true');
+            hideUnselectableTeams(maxSeason);
             console.log(values);
         });
 }

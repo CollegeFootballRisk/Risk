@@ -23,6 +23,7 @@ table! {
         logo -> Nullable<Text>,
         color_1 -> Nullable<Text>,
         color_2 -> Nullable<Text>,
+        seasons -> Array<Int4>,
     }
 }
 

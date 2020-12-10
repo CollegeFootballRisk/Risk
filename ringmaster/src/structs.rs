@@ -295,6 +295,12 @@ impl TurnInfo {
                 turninfo::active.eq(&Some(active)),
                 turninfo::finale.eq(&Some(finale)),
             ))
+            .on_conflict((turninfo::season, turninfo::day))
+            .do_update()
+            .set((
+                turninfo::active.eq(&Some(active)),
+                turninfo::complete.eq(&Some(false)),
+                turninfo::finale.eq(&Some(finale))))
             .execute(conn)
     }
 

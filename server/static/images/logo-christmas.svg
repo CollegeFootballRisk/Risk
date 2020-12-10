@@ -7,9 +7,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="1130.5789mm"
-   height="210.53012mm"
-   viewBox="0 0 1130.5788 210.53012"
+   width="1341.3815mm"
+   height="243.71942mm"
+   viewBox="0 0 1341.3814 243.71942"
    version="1.1"
    id="svg8"
    inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)"
@@ -22,6 +22,38 @@
        width="1217.0999"
        height="772.20862"
        id="rect30" />
+    <filter
+       style="color-interpolation-filters:sRGB"
+       inkscape:label="Drop Shadow"
+       id="filter1611">
+      <feFlood
+         flood-opacity="1"
+         flood-color="rgb(13,89,1)"
+         result="flood"
+         id="feFlood1601" />
+      <feComposite
+         in="flood"
+         in2="SourceGraphic"
+         operator="in"
+         result="composite1"
+         id="feComposite1603" />
+      <feGaussianBlur
+         in="composite1"
+         stdDeviation="18"
+         result="blur"
+         id="feGaussianBlur1605" />
+      <feOffset
+         dx="0"
+         dy="0"
+         result="offset"
+         id="feOffset1607" />
+      <feComposite
+         in="SourceGraphic"
+         in2="offset"
+         operator="over"
+         result="composite2"
+         id="feComposite1609" />
+    </filter>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -31,17 +63,17 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="0.175"
-     inkscape:cx="2441.3408"
-     inkscape:cy="438.77755"
+     inkscape:cx="2905.4374"
+     inkscape:cy="579.80174"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      inkscape:document-rotation="0"
      showgrid="false"
-     inkscape:window-width="1910"
-     inkscape:window-height="1040"
-     inkscape:window-x="4"
-     inkscape:window-y="34"
-     inkscape:window-maximized="0" />
+     inkscape:window-width="1886"
+     inkscape:window-height="1032"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1" />
   <metadata
      id="metadata5">
     <rdf:RDF>
@@ -58,22 +90,23 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(560.72669,-58.685081)">
+     transform="translate(674.54666,-41.68275)">
     <text
        id="text841"
-       y="221.56946"
-       x="-567.7547"
-       style="font-size:211.667px;line-height:1.25;font-family:'Oxygen Mono';-inkscape-font-specification:'Oxygen Mono, Normal';fill:#800000;fill-opacity:1;stroke-width:0.264583"
-       xml:space="preserve"><tspan
-         style="font-weight:bold;fill:#800000;fill-opacity:1;stroke-width:0.264583"
-         y="221.56946"
-         x="-567.7547"
+       y="215.31758"
+       x="-576.42139"
+       style="font-size:203.601px;line-height:1.25;font-family:'Oxygen Mono';-inkscape-font-specification:'Oxygen Mono, Normal';fill:#800000;fill-opacity:1;stroke-width:0.2545;filter:url(#filter1611)"
+       xml:space="preserve"
+       transform="scale(0.97799483,1.0225003)"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:203.601px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#800000;fill-opacity:1;stroke-width:0.2545"
+         y="215.31758"
+         x="-576.42139"
          id="tspan839"
          sodipodi:role="line"
          transform="translate(-6.2561579,-5.0213054)"><tspan
-           style="fill:#ff0000"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:203.601px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#ff0000;stroke-width:0.2545"
            id="tspan34">Aggie</tspan><tspan
-           style="fill:#00ff00"
+           style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:203.601px;font-family:'Bitstream Vera Sans';-inkscape-font-specification:'Bitstream Vera Sans, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#00ff00;stroke-width:0.2545"
            id="tspan36">Risk</tspan></tspan></text>
   </g>
 </svg>
