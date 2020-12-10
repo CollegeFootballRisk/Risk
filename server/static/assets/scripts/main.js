@@ -228,7 +228,7 @@ function getUserInfo(resolve, reject) {
                         select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
                         season = window.turnsObject[window.turnsObject.length - 1].season;
                         appInfo.teamsObject.forEach(function(team) {
-                            if (season in team.seasons && team.name != "Unjoinable Placeholder") {
+                            if (team.seasons.includes(season) && team.name != "Unjoinable Placeholder") {
                                 select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
                             }
                         });
