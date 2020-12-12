@@ -18,6 +18,7 @@ appInfo.rollTime.setUTCHours(4, 0, 0, 0);
 
 if (appInfo.rollTime < new Date()) {
     appInfo.rollTime = new Date();
+    appInfo.rollTime.setUTCHours(4, 0, 0, 0);
     if (appInfo.rollTime < new Date()) {
         appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
     }
@@ -220,6 +221,7 @@ function drawPlayerCard(userObject, teamObject) {
 function getUserInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/me', 'UserLoader', function(userObject) {
+                console.log("Making req");
                 appInfo.userObject = JSON.parse(userObject.response);
                 //see if user has a team, if not, prompt them and halt
                 let active_team = appInfo.userObject.active_team || {
@@ -231,11 +233,13 @@ function getUserInfo(resolve, reject) {
                         //select a team in general!! whoohoo!
                         select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
                         season = window.turnsObject[window.turnsObject.length - 1].season;
+                        approved_teams = [];
                         for (n = 0; n < window.territories.length; n++) {
                             if (!approved_teams.includes(window.territories[n].owner)) {
                                 approved_teams.push(window.territories[n].owner);
                             }
                         }
+
                         appInfo.teamsObject.forEach(function(team) {
                             if (team.seasons.includes(season) && team.name != "Unjoinable Placeholder" && approved_teams.includes(team.name)) {
                                 select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
@@ -381,6 +385,7 @@ function getTurns(resolve, reject) {
     try {
         doAjaxGetRequest('/api/turns', 'Turns', function(team_data) {
             window.turnsObject = JSON.parse(team_data.response);
+            appInfo.rollTime = new Date(window.turnsObject[window.turnsObject.length - 1].rollTime + "Z");
             window.turn = window.turnsObject[window.turnsObject.length - 1];
             resolve(window.turnsObject);
         }, function() { reject("Error"); });
@@ -417,6 +422,37 @@ function makeMove(id) {
                 display: "none"
             });
         });
+}
+
+function drawTerritoryAction(resolve, reject) {
+    let territories = window.territories;
+    if (window.turnsObject[window.turnsObject.length - 1].active) {
+        try {
+            console.log("Drawing single action.");
+            let userteam = appInfo.userObject.active_team.name;
+            console.log(userteam);
+            let attackable_territories = {};
+            let defendable_territories = {};
+            for (i in territories) {
+                if (territories[i].owner == userteam) {
+                    defendable_territories[territories[i].id] = territories[i];
+                    for (j in territories[i].neighbors) {
+                        if (territories[i].neighbors[j].owner != userteam) {
+                            attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                        }
+                    }
+                }
+            }
+            console.log("Territory action drawn");
+            resolve("Okay");
+        } catch (error) {
+            console.log('could not do territory analysis');
+            console.log(error);
+            reject("Error");
+        }
+    } else {
+        console.log("Not displaying actions. No ac")
+    }
 }
 
 function drawActionBoard(resolve, reject) {
@@ -856,7 +892,6 @@ function page_index(contentTag) {
     var templateRoll = document.getElementById("templateRoll");
     contentTag.innerHTML += templateMap.innerHTML;
     contentTag.innerHTML += templateRoll.innerHTML;
-
     let index = Promise.all([new Promise(drawMap), new Promise(getTeamInfo)])
         .then((values) => {
             console.log(values);
