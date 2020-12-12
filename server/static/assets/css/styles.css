@@ -28,8 +28,12 @@ nav {
     list-style: none;
 }
 
+nav a {
+    text-decoration: none !important;
+}
+
 a {
-    text-decoration: none;
+    text-decoration: underline;
     color: inherit;
     cursor: pointer;
     opacity: 0.9;
@@ -51,7 +55,7 @@ a.btn {
 
 body {
     background-color: var(--theme-bg);
-    background: url('../../images/background.jpg');
+    background: url('../../images/background-christmas.jpg');
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -163,6 +167,7 @@ header .brand-image {
     position: relative;
     top: -2px;
 }
+
 
 /*
 @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
@@ -297,7 +302,7 @@ header nav li:last-child {
     header .brand-image {
         position: fixed !important;
         left: 10px;
-	top: 15px !important;
+        top: 15px !important;
     }
 }
 
