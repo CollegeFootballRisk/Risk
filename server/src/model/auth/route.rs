@@ -521,6 +521,6 @@ fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryRes
                 .set((users::current_team.eq(team), users::playing_for.eq(team)))
                 .execute(conn)
         }
-        false => diesel::update(users::table).set(users::playing_for.eq(team)).execute(conn),
+        false => diesel::update(users::table).filter(users::id.eq(user)).set(users::playing_for.eq(team)).execute(conn),
     }
 }

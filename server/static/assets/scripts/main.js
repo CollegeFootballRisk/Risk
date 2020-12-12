@@ -231,8 +231,13 @@ function getUserInfo(resolve, reject) {
                         //select a team in general!! whoohoo!
                         select_team = "<p>Welcome! <br/> To get started, you will need to select a team.</p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
                         season = window.turnsObject[window.turnsObject.length - 1].season;
+                        for (n = 0; n < window.territories.length; n++) {
+                            if (!approved_teams.includes(window.territories[n].owner)) {
+                                approved_teams.push(window.territories[n].owner);
+                            }
+                        }
                         appInfo.teamsObject.forEach(function(team) {
-                            if (team.seasons.includes(season) && team.name != "Unjoinable Placeholder") {
+                            if (team.seasons.includes(season) && team.name != "Unjoinable Placeholder" && approved_teams.includes(team.name)) {
                                 select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
                             }
                         });
@@ -261,9 +266,19 @@ function getUserInfo(resolve, reject) {
                         });
                     } else {
                         //oh no! your team has been e l i m i n a t e d 
+                        console.log("Elimed");
                         select_team = "<p>Oh no! Your team has been <b>eliminated.</b> Select a new one to play as: </p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
+                        approved_teams = [];
+                        season = window.turnsObject[window.turnsObject.length - 1].season;
+                        for (n = 0; n < window.territories.length; n++) {
+                            if (!approved_teams.includes(window.territories[n].owner)) {
+                                approved_teams.push(window.territories[n].owner);
+                            }
+                        }
                         appInfo.teamsObject.forEach(function(team) {
-                            select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                            if (team.seasons.includes(season) && team.name != "Unjoinable Placeholder" && approved_teams.includes(team.name)) {
+                                select_team += "<option name=\"team\" value=\"" + team.id + "\">" + team.name + "</option>";
+                            }
                         });
                         select_team += "</select><div id=\"team-submit-form-error\"></div></form>";
                         errorNotif('Select a Team', select_team, {
@@ -615,10 +630,12 @@ function drawLeaderboard(season, day) {
                 searchable: false,
                 perPageSelect: false,
                 footer: false,
+                perPage: 20,
                 labels: {
                     info: "",
                 }
             });
+            window.datatable.columns().sort(1);
         }
     });
 }
