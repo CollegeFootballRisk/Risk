@@ -161,14 +161,15 @@ header img {
 
 header .brand-image {
     position: relative;
-    top: -2px !important;
+    top: -2px;
 }
 
+/*
 @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
     .selector:not(*: root), .brand-image {
         right: 103px !important;
     }
-}
+}*/
 
 header nav {
     display: flex;
@@ -294,8 +295,9 @@ header nav li:last-child {
 
 @supports (-webkit-touch-callout: none) {
     header .brand-image {
-        position: relative;
-        right: 109px;
+        position: fixed !important;
+        left: 10px;
+	top: 15px !important;
     }
 }
 
