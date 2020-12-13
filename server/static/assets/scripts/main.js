@@ -614,8 +614,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
-                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
-                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
+                        //red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage((heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
                         document.getElementById("old-map-county-info").innerHTML = "Leaderboard";
                         document.getElementById("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
@@ -632,15 +632,24 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     heat = JSON.parse(heat_data.response);
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
+                    console.log("Maxmin", maxmin);
                     for (territory in heat) {
-                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
-                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
+                        red = (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power) || 0;
+                        console.log(red);
+                        console.log(getColorForPercentage(red));
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
                         document.getElementById("old-map-county-info").innerHTML = "Leaderboard";
                         document.getElementById("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
                         document.getElementById("old-map-owner-info").setAttribute('selectitem', 'true')
                     }
+                    var li = "<br/><br/><ul id=\"spot\">";
+                    for (var i = 0, l = 10; i <= l; i++) {
+                        li += "<li style=\"background:" + getColorForPercentage(i / l) + "\">" + (((i / l) * (maxmin[0].power - maxmin[1].power)) + maxmin[1].power).toFixed(0) + "</li>";
+                    }
+                    li += "</ul>";
+                    document.getElementById("map-container").innerHTML += li;
                     resizeMap();
                     resolve(heat);
                 }, function() {
@@ -1091,11 +1100,11 @@ function drawOddsPage(junk) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
-            player_red = Math.round(160 + 200 * (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 60;
-            odds_red = Math.round(160 + 200 * (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 60;
-            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + player_red + ",100%, 50%, 0.5)";
+            player_red = (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players) || 0;
+            odds_red = (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance) || 0;
+            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = getColorForPercentage(player_red);
             document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('players', oddsObject[i].players);
-            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + odds_red + ", 100%, 50%, 0.5)";
+            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = getColorForPercentage(odds_red);
             document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('odds', oddsObject[i].chance);
             obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
@@ -1999,4 +2008,30 @@ function getMaxMin(arr, prop) {
     }
     return [max, min];
 }
+var percentColors = [
+    { pct: 0.0, color: { r: 0x00, g: 0xff, b: 0 } },
+    { pct: 0.5, color: { r: 0xff, g: 0xff, b: 0 } },
+    { pct: 1.0, color: { r: 0xff, g: 0x00, b: 0 } },
+];
+var getColorForPercentage = function(pct) {
+    for (var i = 1; i < percentColors.length - 1; i++) {
+        if (pct < percentColors[i].pct) {
+            break;
+        }
+    }
+    var lower = percentColors[i - 1];
+    var upper = percentColors[i];
+    var range = upper.pct - lower.pct;
+    var rangePct = (pct - lower.pct) / range;
+    var pctLower = 1 - rangePct;
+    var pctUpper = rangePct;
+    var color = {
+        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
+    };
+    return 'rgba(' + [color.r, color.g, color.b].join(',') + ',0.5)';
+    // or output as hex if preferred
+}
+
 // @license-end

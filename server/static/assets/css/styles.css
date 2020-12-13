@@ -654,6 +654,37 @@ h3[selectitem]::after {
     margin: 20px;
 }
 
+#spot {
+    display: inline-block;
+}
+
+#spot li {
+    float: left;
+    width: 50px;
+    border: 2px solid white;
+    border-left: none;
+    border-right: none;
+    padding: 2px;
+    box-shadow: 0px -10px 0px rgba(0, 0, 0, 0.08) inset, 0px 12px 0px rgba(0, 0, 0, 0.2) inset, 0px 0px 5px rgba(0, 0, 0, 0.2);
+    list-style: none;
+    text-align: center;
+    color: white;
+    font-family: Verdana;
+    opacity: 0.8;
+}
+
+#spot li:hover {
+    opacity: 1;
+}
+
+#spot li:first-child {
+    border-left: 2px solid white;
+}
+
+#spot li:last-child {
+    border-right: 2px solid white;
+}
+
 
 /*--------------------
  	Reviews Section
