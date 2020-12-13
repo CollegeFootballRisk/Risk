@@ -23,6 +23,7 @@ table! {
         logo -> Nullable<Text>,
         color_1 -> Nullable<Text>,
         color_2 -> Nullable<Text>,
+        seasons -> Array<Int4>,
     }
 }
 
@@ -77,6 +78,7 @@ table! {
         complete -> Nullable<Bool>,
         active -> Nullable<Bool>,
         finale -> Nullable<Bool>,
+        rollstarttime -> Nullable<Timestamp>,
     }
 }
 

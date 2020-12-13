@@ -128,6 +128,7 @@ fn start() {
             player::route::players,
             player::route::player_multifetch,
             turn::route::turns,
+            turn::route::all_turns,
             turn::route::rolllog,
             team::route::teams,
             team::route::teamplayersbymoves,

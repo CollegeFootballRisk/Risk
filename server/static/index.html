@@ -9,7 +9,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>Aggie Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=0.1.4-rc2">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=0.1.7">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js">
     </script>
@@ -35,7 +35,7 @@
     <header>
         <h2>
             <a href="/" class="loader" target="_self">
-                <img src="/images/logo-text-white.svg">
+                <img src="/images/logo-christmas.svg">
                 <img src="/images/logo-white.svg" id="loadicon" class="brand-image spin">
             </a>
         </h2>
@@ -69,7 +69,7 @@
         </p>
         <p>
             All other <a href="https://pixnio.com/nature-landscapes/night/cosmos-galaxy-wallpaper-night-silhouette-sky-stars-tree#img_info">parts</a>
-            <a href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> this website are <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a>            (public domain) or <a href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
+            <a href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this</a>            website are <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
                 v2.</a>
         </p>
         <p>It's more fun playing with others. Join us on <a href="https://tx.ag/AggieDiscord">Discord</a> or <a href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
@@ -99,6 +99,7 @@
                     Playing Rust Risk
                 </h2><br/>
             </center>
+            <iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>
             <h3> What is Rust Risk? </h3>
             <p id="#what">
                 Aggie Risk is similar to <u><a href="https://collegefootballrisk.com/">College Football Risk</a></u>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the
@@ -119,7 +120,7 @@
     </script>
     <script id="templateRollInfo" type="text/template">
         <h3 class="title">Day {{day}}</h3>
-        <p>{{days}}{{hours}}{{minutes}}{{seconds}} remain until the next roll.</p>
+        <p>{{hours}}{{minutes}}{{seconds}} remain until the next roll.</p>
     </script>
     <script id="templateLeaderboard" type="text/template">
         <section class="leaderboard-wrap">
@@ -134,12 +135,12 @@
     </script>
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
-            <h1 id="map-county-info">Map</h1>
-            <h3 id="map-owner-info">(Hover to see more info)</h3>
+            <h1 id="old-map-county-info">Map</h1>
+            <h3 id="old-map-owner-info"><a href="/map">See past maps</a></h3>
             <h3 id="map-day-info" style="display:none;"></h3>
             <div id="map-container" style="width:100%;">
             </div>
-            <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/><a href="/map">See past maps.</a></u></text>
+            <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/></u></text>
         </section>
     </script>
 
@@ -162,13 +163,7 @@
         </section>
     </script>
     <script id="templateRoll" type="text/template">
-        <section class="roll-wrap">
-            <ul class="ugrid" id="playerCard">
-            </ul>
-            <hr>
-            <div id="rollInfo"></div>
-            <hr>
-            <h2><text style="color:red;" id="last-day-notice"></text></h2>
+        <section class="roll-wrap" id="roll-container">
             <ul class="grid" id="action-container">
                 <li>
                     <h4>Attack</h4>
@@ -181,6 +176,13 @@
                     </div>
                 </li>
             </ul>
+            <ul class="ugrid" id="playerCard">
+            </ul>
+            <hr>
+            <div id="rollInfo"></div>
+            <ul id="pollInfo" style="margin-bottom:100px;"><text style="color:red;"><a onclick="doPoll();">You can take <u>the poll</u> to extend game play now.</a></text></ul>
+            <hr>
+            <h2><text style="color:red;" id="last-day-notice"></text></h2>
         </section>
     </script>
     <script id="templateTerritoryCompleteHeader" type="text/template">
@@ -188,10 +190,10 @@
     </script>
     <script id="templateOdds" type="text/template">
         <section class="map-wrap">
-            <h1 id="map-county-info">Odds</h1>
+            <h1 id="old-map-county-info">Odds</h1>
             <h3 id="map-owner-info">Loading . . . </h3>
             <h3 id="map-owner-teams" selectitem>Loading . . . </h3>
-            <ul class="ugrid" id="action-container">
+            <ul class="ugrid" id="action-container" style="display:none;">
                 <li>
                     <h3>Heat Map</h3>
                     <h4 id="heat-notif"></h4>
@@ -205,7 +207,7 @@
             </ul>
             </div>
         </section>
-        <section class="leaderboard-wrap">
+        <section class="leaderboard-wrap" id="leaderboard-wrapper" style="display:none;">
             <ul class="ugrid">
                 <li class="small p20">
                     <h2>Survival Odds</h2><br/><text id="odds-survival"></text></li>
@@ -381,7 +383,7 @@
             </center>
         </li>
     </script>
-    <script src="/assets/scripts/main.js">
+    <script src="/assets/scripts/main.js?v=0.1.7">
     </script>
 </body>
 

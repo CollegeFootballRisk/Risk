@@ -446,7 +446,7 @@ fn get_adjacent_territory_owners(
 }
 
 fn get_cfb_points(name: String) -> i64 {
-    let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
+    /*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
     let client = Client::with_connector(https);
     let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
     url.push_str(&name);
@@ -464,7 +464,8 @@ fn get_cfb_points(name: String) -> i64 {
             }
         }
         Err(_e) => 1,
-    }
+    }*/
+    5
 }
 
 fn insert_turn(
@@ -521,6 +522,6 @@ fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryRes
                 .set((users::current_team.eq(team), users::playing_for.eq(team)))
                 .execute(conn)
         }
-        false => diesel::update(users::table).set(users::playing_for.eq(team)).execute(conn),
+        false => diesel::update(users::table).filter(users::id.eq(user)).set(users::playing_for.eq(team)).execute(conn),
     }
 }

@@ -9,6 +9,8 @@
     --theme-fg: rgba(255, 255, 255, 1);
     --theme-accent-1: rgba(0, 200, 0, 1);
     --theme-accent-2: rgba(200, 0, 0, 1);
+    --theme-accent-3: rgba(200, 0, 200, 1);
+    --theme-accent-4: rgba(200, 200, 0, 1);
 }
 
 * {
@@ -28,8 +30,16 @@ nav {
     list-style: none;
 }
 
+nav a {
+    text-decoration: none !important;
+}
+
+.loader {
+    text-decoration: none !important;
+}
+
 a {
-    text-decoration: none;
+    text-decoration: underline;
     color: inherit;
     cursor: pointer;
     opacity: 0.9;
@@ -51,7 +61,7 @@ a.btn {
 
 body {
     background-color: var(--theme-bg);
-    background: url('../../images/background.jpg');
+    background: url('../../images/background-christmas.jpg');
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -161,14 +171,16 @@ header img {
 
 header .brand-image {
     position: relative;
-    right: 104px;
+    top: -2px;
 }
 
+
+/*
 @media all and (-webkit-min-device-pixel-ratio:0) and (min-resolution: .001dpcm) {
     .selector:not(*: root), .brand-image {
         right: 103px !important;
     }
-}
+}*/
 
 header nav {
     display: flex;
@@ -233,6 +245,7 @@ header nav li:last-child {
     .loader {
         position: relative;
         left: 25px;
+        text-decoration: none !important;
     }
     .roll-wrap .ugrid li center i {
         font-size: 0.25em;
@@ -294,8 +307,9 @@ header nav li:last-child {
 
 @supports (-webkit-touch-callout: none) {
     header .brand-image {
-        position: relative;
-        right: 109px;
+        position: fixed !important;
+        left: 10px;
+        top: 15px !important;
     }
 }
 
@@ -640,6 +654,37 @@ h3[selectitem]::after {
     margin: 20px;
 }
 
+#spot {
+    display: inline-block;
+}
+
+#spot li {
+    float: left;
+    width: 50px;
+    border: 2px solid white;
+    border-left: none;
+    border-right: none;
+    padding: 2px;
+    box-shadow: 0px -10px 0px rgba(0, 0, 0, 0.08) inset, 0px 12px 0px rgba(0, 0, 0, 0.2) inset, 0px 0px 5px rgba(0, 0, 0, 0.2);
+    list-style: none;
+    text-align: center;
+    color: white;
+    font-family: Verdana;
+    opacity: 0.8;
+}
+
+#spot li:hover {
+    opacity: 1;
+}
+
+#spot li:first-child {
+    border-left: 2px solid white;
+}
+
+#spot li:last-child {
+    border-right: 2px solid white;
+}
+
 
 /*--------------------
  	Reviews Section
@@ -808,7 +853,7 @@ footer p a {
     z-index: -1;
     width: calc(100% + var(--border-width) * 2);
     height: calc(100% + var(--border-width) * 2);
-    background: linear-gradient(60deg, rgba(95, 134, 242, 0.5), rgba(166, 95, 242, 0.5), rgba(242, 95, 208, 0.5), rgba(242, 95, 97, 0.5), rgba(242, 203, 95, 0.5), rgba(171, 242, 95, 0.5), rgba(95, 242, 129, 0.5), rgba(95, 242, 240, 0.5));
+    background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));
     background-size: 300% 300%;
     background-position: 0 50%;
     border-radius: calc(2 * var(--border-width));
@@ -848,7 +893,8 @@ footer p a {
     border: none;
 }
 
-#action-container button {
+#action-container button,
+.action-container button {
     border: 0px;
     border-radius: 5px;
     padding: 10px;
@@ -862,17 +908,36 @@ footer p a {
 }
 
 #action-container button:hover,
-#action-container button:focus {
+#action-container button:focus,
+.action-container button:hover,
+.action-container button:focus {
     box-shadow: 0 0px 15px 0 var(--theme-bg);
     background: var(--theme-bg-05) !important;
 }
 
-#attack-list button {
+#attack-list button,
+#attack-button {
     background: var(--theme-accent-1);
 }
 
-#defend-list button {
+#defend-list button,
+#defend-button {
     background: var(--theme-accent-2);
+}
+
+#visit-button {
+    background: var(--theme-accent-3);
+}
+
+#hover-button {
+    background: var(--theme-accent-4);
+}
+
+#defend-button[disabled],
+#attack-button[disabled],
+#visit-button[disabled],
+.disp-button[disabled] {
+    display: none;
 }
 
 @media (max-width: 700px) {

@@ -27,6 +27,7 @@ pub struct TeamInfo {
     pub name: Option<String>,
     pub logo: Option<String>,
     pub colors: Colors,
+    pub seasons: Vec<i32>
 }
 
 #[derive(Queryable, Serialize, Deserialize)]
@@ -57,7 +58,7 @@ pub struct TeamPlayerMoves {
 impl TeamInfo {
     pub fn load(conn: &PgConnection) -> Vec<TeamInfo> {
         teams::table
-            .select((teams::id, teams::tname, teams::logo, (teams::color_1, teams::color_2)))
+            .select((teams::id, teams::tname, teams::logo, (teams::color_1, teams::color_2), teams::seasons))
             .load::<TeamInfo>(conn)
             .expect("Error loading teams")
     }
