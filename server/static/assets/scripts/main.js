@@ -1023,6 +1023,7 @@ function page_index(contentTag) {
             return new Promise((resolve, reject) => {
                 getAndHighlightMove(resolve, reject);
                 document.getElementById('map-note').style.display = 'unset';
+                doPoll(false);
             })
         })
         .catch((values) => { console.log(values) });
@@ -1738,27 +1739,29 @@ function askPoll(number) {
         false);
 }
 
-function doPoll() {
+function doPoll(realize = true) {
     doAjaxGetRequest('/auth/polls', 'Poll Requests', function(pollData) {
         try {
             pollData = JSON.parse(pollData.response);
             appInfo.pollData = pollData;
             console.log(pollData);
             appInfo.pollResponses = [];
+            console.log("Polling...");
             for (i = 0; i < pollData.length; i++) {
-                doAjaxGetRequest('/auth/poll/response?poll=' + pollData[i].id, 'Poll Response Requests', function(data) {
-                    appInfo.pollResponses.push(JSON.parse(data.response));
-                    paintPoll();
-                }, function() {
-                    appInfo.pollResponses.push([]);
-                    errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
-                        text: "Okay"
-                    }, {
-                        display: "none"
+                if (realize || (pollData[i].season == window.turnsObject[window.turnsObject.length - 1].season && pollData[i].day == window.turnsObject[window.turnsObject.length - 1].day)) {
+                    doAjaxGetRequest('/auth/poll/response?poll=' + pollData[i].id, 'Poll Response Requests', function(data) {
+                        appInfo.pollResponses.push(JSON.parse(data.response));
+                        paintPoll();
+                    }, function() {
+                        appInfo.pollResponses.push([]);
+                        errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
+                            text: "Okay"
+                        }, {
+                            display: "none"
+                        });
                     });
-                });
+                }
             }
-            var startDate = new Date();
         } catch {
             errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
                 text: "Okay"
