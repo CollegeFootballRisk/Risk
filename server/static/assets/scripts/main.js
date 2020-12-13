@@ -11,7 +11,8 @@ var appInfo = {
     loadTime: new Date(),
     burger: false,
     teamsObject: null,
-    userObject: null
+    userObject: null,
+    lockDisplay: false
 }
 
 appInfo.rollTime.setUTCHours(4, 0, 0, 0);
@@ -27,11 +28,26 @@ if (appInfo.rollTime < new Date()) {
 // JS is enabled, so hide that notif
 document.getElementById('error-notif').style.display = "none";
 
+
+function returnHover() {
+    appInfo.lockDisplay = false;
+    document.getElementById('hover-button').disabled = true;
+    let temptags = document.getElementsByTagName("path");
+    for (tt = 0; tt < temptags.length; tt++) {
+        temptags[tt].style.fill = temptags[tt].style.fill.replace('-secondary', '-primary');
+    }
+}
 // link handling
 document.addEventListener('click', function(event) {
     switch (event.target.tagName) {
         case 'path':
-            window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(event.target.attributes['name'].value));
+            if (appInfo.lockDisplay) {
+                mapDisplayUpdate(event, false, true);
+            } else {
+                appInfo.lockDisplay = true;
+                mapDisplayUpdate(event, false, true);
+            }
+            //window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(event.target.attributes['name'].value));
             break;
         case 'A':
             if (link_is_external(event.target)) return;
@@ -48,6 +64,9 @@ document.getElementById('burger').addEventListener('click', function(event) {
     document.getElementById('nav').style.display = (appInfo.burger) ? 'flex' : 'none';
 });
 
+function goToTerritory(territory) {
+    window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(territory));
+}
 
 //request handling
 function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNotif) {
@@ -330,21 +349,69 @@ function getUserInfo(resolve, reject) {
     }
 }
 
+function mapDisplayUpdate(event, change, override = false) {
+    if (!appInfo.lockDisplay || override) {
+        switch (event.target.attributes["mapname"].value) {
+            case "odds":
+                // code block
+                document.getElementById("oddmap_map-county-info").innerHTML = event.target.attributes["name"].value;
+                document.getElementById("oddmap_map-owner-info").innerHTML = event.target.hasAttribute("odds") ? "Odds:  " + parseFloat(event.target.attributes["odds"].value).toFixed(2) : "Odds: 0.00";
+                break;
+            case "heat":
+                // code block
+                document.getElementById("heatmap_map-county-info").innerHTML = event.target.attributes["name"].value;
+                document.getElementById("heatmap_map-owner-info").innerHTML = event.target.hasAttribute("players") ? "Players:  " + event.target.attributes["players"].value : "Players: 0";
+                break;
+            case "map":
+                document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+                document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
+                if (appInfo.attackable_territory_names.includes(event.target.attributes["name"].value)) {
+                    document.getElementById("attack-button").disabled = false;
+                    document.getElementById("attack-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
+                } else {
+                    document.getElementById("attack-button").disabled = true;
+                }
+                if (appInfo.defendable_territory_names.includes(event.target.attributes["name"].value)) {
+                    document.getElementById("defend-button").disabled = false;
+                    document.getElementById("defend-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
+                } else {
+                    document.getElementById("defend-button").disabled = true;
+                }
+                document.getElementById("visit-button").disabled = false;
+                document.getElementById("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
+                break;
+            default:
+                document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+                document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
+                break;
+        }
+        if (override) {
+            let temptags = document.getElementsByTagName("path");
+            for (tt = 0; tt < temptags.length; tt++) {
+                temptags[tt].style.fill = temptags[tt].style.fill.replace('-secondary', '-primary');
+            }
+            document.getElementById('hover-button').disabled = false;
+        }
+        if (change) {
+            event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
+
+        } else {
+            event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
+        }
+    }
+}
+
 function mapHover(event) {
     if (!event.target.matches('path')) return;
     type = event.type;
     switch (type) {
         case 'mouseover':
             event.preventDefault();
-            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-            document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
-            event.target.style.fill = event.target.style.fill.replace('-primary', '-secondary');
+            mapDisplayUpdate(event, false);
             break;
         case 'mouseout':
             event.preventDefault();
-            document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
-            document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
-            event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
+            mapDisplayUpdate(event, true);
             break;
         default:
             break;
@@ -431,14 +498,14 @@ function drawTerritoryAction(resolve, reject) {
             console.log("Drawing single action.");
             let userteam = appInfo.userObject.active_team.name;
             console.log(userteam);
-            let attackable_territories = {};
-            let defendable_territories = {};
+            appInfo.attackable_territories = {};
+            appInfo.defendable_territories = {};
             for (i in territories) {
                 if (territories[i].owner == userteam) {
-                    defendable_territories[territories[i].id] = territories[i];
+                    appInfo.defendable_territories[territories[i].id] = territories[i];
                     for (j in territories[i].neighbors) {
                         if (territories[i].neighbors[j].owner != userteam) {
-                            attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                            appInfo.attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
                         }
                     }
                 }
@@ -468,26 +535,30 @@ function drawActionBoard(resolve, reject) {
             console.log("Drawing Actions.");
             let userteam = appInfo.userObject.active_team.name;
             console.log(userteam);
-            let attackable_territories = {};
-            let defendable_territories = {};
+            appInfo.attackable_territories = {};
+            appInfo.attackable_territory_names = [];
+            appInfo.defendable_territories = {};
+            appInfo.defendable_territory_names = [];
             console.log(territories);
             for (i in territories) {
                 if (territories[i].owner == userteam) {
-                    defendable_territories[territories[i].id] = territories[i];
+                    appInfo.defendable_territories[territories[i].id] = territories[i];
+                    appInfo.defendable_territory_names.push(territories[i].name);
                     for (j in territories[i].neighbors) {
                         if (territories[i].neighbors[j].owner != userteam) {
-                            attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                            appInfo.attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                            appInfo.attackable_territory_names.push(territories[i].neighbors[j].name);
                         }
                     }
                 }
             }
             document.getElementById('action-container').style.display = "flex";
             let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
-            for (k in attackable_territories) {
-                document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, attackable_territories[k].name).replace(/{{id}}/, attackable_territories[k].id);
+            for (k in appInfo.attackable_territories) {
+                document.getElementById('attack-list').innerHTML += action_item.replace(/{{name}}/, appInfo.attackable_territories[k].name).replace(/{{id}}/, appInfo.attackable_territories[k].id);
             }
-            for (l in defendable_territories) {
-                document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, defendable_territories[l].name).replace(/{{id}}/, defendable_territories[l].id);
+            for (l in appInfo.defendable_territories) {
+                document.getElementById('defend-list').innerHTML += action_item.replace(/{{name}}/, appInfo.defendable_territories[l].name).replace(/{{id}}/, appInfo.defendable_territories[l].id);
             }
             console.log("Territory actions drawn");
             resolve("Okay");
@@ -518,7 +589,7 @@ function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
             continue;
         }
         turn = turnsObject.length - turnb - 1;
-        sel = (turnsObject[turn].day == day || (day == 0 && turn == turnsObject.length - 1)) ? "selected" : "";
+        sel = ((turnsObject[turn].season == season && turnsObject[turn].day == day) || (day == 0 && turn == turnsObject.length - 1)) ? "selected" : "";
         days += opt.replace(/{{val}}/gi, turnsObject[turn].season + "." + turnsObject[turn].day).replace(/{{sel}}/, sel).replace(/{{season}}/, turnsObject[turn].season).replace(/{{day}}/, turnsObject[turn].day);
     }
     days += "</select>";
@@ -533,7 +604,7 @@ function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
 function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
     // source should be either 'heat' or 'territories'
     var addendum = (season > 0 && day > 0) ? "?season=" + season + "&day=" + day : "";
-    doAjaxGetRequest('/images/map.svg', 'Map', function(data) {
+    doAjaxGetRequest('/images/map2.svg', 'Map', function(data) {
         document.getElementById('map-container').innerHTML = data.response;
         //now to fetch territory ownership or heat data
         switch (source) {
@@ -546,9 +617,29 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
-                        document.getElementById("map-county-info").innerHTML = "Leaderboard";
-                        document.getElementById("map-owner-info").innerHTML = seasonDayObject(1, day || 0, false, "page_leaderboard_update", window.turnsObject);
-                        document.getElementById("map-owner-info").setAttribute('selectitem', 'true')
+                        document.getElementById("old-map-county-info").innerHTML = "Leaderboard";
+                        document.getElementById("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
+                        document.getElementById("old-map-owner-info").setAttribute('selectitem', 'true')
+                    }
+                    resizeMap();
+                    resolve(heat);
+                }, function() {
+                    reject("Error");
+                });
+                break;
+            case 'leaderboard':
+                doAjaxGetRequest('/api/heat' + addendum, 'Heat', function(heat_data) {
+                    heat = JSON.parse(heat_data.response);
+                    // find maximum
+                    maxmin = getMaxMin(heat, "power");
+                    for (territory in heat) {
+                        red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = "hsla(" + red + ", 100%, 50%, 0.5)";
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
+                        document.getElementById("old-map-county-info").innerHTML = "Leaderboard";
+                        document.getElementById("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
+                        document.getElementById("old-map-owner-info").setAttribute('selectitem', 'true')
                     }
                     resizeMap();
                     resolve(heat);
@@ -562,6 +653,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     for (territory in window.territories) {
                         document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
                         document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
+                        document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('mapname', "map");
+                        document.getElementById('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('territoryid', territories[territory].id);
                     }
                     resizeMap();
                     resolve(window.territories);
@@ -681,8 +774,13 @@ function page_leaderboard_update(seasonday) {
     seasonday = seasonday.split(".");
     season = Number(seasonday[0]) || 0;
     day = Number(seasonday[1]) || 0;
-    drawLeaderboard(season, day, templateLeaderboard, contentTag);
-    drawMap(console.log, console.log, 'heat', season, day);
+    drawLeaderboard(season, day, templateLeaderboard, contentTag, season, day);
+    drawMap(console.log, console.log, 'leaderboard', season, day);
+    let selectOpt = document.getElementById('day_select').getElementsByTagName('option');
+    for (ely = 0; ely < selectOpt.length; ely++) {
+        selectOpt[ely].removeAttribute("selected");
+    }
+    document.getElementById('day_select').value = season + "." + day;
 }
 
 function page_info(contentTag) {
@@ -711,11 +809,11 @@ function page_leaderboard(contentTag) {
         getTeamInfo(resolve, reject);
     }).then(() => {
         return new Promise((resolve, reject) => {
-            drawMap(resolve, reject, "heat");
+            drawMap(resolve, reject, "leaderboard");
         })
     }).then(() => {
         return new Promise((resolve, reject) => {
-            removeMapHover(resolve, reject);
+            setupMapHover(resolve, reject);
         })
     });
 
@@ -963,7 +1061,7 @@ function drawOddsPage(junk) {
         oddsObject = JSON.parse(oddsObject.response);
         var obj = {
             // Quickly get the headings
-            headings: ["Territory", "Owner", "MVPs", "Players", "1✯", "2✯", "3✯", "4✯", "5✯", "Team Power", "Territory Power", "Chance"],
+            headings: ["Territory", "Owner", "Winner", "MVPs", "Players", "1✯", "2✯", "3✯", "4✯", "5✯", "Team<br/> Power", "Territory<br/> Power", "Chance"],
 
             // data array
             data: []
@@ -979,7 +1077,15 @@ function drawOddsPage(junk) {
         }
         let chance_mm = [chance_max, chance_min];
         document.getElementById('heat-map').innerHTML = window.mapTemplate.replace(/id="/gi, 'id="heatmap_');
+        heat_paths = document.getElementById('heat-map').getElementsByTagName('path');
+        for (hp = 0; hp < heat_paths.length; hp++) {
+            heat_paths[hp].setAttribute('mapname', 'heat');
+        }
         document.getElementById('odds-map').innerHTML = window.mapTemplate.replace(/id="/gi, 'id="oddmap_');
+        odds_paths = document.getElementById('odds-map').getElementsByTagName('path');
+        for (op = 0; op < odds_paths.length; op++) {
+            odds_paths[op].setAttribute('mapname', 'odds');
+        }
         for (i in oddsObject) {
             territory_count += (oddsObject[i].winner.replace(/\W/g, '') == team.replace(/\W/g, '')) ? 1 : 0;
             territory_expected += oddsObject[i].chance;
@@ -987,9 +1093,12 @@ function drawOddsPage(junk) {
             player_red = Math.round(160 + 200 * (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players)) | 60;
             odds_red = Math.round(160 + 200 * (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance)) | 60;
             document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + player_red + ",100%, 50%, 0.5)";
+            document.getElementById("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('players', oddsObject[i].players);
             document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = "hsla(" + odds_red + ", 100%, 50%, 0.5)";
+            document.getElementById("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('odds', oddsObject[i].chance);
             obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
+                "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["winner"]),
                 "<a href=\"/player/{{player}}\">{{player}}</a>".replace(/{{player}}/gi, oddsObject[i]["mvp"]),
                 oddsObject[i]["players"],
                 oddsObject[i]["starBreakdown"]["ones"],
@@ -1032,7 +1141,7 @@ function drawOddsPage(junk) {
 function page_odds(contentTag) {
     // We just dump the grid and such, then let the user sort out what they want
     contentTag.innerHTML = document.getElementById('templateOdds').innerHTML;
-    doAjaxGetRequest('/images/map.svg', 'Map', function(data) { window.mapTemplate = data.response; });
+    doAjaxGetRequest('/images/map2.svg', 'Map', function(data) { window.mapTemplate = data.response; });
     // we now populate the two lists with options, need a list of teams and a list of turns
     Promise.all([new Promise(getTeamInfo), new Promise((resolve, reject) => {
             getTurns(resolve, reject);
@@ -1052,6 +1161,10 @@ function page_odds(contentTag) {
             document.getElementById("map-owner-info").setAttribute('selectitem', 'true');
             hideUnselectableTeams(maxSeason);
             console.log(values);
+        }).then(() => {
+            return new Promise((resolve, reject) => {
+                setupMapHover(resolve, reject);
+            })
         });
 }
 
@@ -1544,6 +1657,7 @@ function page_map(content, data = { season: 0, day: 0 }) {
                     .replace(/{{nday}}/, window.turnsObject.find(el => el.id == dayId + 1).day);
             }
             document.getElementById('map-day-info').innerHTML = tagtemplate;
+            document.getElementById('old-map-owner-info').style.display = 'none';
             document.getElementById('map-day-info').style.display = 'unset';
         })
     });
@@ -1551,6 +1665,7 @@ function page_map(content, data = { season: 0, day: 0 }) {
 
 function handleNewPage(title, contentTag, call, vari) {
     contentTag.innerHTML = "";
+    appInfo.lockDisplay = false;
     document.title = "Aggie Risk | " + title;
     clearInterval(window.pulse);
     call(contentTag, vari);

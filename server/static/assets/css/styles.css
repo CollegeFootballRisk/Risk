@@ -9,6 +9,8 @@
     --theme-fg: rgba(255, 255, 255, 1);
     --theme-accent-1: rgba(0, 200, 0, 1);
     --theme-accent-2: rgba(200, 0, 0, 1);
+    --theme-accent-3: rgba(200, 0, 200, 1);
+    --theme-accent-4: rgba(200, 200, 0, 1);
 }
 
 * {
@@ -855,7 +857,8 @@ footer p a {
     border: none;
 }
 
-#action-container button {
+#action-container button,
+.action-container button {
     border: 0px;
     border-radius: 5px;
     padding: 10px;
@@ -869,17 +872,36 @@ footer p a {
 }
 
 #action-container button:hover,
-#action-container button:focus {
+#action-container button:focus,
+.action-container button:hover,
+.action-container button:focus {
     box-shadow: 0 0px 15px 0 var(--theme-bg);
     background: var(--theme-bg-05) !important;
 }
 
-#attack-list button {
+#attack-list button,
+#attack-button {
     background: var(--theme-accent-1);
 }
 
-#defend-list button {
+#defend-list button,
+#defend-button {
     background: var(--theme-accent-2);
+}
+
+#visit-button {
+    background: var(--theme-accent-3);
+}
+
+#hover-button {
+    background: var(--theme-accent-4);
+}
+
+#defend-button[disabled],
+#attack-button[disabled],
+#visit-button[disabled],
+.disp-button[disabled] {
+    display: none;
 }
 
 @media (max-width: 700px) {

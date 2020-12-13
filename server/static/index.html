@@ -9,7 +9,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>Aggie Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=0.1.5">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=0.1.6">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js">
     </script>
@@ -135,12 +135,12 @@
     </script>
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
-            <h1 id="map-county-info">Map</h1>
-            <h3 id="map-owner-info">(Hover to see more info)</h3>
+            <h1 id="old-map-county-info">Map</h1>
+            <h3 id="old-map-owner-info"><a href="/map">See past maps</a></h3>
             <h3 id="map-day-info" style="display:none;"></h3>
             <div id="map-container" style="width:100%;">
             </div>
-            <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/><a href="/map">See past maps.</a></u></text>
+            <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/></u></text>
         </section>
     </script>
 
@@ -190,7 +190,7 @@
     </script>
     <script id="templateOdds" type="text/template">
         <section class="map-wrap">
-            <h1 id="map-county-info">Odds</h1>
+            <h1 id="old-map-county-info">Odds</h1>
             <h3 id="map-owner-info">Loading . . . </h3>
             <h3 id="map-owner-teams" selectitem>Loading . . . </h3>
             <ul class="ugrid" id="action-container" style="display:none;">
@@ -383,7 +383,7 @@
             </center>
         </li>
     </script>
-    <script src="/assets/scripts/main.js?v=0.1.5">
+    <script src="/assets/scripts/main.js?v=0.1.6">
     </script>
 </body>
 
