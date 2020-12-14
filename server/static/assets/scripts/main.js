@@ -733,7 +733,7 @@ function drawLeaderboard(season, day) {
 
         var obj = {
             // Quickly get the headings
-            headings: ["Rank", "Name", "Territories", "Players", "Mercenaries", "Stars", "Efficiency"],
+            headings: ["Rank", "Name", "Territories", "Team<br/> Players", "Mercenaries", "Star<br/> Power", "Efficiency"],
 
             // data array
             data: []

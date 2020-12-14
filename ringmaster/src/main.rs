@@ -148,7 +148,7 @@ fn process_territories(
                         )
                     })
                     .territorycount += 1;
-                stats
+                /*stats
                     .entry(teams[0])
                     .or_insert_with(|| {
                         Stats::new(
@@ -159,7 +159,7 @@ fn process_territories(
                         )
                     })
                     .starpower +=
-                    territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();
+                    territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();*/
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
@@ -302,20 +302,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     i.team,
                 )
             })
-            .playercount += 1;
-
-        stats
-            .entry(i.team)
-            .or_insert_with(|| {
-                Stats::new(
-                    i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                    i.season.unwrap_or(0),
-                    i.day.unwrap_or(0),
-                    i.team,
-                )
-            })
             .starpower += i.power / i.multiplier.unwrap_or(1.0);
-
         stats
             .entry(i.team)
             .or_insert_with(|| {
@@ -340,6 +327,19 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     )
                 })
                 .merccount += 1;
+        }
+        else{
+            stats
+            .entry(i.team)
+            .or_insert_with(|| {
+                Stats::new(
+                    i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
+                    i.season.unwrap_or(0),
+                    i.day.unwrap_or(0),
+                    i.team,
+                )
+            })
+            .playercount += 1;
         }
         match i.stars {
             1 => {
