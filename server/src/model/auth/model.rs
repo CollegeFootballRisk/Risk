@@ -91,7 +91,7 @@ impl Poll {
     ) -> Result<Vec<Poll>, diesel::result::Error> {
         continuation_polls::table
             .filter(continuation_polls::season.eq(season))
-            .filter(continuation_polls::day.gt(day))
+            .filter(continuation_polls::day.ge(day))
             .load::<Poll>(conn)
     }
 }
