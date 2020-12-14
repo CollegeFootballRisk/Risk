@@ -148,6 +148,17 @@ fn process_territories(
                         )
                     })
                     .territorycount += 1;
+                stats
+                .entry(territory.owner_id)
+                .or_insert_with(|| {
+                    Stats::new(
+                        territory.season * 1000 + territory.season + 1,
+                        territory.season,
+                        territory.day,
+                        territory.owner_id,
+                    )
+                })
+                .territorycount += 0;
                 /*stats
                     .entry(teams[0])
                     .or_insert_with(|| {
@@ -192,6 +203,17 @@ fn process_territories(
             _ => {
                  dbg!(&teams);
                 let mut map = HashMap::new();
+                stats
+                .entry(territory.owner_id)
+                .or_insert_with(|| {
+                    Stats::new(
+                        territory.season * 1000 + territory.season + 1,
+                        territory.season,
+                        territory.day,
+                        territory.owner_id,
+                    )
+                })
+                .territorycount += 0;
                 for team in teams {
                     map.insert(team, (0, 0f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
                 }
