@@ -206,7 +206,7 @@
       <button id="attack-button" class="disp-button" disabled="">Attack</button>
       <button id="defend-button" class="disp-button" disabled="">Defend</button>
       <button id="visit-button" class="disp-button" disabled="">History</button>
-      <button id="hover-button" class="disp-button" onclick="returnHover();" disabled="">Hover</button></div>
+      <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button></div>
     </xhtml:body>
   </foreignobject>
 </svg>

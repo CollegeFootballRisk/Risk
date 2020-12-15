@@ -929,7 +929,8 @@ footer p a {
     background: var(--theme-accent-3);
 }
 
-#hover-button {
+#hover-button,
+.hover-button {
     background: var(--theme-accent-4);
 }
 

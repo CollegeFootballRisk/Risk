@@ -31,7 +31,12 @@ document.getElementById('error-notif').style.display = "none";
 
 function returnHover() {
     appInfo.lockDisplay = false;
-    document.getElementById('hover-button').disabled = true;
+    try {
+        document.getElementById('hover-button').disabled = true;
+    } catch {
+        document.getElementById('oddmap_hover-button').disabled = true;
+        document.getElementById('heatmap_hover-button').disabled = true;
+    }
     let temptags = document.getElementsByTagName("path");
     for (tt = 0; tt < temptags.length; tt++) {
         temptags[tt].style.fill = temptags[tt].style.fill.replace('-secondary', '-primary');
@@ -41,10 +46,16 @@ function returnHover() {
 document.addEventListener('click', function(event) {
     switch (event.target.tagName) {
         case 'path':
-            if (appInfo.lockDisplay) {
+            if (appInfo.lockDisplay || event.target.attributes['mapname'] == 'odds') {
                 mapDisplayUpdate(event, false, true);
             } else {
                 appInfo.lockDisplay = true;
+                document.onkeydown = function(evt) {
+                    evt = evt || window.event;
+                    if (evt.keyCode == 27) {
+                        returnHover();
+                    }
+                };
                 mapDisplayUpdate(event, false, true);
             }
             //window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(event.target.attributes['name'].value));
@@ -352,16 +363,19 @@ function getUserInfo(resolve, reject) {
 
 function mapDisplayUpdate(event, change, override = false) {
     if (!appInfo.lockDisplay || override) {
+        twid = "hover-button";
         switch (event.target.attributes["mapname"].value) {
             case "odds":
                 // code block
                 document.getElementById("oddmap_map-county-info").innerHTML = event.target.attributes["name"].value;
                 document.getElementById("oddmap_map-owner-info").innerHTML = event.target.hasAttribute("odds") ? "Odds:  " + parseFloat(event.target.attributes["odds"].value).toFixed(2) : "Odds: 0.00";
+                twid = "oddmap_" + twid;
                 break;
             case "heat":
                 // code block
                 document.getElementById("heatmap_map-county-info").innerHTML = event.target.attributes["name"].value;
                 document.getElementById("heatmap_map-owner-info").innerHTML = event.target.hasAttribute("players") ? "Players:  " + event.target.attributes["players"].value : "Players: 0";
+                twid = "heatmap_" + twid;
                 break;
             case "map":
                 document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
@@ -381,6 +395,12 @@ function mapDisplayUpdate(event, change, override = false) {
                 document.getElementById("visit-button").disabled = false;
                 document.getElementById("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
                 break;
+            case "leaderboard":
+                document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
+                document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br /> Power:" + event.target.attributes["power"].value + " Players: " + event.target.attributes["players"].value;
+                document.getElementById("visit-button").disabled = false;
+                document.getElementById("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
+                break;
             default:
                 document.getElementById("map-county-info").innerHTML = event.target.attributes["name"].value;
                 document.getElementById("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
@@ -391,7 +411,7 @@ function mapDisplayUpdate(event, change, override = false) {
             for (tt = 0; tt < temptags.length; tt++) {
                 temptags[tt].style.fill = temptags[tt].style.fill.replace('-secondary', '-primary');
             }
-            document.getElementById('hover-button').disabled = false;
+            document.getElementById(twid).disabled = false;
         }
         if (change) {
             event.target.style.fill = event.target.style.fill.replace('-secondary', '-primary');
@@ -492,37 +512,6 @@ function makeMove(id) {
         });
 }
 
-function drawTerritoryAction(resolve, reject) {
-    let territories = window.territories;
-    if (window.turnsObject[window.turnsObject.length - 1].active) {
-        try {
-            console.log("Drawing single action.");
-            let userteam = appInfo.userObject.active_team.name;
-            console.log(userteam);
-            appInfo.attackable_territories = {};
-            appInfo.defendable_territories = {};
-            for (i in territories) {
-                if (territories[i].owner == userteam) {
-                    appInfo.defendable_territories[territories[i].id] = territories[i];
-                    for (j in territories[i].neighbors) {
-                        if (territories[i].neighbors[j].owner != userteam) {
-                            appInfo.attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
-                        }
-                    }
-                }
-            }
-            console.log("Territory action drawn");
-            resolve("Okay");
-        } catch (error) {
-            console.log('could not do territory analysis');
-            console.log(error);
-            reject("Error");
-        }
-    } else {
-        console.log("Not displaying actions. No ac")
-    }
-}
-
 function drawActionBoard(resolve, reject) {
     let territories = window.territories;
     if (window.turnsObject[window.turnsObject.length - 1].finale) {
@@ -543,13 +532,17 @@ function drawActionBoard(resolve, reject) {
             console.log(territories);
             for (i in territories) {
                 if (territories[i].owner == userteam) {
-                    appInfo.defendable_territories[territories[i].id] = territories[i];
-                    appInfo.defendable_territory_names.push(territories[i].name);
+                    neighbors = 0;
                     for (j in territories[i].neighbors) {
                         if (territories[i].neighbors[j].owner != userteam) {
                             appInfo.attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
                             appInfo.attackable_territory_names.push(territories[i].neighbors[j].name);
+                            neighbors += 1;
                         }
+                    }
+                    if (neighbors != 0) {
+                        appInfo.defendable_territories[territories[i].id] = territories[i];
+                        appInfo.defendable_territory_names.push(territories[i].name);
                     }
                 }
             }
@@ -640,6 +633,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         console.log(getColorForPercentage(red));
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
+                        document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
                         document.getElementById('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
                         document.getElementById("old-map-county-info").innerHTML = "Leaderboard";
                         document.getElementById("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
