@@ -73,50 +73,55 @@ impl PlayerWithTurnsAndAdditionalTeam {
         name: Vec<String>,
         team_assigned: bool,
         conn: &PgConnection,
-    ) -> PlayerWithTurnsAndAdditionalTeam {
+    ) -> Option<PlayerWithTurnsAndAdditionalTeam> {
         let me = PlayerWithTurns::load(name.clone(), true, &conn);
-        use diesel::dsl::not;
-        let status_code: i32 = match team_assigned {
-            true => 0,
-            false => -1,
-        };
-        let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
-        let results = users::table
-            .filter(users::uname.eq_any(ciName))
-            .filter(not(users::current_team.eq(status_code)))
-            .left_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
-            .first::<Team>(conn);
-        match results {
-            Ok(results) => {
-                PlayerWithTurnsAndAdditionalTeam {
-                    name: me[0].name.clone(),
-                    team: me[0].team.clone(),
-                    active_team: Some(TeamWithColors {
-                        name: results.name,
-                        colors: Colors {
-                            primary: results.color_1,
-                            secondary: results.color_2,
-                        },
-                    }),
-                    platform: me[0].platform.clone(),
-                    ratings: me[0].ratings.clone(),
-                    stats: me[0].stats.clone(),
-                    turns: me[0].turns.clone(),
-                }
+            match me.len() {
+                0 => {None}
+                1 => {        use diesel::dsl::not;
+                    let status_code: i32 = match team_assigned {
+                        true => 0,
+                        false => -1,
+                    };
+                    let ciName: Vec<CiString> = name.iter().map(|x| CiString::from(x.clone())).collect();
+                    let results = users::table
+                        .filter(users::uname.eq_any(ciName))
+                        .filter(not(users::current_team.eq(status_code)))
+                        .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+                        .select((teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()))
+                        .first::<Team>(conn);
+                        match results {
+                            Ok(results) => {
+                                Some(PlayerWithTurnsAndAdditionalTeam {
+                                    name: me[0].name.clone(),
+                                    team: me[0].team.clone(),
+                                    active_team: Some(TeamWithColors {
+                                        name: results.name,
+                                        colors: Colors {
+                                            primary: results.color_1,
+                                            secondary: results.color_2,
+                                        },
+                                    }),
+                                    platform: me[0].platform.clone(),
+                                    ratings: me[0].ratings.clone(),
+                                    stats: me[0].stats.clone(),
+                                    turns: me[0].turns.clone(),
+                                })
+                            }
+                            Err(_e) => {
+                                Some(PlayerWithTurnsAndAdditionalTeam {
+                                    name: me[0].name.clone(),
+                                    team: None,
+                                    active_team: None,
+                                    platform: me[0].platform.clone(),
+                                    ratings: me[0].ratings.clone(),
+                                    stats: me[0].stats.clone(),
+                                    turns: me[0].turns.clone(),
+                                })
+                            }
+                        }
+                    }
+                _ => {None}
             }
-            Err(_e) => {
-                PlayerWithTurnsAndAdditionalTeam {
-                    name: me[0].name.clone(),
-                    team: None,
-                    active_team: None,
-                    platform: me[0].platform.clone(),
-                    ratings: me[0].ratings.clone(),
-                    stats: me[0].stats.clone(),
-                    turns: me[0].turns.clone(),
-                }
-            }
-        }
     }
 }
 

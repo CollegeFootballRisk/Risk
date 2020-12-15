@@ -228,6 +228,7 @@ function drawPlayerCard(userObject, teamObject) {
         .replace(/{{streak}}/g, userObject.stats.streak)
         .replace(/{{cfb_stars}}/g, userObject.stats.awards)
         .replace(/{{team}}/g, teamObject.team || "")
+        .replace(/{{team_2}}/g, (userObject.active_team.name != userObject.team.name) ? "Playing as " + userObject.active_team.name || "" : ".")
         .replace(/{{team_players_yesterday}}/g, teamObject.players || "0")
         .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
         .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")

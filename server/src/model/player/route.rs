@@ -38,10 +38,13 @@ pub fn me(
                         false,
                         &conn,
                     );
-                    if users.name.to_lowercase() == c.0.user.to_lowercase() {
-                        std::result::Result::Ok(Json(users))
-                    } else {
-                        std::result::Result::Err(Status::NotFound)
+                    match users{
+                        Some(user) => {if user.name.to_lowercase() == c.0.user.to_lowercase() {
+                            std::result::Result::Ok(Json(user))
+                        } else {
+                            std::result::Result::Err(Status::NotFound)
+                        }}
+                        None => std::result::Result::Err(Status::NotFound)
                     }
                 }
                 Err(_e) => std::result::Result::Err(Status::BadRequest),
@@ -91,11 +94,14 @@ pub fn player_multifetch(
 }
 
 #[get("/player?<player>")]
-pub fn player(player: String, conn: DbConn) -> Result<Json<PlayerWithTurns>, Status> {
-    let mut users = PlayerWithTurns::load(vec![player], true, &conn);
-    if users.len() as i32 == 1 {
-        std::result::Result::Ok(Json(users.remove(0)))
-    } else {
-        std::result::Result::Err(Status::NotFound)
-    }
+pub fn player(player: String, conn: DbConn) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
+    let mut users = PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, &conn);
+    //if users.len() as i32 == 1 {
+        match users{
+            Some(user) => std::result::Result::Ok(Json(user)),
+            None => std::result::Result::Err(Status::NotFound)
+        }
+   // } else {
+     //   std::result::Result::Err(Status::NotFound)
+    //}
 }
