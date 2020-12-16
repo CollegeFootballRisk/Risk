@@ -411,16 +411,21 @@ fn handle_territory_info(
                     match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
                         Some(_tuple_of_territory) => {
                             let pos = adjacent_territory_owners.iter().position(|&x| x.1 == target);
-                            if team_id.0 != 0 {
-                                if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                    Ok((team_id, 1.5))
-                                } else {
-                                    Ok((team_id, 1.0))
+                            match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0){
+                                Some(_npos) => {
+                                    if team_id.0 != 0 {
+                                        if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
+                                            Ok((team_id, 1.5))
+                                        } else {
+                                            Ok((team_id, 1.0))
+                                        }
+                                    } else {
+                                        let mut rng = thread_rng();
+                                        let n: i32 = rng.gen_range(4, 6);
+                                        Ok((team_id, (n / 4) as f32))
+                                    }
                                 }
-                            } else {
-                                let mut rng = thread_rng();
-                                let n: i32 = rng.gen_range(4, 6);
-                                Ok((team_id, (n / 4) as f32))
+                                None => Err("You own all the surrounding territories".to_string()),
                             }
                         }
                         None => Err("You don't own that territory or an adjacent one".to_string()),
