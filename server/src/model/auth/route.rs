@@ -212,9 +212,9 @@ pub fn make_move(
                                     let user_weight: f32 = match user_ratings.overall {
                                         1 => 1.0,
                                         2 => 2.0,
-                                        3 => 6.0,
-                                        4 => 12.0,
-                                        5 => 24.0,
+                                        3 => 3.0,
+                                        4 => 4.0,
+                                        5 => 5.0,
                                         _ => 1.0,
                                     };
                                     let user_power: f32 = multiplier * user_weight as f32;
