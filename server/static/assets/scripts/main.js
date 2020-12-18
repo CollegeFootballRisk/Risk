@@ -12,8 +12,12 @@ var appInfo = {
     burger: false,
     teamsObject: null,
     userObject: null,
-    lockDisplay: false
+    lockDisplay: false,
+    dDay: new Date("December 24, 2020 04:00:00"),
+    fullOpacity: 0
 }
+
+appInfo.dDay.setUTCHours(4);
 
 appInfo.rollTime.setUTCHours(4, 0, 0, 0);
 
@@ -558,7 +562,7 @@ function drawActionBoard(resolve, reject) {
             resolve("Okay");
         } catch (error) {
             console.log('could not do territory analysis');
-            console.log(error);
+            //console.log(error);
             reject("Error");
         }
     }
@@ -571,7 +575,7 @@ function resizeMap() {
         document.getElementById('map').setAttribute('height', width);
     }
     document.getElementById('map').setAttribute('preserveAspectRatio', 'xMinYMin');
-    document.getElementById('map').setAttribute('viewBox', '0 0 650 650');
+    document.getElementById('map').setAttribute('viewBox', '0 0 650 700');
 }
 
 function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
@@ -1026,7 +1030,9 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                getAndHighlightMove(resolve, reject);
+                if (typeof appInfo.userObject != 'undefined') {
+                    getAndHighlightMove(resolve, reject);
+                }
                 document.getElementById('map-note').style.display = 'unset';
                 doPoll(false);
             })
@@ -1670,6 +1676,10 @@ function page_map(content, data = { season: 0, day: 0 }) {
 }
 
 function handleNewPage(title, contentTag, call, vari) {
+    if (new Date() > appInfo.dDay) {
+        clearInterval(window.pulse);
+        sky();
+    }
     contentTag.innerHTML = "";
     appInfo.lockDisplay = false;
     document.title = "Aggie Risk | " + title;
@@ -1923,6 +1933,10 @@ router
     });
 
 function doDate() {
+    if (new Date() > appInfo.dDay) {
+        clearInterval(window.pulse);
+        sky();
+    }
     var templateRollInfo = document.getElementById("templateRollInfo");
     templateRollInfo = templateRollInfo.innerHTML;
     var now = new Date();
@@ -1945,6 +1959,27 @@ function doDate() {
         .replace(/{{seconds}}/, pad(seconds, 'seconds', true, true, minutes + days + hours));
     document.getElementById("rollInfo").innerHTML = str;
 }
+
+function doDate2() {
+    var now = new Date();
+    var str = "";
+    var difference = appInfo.rollTime - now;
+    //var days = 0;
+    //var days = Math.floor(difference / 1000 / 24 / 60 / 60)
+    //difference -= days * 1000 * 24 * 60 * 60;
+    var phours = Math.floor(difference / 1000 / 60 / 60);
+    if (phours < 0) {
+        merry();
+    }
+    difference -= phours * 1000 * 60 * 60;
+    var minutes = Math.floor(difference / 1000 / 60);
+    difference -= minutes * 1000 * 60;
+    var seconds = Math.floor(difference / 1000);
+    difference -= seconds * 1000;
+    str = pad(phours, '', true, false, 1).slice(0, -2) + ":" + pad(minutes, '', true, false, 1).slice(0, -2) + ":" + pad(seconds, '', true, false, 1).slice(0, -2);
+    document.getElementById('big-clock').innerHTML = str;
+}
+
 
 /*** UTILITIES ***/
 
@@ -2030,4 +2065,84 @@ var getColorForPercentage = function(pct) {
     // or output as hex if preferred
 }
 
+function getCookie(cname) {
+    var name = cname + "=";
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return "";
+}
+
+function sky() {
+    //fade:
+    try {
+        clearInterval(window.pulse);
+        clearTimeout(appInfo.fadeTimer);
+        clearTimeout(sky2t);
+        clearTimeout(window.pulse2);
+    } catch {
+
+    }
+    if (getCookie('seen') == 'true') {
+        sky2();
+    } else {
+        appInfo.fullOpacity = 1;
+        appInfo.fadeTimer = setInterval(
+            function() {
+                appInfo.fullOpacity = appInfo.fullOpacity - 0.1;
+                document.getElementById('reddit-login-top').style.opacity = appInfo.fullOpacity;
+                document.getElementById('nav').style.opacity = appInfo.fullOpacity;
+                document.getElementById('content-wrapper').style.opacity = appInfo.fullOpacity;
+                document.getElementsByTagName('footer')[0].style.opacity = appInfo.fullOpacity;
+                if (appInfo.fullOpacity <= 0) {
+                    console.log("Exit");
+                    document.cookie = "seen=true; expires=Thu, 28 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
+                    clearInterval(window.pulse);
+                    clearTimeout(appInfo.fadeTimer);
+                    clearTimeout(window.pulse2);
+                    clearTimeout(sky2t);
+                    var sky2t = setTimeout(sky2, 200);
+                }
+            }, 200);
+    }
+}
+
+function merry() {
+    appInfo.rollTime = new Date("December 26, 2020 04:00:00");
+    appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+
+    if (appInfo.rollTime < new Date()) {
+        appInfo.rollTime = new Date();
+        appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+        if (appInfo.rollTime < new Date()) {
+            appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
+        }
+    }
+}
+
+function sky2() {
+    try {
+        document.getElementById('reddit-login-top').style.display = "none";
+    } finally {
+        document.getElementById('nav').style.display = "none";
+        document.getElementById('content-wrapper').style.display = "none";
+        document.getElementsByTagName('footer')[0].style.display = "none";
+        document.getElementsByTagName('body')[0].style.background = 'black';
+        document.getElementsByTagName('body')[0].innerHTML += "<h1 style=\"color:var(--theme-accent-1);font-family:digitalClock; font-size:35vh;text-align:center;margin-top:32.5vh;\" id=\"big-clock\">00:00:00</h1><h2 style=\"text-align: center;margin-top: 10vh;\"><a href=\"https://tx.ag/AggieDiscord\">Join the Discord</a></h2>";
+        appInfo.rollTime = new Date("December 26, 2020 04:00:00");
+        appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+
+        merry();
+
+        window.pulse2 = setInterval(doDate2, 1000);
+    }
+}
 // @license-end

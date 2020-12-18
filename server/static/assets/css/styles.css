@@ -61,7 +61,7 @@ a.btn {
 
 body {
     background-color: var(--theme-bg);
-    background: url('../../images/background-christmas.jpg');
+    background: url('../../images/background-christmas.jpg') no-repeat center center fixed;
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -1209,4 +1209,12 @@ footer p a {
     100% {
         opacity: 0.2
     }
+}
+
+
+/* Font from https://www.1001fonts.com/digital-7-font.html */
+
+@font-face {
+    font-family: "digitalClock";
+    src: url('/assets/scripts/digital-7.regular.ttf');
 }
