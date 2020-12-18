@@ -345,6 +345,14 @@ header nav li:last-child {
     }
 }
 
+.map-container {
+    width: 100vw !important;
+}
+
+.map-wrap {
+    width: 100vw;
+}
+
 
 /*.map-wrap .background-image {
     position: absolute;
