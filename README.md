@@ -5,63 +5,7 @@ A Risk game similar to CollegeFootballRisk, written in Rust
 - [Deviations from College Football Risk's API](/documentation/DEVIATIONS.md)
 
 # Installation
-This programme requires Rust nightly. It can be installed with [rustup](https://github.com/rust-lang/rustup#choosing-where-to-install).
-
-Once nightly is installed, you can clone the following repository:
-
-```
-git clone https://github.com/mautamu/Risk.git
-```
-
-You'll now need to configure the environmental variables. Use a text editor to edit the following file:
-
-**server/.env**
-
-```
-DATABASE_URL=postgresql://{user}@{host}/{database_name}
-```
-
-We can now create the database. Use postgres to [Create a Database](https://www.postgresql.org/docs/9.0/sql-createdatabase.html).
-
-Once a database has been created, you will need to run the **db/up.sql** file using the following:
-```
-psql -U {user} -f db/up.sql
-```
-
-Next, copy sample.env to .env:
-```
-cp sample.env .env
-```
-
-Edit the .env file with your reddit and/or discord keys. Similarly edit the uri and other information. The next file to edit is **server/Rocket.toml**. A sample one follows:
-``` 
-[global.oauth.reddit]
-provider = "Reddit"
-client_id = ""
-client_secret = ""
-redirect_uri = "http://localhost/auth/reddit"
-[staging]
-address = ""
-port = 
-keep_alive = 5
-log = ""
-limits = { forms = 32768 }
-[production]
-address=""
-port=
-keep_alive=5
-log = ""
-limits = { forms = 32768 }
-secret_key = ""
-```
-
-The server programme should now be able to start up successfully, but does not have any data.
-
-`cargo run`
->Error?
->If cargo throws an error about schema, copy SchemaWithViews to schema like so:
-`cp src/SchemaWithViews.rs src/schema.rs`
-
+*See [/documentation/getting_started.md](/documentation/getting_started.md)*.
 
 # Contributing
 
