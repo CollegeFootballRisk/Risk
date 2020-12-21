@@ -164,10 +164,11 @@ pub fn my_move(
     }
 }
 
-#[get("/move?<target>")]
+#[get("/move?<target>&<aon>")]
 //#[cfg(feature = "risk_security")]
 pub fn make_move(
     target: i32,
+    aon: Option<bool>,
     mut cookies: Cookies,
     conn: DbConn,
     remote_addr: SocketAddr,
@@ -193,7 +194,7 @@ pub fn make_move(
                                     season: latest.season,
                                     day: latest.day,
                                 },
-                                &conn,
+                                &conn, aon
                             ) {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
@@ -372,7 +373,7 @@ fn handle_territory_info(
     c: &Claims,
     target: i32,
     latest: Latest,
-    conn: &PgConnection,
+    conn: &PgConnection, aon: Option<bool>
 ) -> Result<
     (
         (
@@ -426,13 +427,18 @@ fn handle_territory_info(
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
                                         let mut regional_multiplier = 2 * handleregionalownership(&latest, team_id.0, &conn).unwrap_or(0);
-                                        if(regional_multiplier == 0){
+                                        if regional_multiplier == 0 {
                                             regional_multiplier = 1;
                                         }
+                                        let mut aon_multiplier: i32 = 1;
+                                        if aon == Some(true) && get_territory_number(team_id.0, &latest, &conn) == 1{
+                                            let mut rng = thread_rng();
+                                            aon_multiplier = 5 * rng.gen_range(0, 2);
+                                        }
                                         if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                            Ok((team_id, 1.5 * regional_multiplier as f32))
+                                            Ok((team_id, 1.5 * regional_multiplier as f32 * aon_multiplier as f32))
                                         } else {
-                                            Ok((team_id, 1.0 * regional_multiplier as f32))
+                                            Ok((team_id, 1.0 * regional_multiplier as f32 * aon_multiplier as f32))
                                         }
                                     } else {
                                         let mut rng = thread_rng();
@@ -468,6 +474,16 @@ fn get_adjacent_territory_owners(
         )
         .select((territory_ownership::owner_id, territory_ownership::territory_id))
         .load::<(i32, i32)>(conn)
+}
+
+fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32{
+    use diesel::dsl::count;
+    territory_ownership::table
+    .filter(territory_ownership::season.eq(latest.season))
+    .filter(territory_ownership::day.eq(latest.day))
+    .filter(territory_ownership::owner_id.eq(team))
+    .select(count(territory_ownership::owner_id))
+    .first(conn).unwrap_or(0) as i32
 }
 
 fn get_cfb_points(name: String) -> i64 {

@@ -17,8 +17,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 24, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg',
-    viewbox: '0 0 700 700'
+    map: '/images/map2.svg?v=12',
+    viewbox: '0 0 800 700'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -498,12 +498,18 @@ function getTurns(resolve, reject) {
 }
 
 function makeMove(id) {
+    appInfo.doubleOrNothing = false;
+    if (appInfo.defendable_territory_names.length == 1) {
+        //Prompt the player if they want to double or nothing their move
+        doubleOrNothingText = window.prompt("Type YES to quintuple-or-nothing your move's power. Otherwise type NO.");
+        appInfo.doubleOrNothing = (doubleOrNothingText.toLowerCase() == 'yes');
+    }
     let endCycleColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').concat("");
     let endCycleColor05 = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg-05').concat("");
     document.documentElement.style.setProperty("--theme-bg", "rgba(255,0,255,1)");
     document.documentElement.style.setProperty("--theme-bg-05", "rgba(255,0,255,0.5)");
     var timeStamp = Math.floor(Date.now() / 1000); //use timestamp to override cache
-    doAjaxGetRequest("/auth/move?target=".concat(id, '&timestamp=', timeStamp.toString()), 'Make Move', function() {
+    doAjaxGetRequest("/auth/move?target=".concat(id, '&timestamp=', timeStamp.toString(), "&aon=", appInfo.doubleOrNothing), 'Make Move', function() {
             document.documentElement.style.setProperty('--theme-bg', endCycleColor);
             document.documentElement.style.setProperty('--theme-bg-05', endCycleColor05);
             doAjaxGetRequest("/auth/my_move", 'Load Move', function(data) {
