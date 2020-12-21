@@ -218,6 +218,7 @@ from (
     from users
     ) t
 group by 1) as overall where overall.id= users.id;
+update users set playing_for = -1 where playing_for not in (select distinct(owner_id) from territory_ownership where territory_ownership.day = do_user_update.day+1 and territory_ownership.season = do_user_update.season);
     return FOUND;
     END;
     $$;
@@ -448,6 +449,7 @@ CREATE VIEW public.territory_ownership_without_neighbors AS
     territory_ownership.day,
     territory_ownership.season,
     territories.name,
+    territories.region,
     teams.tname AS owner,
     tex.tname AS prev_owner,
     territory_ownership."timestamp",
@@ -1168,3 +1170,22 @@ create table continuation_polls (id serial, season int, day int, question text d
 create table continuation_responses (id serial, poll_id int, user_id int, response bool);
 ALTER TABLE ONLY public.continuation_responses
     ADD CONSTRAINT continuation_responses_poll_id_user_id_key UNIQUE (user_id, poll_id);
+
+
+alter table territories add column region integer;
+update territories set region = 1 where name in ('Pampa', 'Amarillo', 'Lubbock', 'Turkey', 'Odessa', 'Alpine', 'El Paso');
+update territories set region = 2 where name in ('Ozona', 'Uvalde','Austin','San Antonio','Laredo','Corpus Christi');
+update territories set region = 3 where name in ('Victoria','College Station', 'El Campo', 'Houston','Nacogdoches','Waco');    update territories set region = 4 where name in ('Dallas', 'Fort Worth', 'San Angelo', 'Abilene', 'Wichita Falls', 'Tyler', 'Denton');
+
+CREATE VIEW public.region_ownership AS
+ SELECT count(distinct(territory_ownership.owner_id)) as owner_count,
+ array_agg(distinct(territory_ownership.owner_id)) as owners,
+    territory_ownership.day as day,
+    territory_ownership.season as season,
+    territories.region as region
+   FROM (public.territory_ownership
+     LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
+ group by territory_ownership.day, territory_ownership.season, territories.region   ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
+
+
+ALTER TABLE public.region_ownership OWNER TO risk;

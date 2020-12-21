@@ -17,7 +17,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 24, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg'
+    map: '/images/map2.svg',
+    viewbox: '0 0 700 700'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -96,8 +97,9 @@ function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNot
             if (typeof callback == 'function') {
                 try {
                     callback(this);
-                } catch {
+                } catch (err) {
                     console.log("Error with callback function");
+                    console.log(err);
                 }
             } else {
                 return JSON.parse(this.response);
@@ -387,19 +389,24 @@ function mapDisplayUpdate(event, change, override = false) {
                 break;
             case "map":
                 _("map-county-info").innerHTML = event.target.attributes["name"].value;
-                _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
-                if (appInfo.attackable_territory_names.includes(event.target.attributes["name"].value)) {
-                    _("attack-button").disabled = false;
-                    _("attack-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
-                } else {
-                    _("attack-button").disabled = true;
+                _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br />Region: " + event.target.attributes["region"].value;
+                try {
+                    if (appInfo.attackable_territory_names.includes(event.target.attributes["name"].value)) {
+                        _("attack-button").disabled = false;
+                        _("attack-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
+                    } else {
+                        _("attack-button").disabled = true;
+                    }
+                    if (appInfo.defendable_territory_names.includes(event.target.attributes["name"].value)) {
+                        _("defend-button").disabled = false;
+                        _("defend-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
+                    } else {
+                        _("defend-button").disabled = true;
+                    }
+                } catch {
+                    //user not logged in. Oh well..
                 }
-                if (appInfo.defendable_territory_names.includes(event.target.attributes["name"].value)) {
-                    _("defend-button").disabled = false;
-                    _("defend-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
-                } else {
-                    _("defend-button").disabled = true;
-                }
+
                 _("visit-button").disabled = false;
                 _("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
                 break;
@@ -579,7 +586,7 @@ function resizeMap() {
         _('map').setAttribute('height', width);
     }
     _('map').setAttribute('preserveAspectRatio', 'xMinYMin');
-    _('map').setAttribute('viewBox', '0 0 650 700');
+    _('map').setAttribute('viewBox', appInfo.viewbox);
 }
 
 function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
@@ -662,6 +669,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                 doAjaxGetRequest('/api/territories' + addendum, 'Territories', function(territory_data) {
                     window.territories = JSON.parse(territory_data.response);
                     for (territory in window.territories) {
+                        console.log(window.territories[territory].name);
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('mapname', "map");
@@ -1047,7 +1055,7 @@ function hideUnselectableTeams(season) {
         if (option_element.getAttribute("season") != season || option_element.value == "Unjoinable Placeholder") {
             option_element.style.display = "none";
         } else {
-            console.log(option_element);
+            //console.log(option_element);
             option_element.style.display = "flex";
         }
     });
@@ -1148,7 +1156,6 @@ function drawOddsPage(junk) {
         _('odds-actual').innerHTML = territory_count.toFixed(2);
         _('leaderboard-wrapper').style.display = 'flex';
         _('action-container').style.display = 'flex';
-
     });
 }
 

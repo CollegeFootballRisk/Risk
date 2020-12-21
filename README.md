@@ -10,7 +10,7 @@ This programme requires Rust nightly. It can be installed with [rustup](https://
 Once nightly is installed, you can clone the following repository:
 
 ```
-git clone https://github.com/kennroo/Risk.git
+git clone https://github.com/mautamu/Risk.git
 ```
 
 You'll now need to configure the environmental variables. Use a text editor to edit the following file:

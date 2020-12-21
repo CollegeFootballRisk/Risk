@@ -254,6 +254,17 @@ table! {
         response -> Bool,
     }
 }
+
+table! {
+    region_ownership (day){
+        owner_count -> Int8,
+        owners -> Array<Int4>,
+        day -> Int4,
+        season -> Int4,
+        region -> Int4,
+    }
+}
+
 allow_tables_to_appear_in_same_query!(
     past_turns,
     teams,

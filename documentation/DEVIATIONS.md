@@ -25,3 +25,6 @@
 
   - /team/players
     > The only difference is the presence of the 'id' tag. It is not important and can be disregarded.
+
+  - /*
+    > We use rgba values rather than hex values

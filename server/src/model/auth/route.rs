@@ -11,7 +11,7 @@ use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
     PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
 };
-use crate::schema::{new_turns, territory_adjacency, territory_ownership, users};
+use crate::schema::{new_turns, region_ownership, territory_adjacency, territory_ownership, users};
 use diesel::prelude::*;
 use diesel::result::Error;
 use rocket::http::{Cookies, Status};
@@ -357,6 +357,17 @@ pub fn view_response(
     }
 }
 
+fn handleregionalownership(latest: &Latest, team: i32, conn: &PgConnection) -> QueryResult<i64>{
+    use diesel::dsl::count;
+    region_ownership::table
+    .filter(region_ownership::season.eq(latest.season))
+    .filter(region_ownership::day.eq(latest.day))
+    .filter(region_ownership::owner_count.eq(1 as i64))
+    .filter(region_ownership::owners.contains(vec![team]))
+    .select(count(region_ownership::owners))
+    .first(conn)
+}
+
 fn handle_territory_info(
     c: &Claims,
     target: i32,
@@ -406,7 +417,7 @@ fn handle_territory_info(
         )>(conn)
     {
         Ok(team_id) => {
-            match get_adjacent_territory_owners(target, latest, &conn) {
+            match get_adjacent_territory_owners(target, &latest, &conn) {
                 Ok(adjacent_territory_owners) => {
                     match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
                         Some(_tuple_of_territory) => {
@@ -414,10 +425,14 @@ fn handle_territory_info(
                             match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0){
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
+                                        let mut regional_multiplier = 2 * handleregionalownership(&latest, team_id.0, &conn).unwrap_or(0);
+                                        if(regional_multiplier == 0){
+                                            regional_multiplier = 1;
+                                        }
                                         if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                            Ok((team_id, 1.5))
+                                            Ok((team_id, 1.5 * regional_multiplier as f32))
                                         } else {
-                                            Ok((team_id, 1.0))
+                                            Ok((team_id, 1.0 * regional_multiplier as f32))
                                         }
                                     } else {
                                         let mut rng = thread_rng();
@@ -440,7 +455,7 @@ fn handle_territory_info(
 
 fn get_adjacent_territory_owners(
     target: i32,
-    latest: Latest,
+    latest: &Latest,
     conn: &PgConnection,
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
