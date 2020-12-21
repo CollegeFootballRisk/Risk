@@ -1,0 +1,3 @@
+[submodule "rocket_oauth2"]
+	path = rocket_oauth2
+	url = https://github.com/mautamu/rocket_oauth2
