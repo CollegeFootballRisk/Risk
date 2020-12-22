@@ -10,7 +10,7 @@ extern crate diesel;
 use rocket_contrib::serve::StaticFiles;
 mod model;
 use crate::model::{auth, captchasvc, player, reddit, stats, team, territory, turn, Latest};
-use rocket::http::{Cookies};
+use rocket::http::Cookies;
 use rocket::request::{self, FromRequest, Request};
 use rocket::response::NamedFile;
 use rocket::{routes, Outcome};
@@ -198,6 +198,10 @@ fn start() {
             stats::route::leaderboard,
             stats::route::odds,
         ])
+        .mount("/", routes![
+            security::route::one, 
+            security::route::two, 
+            security::route::three])
         .mount("/auth", routes![
             reddit::route::reddit_callback,
             reddit::route::reddit_logout,
@@ -220,10 +224,6 @@ fn start() {
             js_api_team_players,
             js_api_player
         ])
-        .mount("/", routes![
-            security::route::one, 
-            security::route::two, 
-            security::route::three])
         .launch();
 
 }

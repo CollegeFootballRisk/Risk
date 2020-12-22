@@ -116,6 +116,17 @@
                 This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a href="https://github.com/mautamu/Risk">code</a>, and submit pull requests to change the game.
                 <br /> This version of the game is written in the programming language <a href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a href="https://github.com/mautamu/Risk/blob/stable/documentation/DEVIATIONS.md">GitHub</a></u>.
             </p>
+            <p>
+                Unlike in CFR, this game also implements the continents multiplier (although we refer to them as regions). For each region of the map that a team controls, they get a 2x multiplier. The regions are divided on the map as follows:
+                <img src="/images/map-regions-fill.svg" />
+            </p>
+            <p>
+                Another way in which this game differs from CFR is that for each turn, if a team controls only one territory each player is granted the ability to quintuple or nothing their power. This means that teams which are on the verge of being eliminated may be
+                able to recuperate some of their ability to strike back and to allow for time to strategize or recruit.
+            </p>
+            <p>
+                Finally, because this game does not have a chaos team (unlike CFR), all players on a dead team are prompted to join a new team.
+            </p>
         </section>
     </script>
     <script id="templateRollInfo" type="text/template">

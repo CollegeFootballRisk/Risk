@@ -27,7 +27,7 @@ use std::io::Read;
 #[cfg(feature = "risk_security")]
 use crate::security::*;
 
-#[get("/join?<team>")]
+#[get("/join?<team>",rank=1)]
 pub fn join_team(
     team: i32,
     mut cookies: Cookies,
@@ -111,14 +111,14 @@ pub fn join_team(
                                     }
                                     Some(_e) => {
                                         dbg!(_e);
-                                        std::result::Result::Err(Status::Conflict)
+                                        std::result::Result::Err(Status::InternalServerError)
                                     }
                                 }
                             } else {
                                 std::result::Result::Err(Status::Unauthorized)
                             }
                         }
-                        None => std::result::Result::Err(Status::NotFound)
+                        None => std::result::Result::Err(Status::Unauthorized)
                     }
                 }
                 Err(_e) => std::result::Result::Err(Status::Unauthorized),
@@ -128,7 +128,7 @@ pub fn join_team(
     }
 }
 
-#[get("/my_move")]
+#[get("/my_move",rank=1)]
 //#[cfg(feature = "risk_security")]
 pub fn my_move(
     mut cookies: Cookies,
@@ -164,7 +164,7 @@ pub fn my_move(
     }
 }
 
-#[get("/move?<target>&<aon>")]
+#[get("/move?<target>&<aon>",rank=1)]
 //#[cfg(feature = "risk_security")]
 pub fn make_move(
     target: i32,
@@ -226,7 +226,7 @@ pub fn make_move(
                                     match insert_turn(
                                         &user,
                                         user_ratings,
-                                        latest,
+                                        &latest,
                                         target,
                                         multiplier,
                                         user_weight,
@@ -278,7 +278,7 @@ pub fn make_move(
     }
 }
 
-#[get("/polls")]
+#[get("/polls",rank=1)]
 //#[cfg(feature = "risk_security")]
 pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     match Latest::latest(&conn) {
@@ -292,7 +292,7 @@ pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     }
 }
 
-#[get("/poll/respond?<poll>&<response>")]
+#[get("/poll/respond?<poll>&<response>",rank=1)]
 //#[cfg(feature = "risk_security")]
 pub fn submit_poll(
     mut cookies: Cookies,
@@ -332,7 +332,7 @@ pub fn submit_poll(
     }
 }
 
-#[get("/poll/response?<poll>")]
+#[get("/poll/response?<poll>",rank=1)]
 //#[cfg(feature = "risk_security")]
 pub fn view_response(
     mut cookies: Cookies,
@@ -358,7 +358,7 @@ pub fn view_response(
     }
 }
 
-fn handleregionalownership(latest: &Latest, team: i32, conn: &PgConnection) -> QueryResult<i64>{
+pub fn handleregionalownership(latest: &Latest, team: i32, conn: &PgConnection) -> QueryResult<i64>{
     use diesel::dsl::count;
     region_ownership::table
     .filter(region_ownership::season.eq(latest.season))
@@ -369,7 +369,7 @@ fn handleregionalownership(latest: &Latest, team: i32, conn: &PgConnection) -> Q
     .first(conn)
 }
 
-fn handle_territory_info(
+pub fn handle_territory_info(
     c: &Claims,
     target: i32,
     latest: Latest,
@@ -459,7 +459,7 @@ fn handle_territory_info(
     }
 }
 
-fn get_adjacent_territory_owners(
+pub fn get_adjacent_territory_owners(
     target: i32,
     latest: &Latest,
     conn: &PgConnection,
@@ -476,7 +476,7 @@ fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32{
+pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32{
     use diesel::dsl::count;
     territory_ownership::table
     .filter(territory_ownership::season.eq(latest.season))
@@ -486,7 +486,7 @@ fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32{
     .first(conn).unwrap_or(0) as i32
 }
 
-fn get_cfb_points(name: String) -> i64 {
+pub fn get_cfb_points(name: String) -> i64 {
     /*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
     let client = Client::with_connector(https);
     let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
@@ -509,7 +509,7 @@ fn get_cfb_points(name: String) -> i64 {
     5
 }
 
-fn insert_turn(
+pub fn insert_turn(
     user: &(
         i32,
         i32,
@@ -522,7 +522,7 @@ fn insert_turn(
         i32,
     ),
     user_ratings: Ratings,
-    latest: Latest,
+    latest: &Latest,
     target: i32,
     multiplier: f32,
     user_weight: f32,
@@ -555,7 +555,7 @@ fn insert_turn(
         .execute(conn)
 }
 
-fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
         true => {
             diesel::update(users::table)
