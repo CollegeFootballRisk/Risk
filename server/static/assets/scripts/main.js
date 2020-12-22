@@ -15,7 +15,7 @@ var appInfo = {
     teamsObject: null,
     userObject: null,
     lockDisplay: false,
-    dDay: new Date("December 24, 2020 04:00:00"),
+    dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
     map: '/images/map2.svg?v=12',
     viewbox: '0 0 800 700'
