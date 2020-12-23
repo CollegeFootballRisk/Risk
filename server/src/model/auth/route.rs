@@ -1,17 +1,8 @@
-/*use anyhow::{Context, Error};
-use hyper::{
-    header::{Authorization, Bearer, UserAgent},
-    net::HttpsConnector,
-    Client,
-};*/
-//use rocket_oauth2::{OAuth2, TokenResponse};
-//use rocket::response::{Debug, Redirect};
-//hyper::header::{Authorization, Bearer, UserAgent},
 use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
     PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
 };
-use crate::schema::{new_turns, region_ownership, territory_adjacency, territory_ownership, users};
+use crate::schema::{cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users};
 use diesel::prelude::*;
 use diesel::result::Error;
 use rocket::http::{Cookies, Status};
@@ -19,10 +10,9 @@ use rocket::State;
 use std::net::SocketAddr;
 extern crate rand;
 use crate::db::DbConn;
-use hyper::{net::HttpsConnector, Client};
 use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
-use std::io::Read;
+use diesel_citext::types::CiString;
 
 #[cfg(feature = "risk_security")]
 use crate::security::*;
@@ -198,7 +188,7 @@ pub fn make_move(
                             ) {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
-                                    let awards = get_cfb_points(c.0.user.clone());
+                                    let awards = get_cfb_points(c.0.user.clone(), &conn);
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -486,27 +476,18 @@ pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> 
     .first(conn).unwrap_or(0) as i32
 }
 
-pub fn get_cfb_points(name: String) -> i64 {
-    /*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
-    let client = Client::with_connector(https);
-    let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
-    url.push_str(&name);
-    let mut res = client.get(&url).send().unwrap();
-
-    let mut body = String::new();
-    match res.read_to_string(&mut body) {
-        Ok(_ok) => {
-            match serde_json::from_str(&body[0..]) {
-                Ok(v) => {
-                    let v: serde_json::Value = v;
-                    v["ratings"]["overall"].as_i64().unwrap_or(1)
-                }
-                _ => 1,
-            }
-        }
-        Err(_e) => 1,
-    }*/
-    5
+pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
+    match cfbr_stats::table
+    .filter(cfbr_stats::player.eq(CiString::from(name)))
+    .select(cfbr_stats::stars)
+    .first(conn).unwrap_or(1) {
+        1 => 1,
+        2 => 2,
+        3 => 3,
+        4 => 4,
+        5 => 5,
+        _ => 1
+    }
 }
 
 pub fn insert_turn(
@@ -566,3 +547,35 @@ pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> Quer
         false => diesel::update(users::table).filter(users::id.eq(user)).set(users::playing_for.eq(team)).execute(conn),
     }
 }
+
+// Code Graveyard
+/*use anyhow::{Context, Error};
+use hyper::{
+    header::{Authorization, Bearer, UserAgent},
+    net::HttpsConnector,
+    Client,
+};*/
+//use rocket_oauth2::{OAuth2, TokenResponse};
+//use rocket::response::{Debug, Redirect};
+//hyper::header::{Authorization, Bearer, UserAgent},
+//use hyper::{net::HttpsConnector, Client};
+//use std::io::Read;
+    /*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
+    let client = Client::with_connector(https);
+    let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
+    url.push_str(&name);
+    let mut res = client.get(&url).send().unwrap();
+
+    let mut body = String::new();
+    match res.read_to_string(&mut body) {
+        Ok(_ok) => {
+            match serde_json::from_str(&body[0..]) {
+                Ok(v) => {
+                    let v: serde_json::Value = v;
+                    v["ratings"]["overall"].as_i64().unwrap_or(1)
+                }
+                _ => 1,
+            }
+        }
+        Err(_e) => 1,
+    }*/

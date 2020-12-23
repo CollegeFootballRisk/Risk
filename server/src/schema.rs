@@ -167,6 +167,15 @@ table! {
 }
 
 table! {
+    cfbr_stats (player) {
+        player -> diesel_citext::sql_types::Citext,
+        team -> diesel_citext::sql_types::Citext,
+        turnsplayed -> Int4,
+        stars -> Int4,
+    }
+}
+
+table! {
     statistics (sequence) {
         sequence -> Int4,
         season -> Int4,
