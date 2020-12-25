@@ -61,7 +61,7 @@ a.btn {
 
 body {
     background-color: var(--theme-bg);
-    background: url('../../images/background-christmas.jpg') no-repeat center center fixed;
+    background: url('../../images/background-newyears.jpg') no-repeat center center fixed;
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -924,7 +924,10 @@ footer p a {
 }
 
 #attack-list button,
-#attack-button {
+#attack-button,
+#regions-button,
+#heatmap_regions-button,
+#oddmap_regions-button {
     background: var(--theme-accent-1);
 }
 
@@ -933,11 +936,15 @@ footer p a {
     background: var(--theme-accent-2);
 }
 
-#visit-button {
+#visit-button,
+.ohio-button {
     background: var(--theme-accent-3);
 }
 
 #hover-button,
+#bridges-button,
+#heatmap_bridges-button,
+#oddmap_bridges-button,
 .hover-button {
     background: var(--theme-accent-4);
 }

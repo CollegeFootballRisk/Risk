@@ -17,8 +17,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg?v=12',
-    viewbox: '0 0 800 700'
+    map: '/images/map3.svg?v=12',
+    viewbox: '0 0 700 700'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -437,8 +437,51 @@ function mapDisplayUpdate(event, change, override = false) {
     }
 }
 
+function regionsNBridgesInit() {
+    //if main map
+    appInfo.regionsDisplay = false;
+    appInfo.bridgesDisplay = false;
+    //if odds/heat map
+    appInfo.regionsDisplayOdds = false;
+    appInfo.bridgesDisplayOdds = false;
+    try {
+        _("regions-button").onclick = function() { handleRegions() };
+        _("bridges-button").onclick = function() { handleBridges() };
+    } catch {
+        _("oddmap_regions-button").onclick = function() { handleRegions() };
+        _("oddmap_bridges-button").onclick = function() { handleBridges() };
+        _("heatmap_regions-button").onclick = function() { handleRegions() };
+        _("heatmap_bridges-button").onclick = function() { handleBridges() };
+    }
+}
+
+function handleRegions() {
+    try {
+        appInfo.regionsDisplay = !appInfo.regionsDisplay;
+        _("Regions").style.display = appInfo.regionsDisplay ? "flex" : "none";
+    } catch {
+        appInfo.regionsDisplayOdds = !appInfo.regionsDisplayOdds;
+        _("oddmap_Regions").style.display = appInfo.regionsDisplayOdds ? "flex" : "none";
+        _("heatmap_Regions").style.display = appInfo.regionsDisplayOdds ? "flex" : "none";
+    }
+}
+
+
+function handleBridges() {
+    try {
+        appInfo.bridgesDisplay = !appInfo.bridgesDisplay;
+        _("Bridges").style.display = appInfo.bridgesDisplay ? "flex" : "none";
+    } catch {
+        appInfo.bridgesDisplayOdds = !appInfo.bridgesDisplayOdds;
+        _("oddmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
+        _("heatmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
+    }
+}
+
+
 function mapHover(event) {
     if (!event.target.matches('path')) return;
+    if (event.target.attributes['id'].value.toLowerCase().indexOf('region') != -1) return;
     type = event.type;
     switch (type) {
         case 'mouseover':
@@ -637,6 +680,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         _("old-map-owner-info").setAttribute('selectitem', 'true')
                     }
                     resizeMap();
+                    regionsNBridgesInit()
                     resolve(heat);
                 }, function() {
                     reject("Error");
@@ -666,6 +710,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     li += "</ul>";
                     _("map-container").innerHTML += li;
                     resizeMap();
+                    regionsNBridgesInit()
                     resolve(heat);
                 }, function() {
                     reject("Error");
@@ -682,6 +727,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('territoryid', territories[territory].id);
                     }
                     resizeMap();
+                    regionsNBridgesInit()
                     resolve(window.territories);
                 }, function() {
                     reject("Error");
@@ -1139,7 +1185,8 @@ function drawOddsPage(junk) {
                 oddsObject[i]["chance"].toFixed(2)
             ]);
         }
-        //resizeMap();
+        regionsNBridgesInit()
+            //resizeMap();
         try {
             window.datatable.destroy();
         } catch {
@@ -1691,10 +1738,10 @@ function page_map(content, data = { season: 0, day: 0 }) {
 }
 
 function handleNewPage(title, contentTag, call, vari) {
-    if (new Date() > appInfo.dDay) {
-        clearInterval(window.pulse);
-        sky();
-    }
+    /* if (new Date() > appInfo.dDay) {
+         clearInterval(window.pulse);
+         sky();
+     }*/
     contentTag.innerHTML = "";
     appInfo.lockDisplay = false;
     document.title = "Aggie Risk | " + title;
@@ -1782,10 +1829,11 @@ function doPoll(realize = true) {
             appInfo.pollResponses = [];
             console.log("Polling...");
             for (i = 0; i < pollData.length; i++) {
-                if (realize || (pollData[i].season == window.turnsObject[window.turnsObject.length - 1].season && pollData[i].day == window.turnsObject[window.turnsObject.length - 1].day)) {
+                if (realize || (pollData[i].season == window.turnsObject[window.turnsObject.length - 1].season && pollData[i].day == window.turnsObject[window.turnsObject.length - 1].day && getCookie('polled') != "true")) {
                     doAjaxGetRequest('/auth/poll/response?poll=' + pollData[i].id, 'Poll Response Requests', function(data) {
                         appInfo.pollResponses.push(JSON.parse(data.response));
                         paintPoll();
+                        document.cookie = "polled=true; expires=Thu, 31 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
                     }, function() {
                         appInfo.pollResponses.push([]);
                         errorNotif('Error Parsing Polls', 'Hmm, appears somebody stole our voter rolls. Try again?', {
@@ -1959,10 +2007,11 @@ function _(id) {
 }
 
 function doDate() {
-    if (new Date() > appInfo.dDay) {
-        clearInterval(window.pulse);
-        sky();
-    }
+    0
+    /* if (new Date() > appInfo.dDay) {
+            clearInterval(window.pulse);
+            sky();
+        }*/
     var templateRollInfo = _("templateRollInfo");
     templateRollInfo = templateRollInfo.innerHTML;
     var now = new Date();
@@ -2143,7 +2192,7 @@ function sky() {
                 document.getElementsByTagName('footer')[0].style.opacity = appInfo.fullOpacity;
                 if (appInfo.fullOpacity <= 0) {
                     console.log("Exit");
-                    document.cookie = "seen=true; expires=Thu, 28 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
+                    document.cookie += "seen=true; expires=Thu, 28 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
                     clearInterval(window.pulse);
                     clearTimeout(appInfo.fadeTimer);
                     clearTimeout(window.pulse2);

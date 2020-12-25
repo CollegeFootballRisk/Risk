@@ -1,6 +1,6 @@
 [package]
 name = "rust-risk"
-version = "0.1.12"
+version = "0.1.14"
 authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2018"
 
