@@ -17,7 +17,7 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map3.svg?v=12',
+    map: '/images/map3.svg?v=13',
     viewbox: '0 0 700 700'
 }
 

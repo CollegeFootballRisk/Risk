@@ -308,7 +308,7 @@
   </g>
   <g
      id="Regions"
-     style="stroke:#ffffff;stroke-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none; display:none;">
+     style="stroke:#ffffff;stroke-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none; display:none;pointer-events: none;">
     <path
        id="region_2"
        style="fill:#000000;fill-opacity:0;stroke:#00ff00;stroke-opacity:1;stroke-width:8;stroke-miterlimit:4;stroke-dasharray:12,12;stroke-dashoffset:0"
