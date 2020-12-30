@@ -17,7 +17,7 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map3.svg?v=13',
+    map: '/images/map2.svg?v=13',
     viewbox: '0 0 700 700'
 }
 
@@ -1038,7 +1038,7 @@ function page_territory_cover(contentTag, tname) {
             var box = _("templateTerritoryHistoryBox");
             var str = "";
             territoryHistoryObject = JSON.parse(territoryResponse.response);
-            for (obj in territoryHistoryObject) {
+            for (obj in territoryHistoryObject.reverse()) {
                 var objr = territoryHistoryObject.length - obj - 1;
                 str += box.innerHTML.replace(/{{day}}/gi, territoryHistoryObject[objr].day).replace(/{{team}}/, territoryHistoryObject[objr].owner).replace(/{{season}}/, territoryHistoryObject[objr].season);
             }
