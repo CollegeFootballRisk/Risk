@@ -469,12 +469,16 @@ function handleRegions() {
 
 function handleBridges() {
     try {
-        appInfo.bridgesDisplay = !appInfo.bridgesDisplay;
-        _("Bridges").style.display = appInfo.bridgesDisplay ? "flex" : "none";
+        try {
+            appInfo.bridgesDisplay = !appInfo.bridgesDisplay;
+            _("Bridges").style.display = appInfo.bridgesDisplay ? "flex" : "none";
+        } catch {
+            appInfo.bridgesDisplayOdds = !appInfo.bridgesDisplayOdds;
+            _("oddmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
+            _("heatmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
+        }
     } catch {
-        appInfo.bridgesDisplayOdds = !appInfo.bridgesDisplayOdds;
-        _("oddmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
-        _("heatmap_Bridges").style.display = appInfo.bridgesDisplayOdds ? "flex" : "none";
+        alert("Sorry, there ain't none!");
     }
 }
 
@@ -1059,6 +1063,8 @@ function page_index(contentTag) {
         */
     var templateMap = _("templateMap");
     var templateRoll = _("templateRoll");
+    var templateAnnouncements = _("templateAnnouncements");
+    contentTag.innerHTML += templateAnnouncements.innerHTML;
     contentTag.innerHTML += templateMap.innerHTML;
     contentTag.innerHTML += templateRoll.innerHTML;
     let index = Promise.all([new Promise(drawMap), new Promise(getTeamInfo)])
