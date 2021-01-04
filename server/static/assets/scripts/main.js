@@ -17,8 +17,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg?v=13',
-    viewbox: '0 0 700 700'
+    map: '/images/map4v2.svg?v=13',
+    viewbox: '0 0 700 800'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -531,7 +531,7 @@ function getTurns(resolve, reject) {
     try {
         doAjaxGetRequest('/api/turns', 'Turns', function(team_data) {
             window.turnsObject = JSON.parse(team_data.response);
-            appInfo.rollTime = new Date(window.turnsObject[window.turnsObject.length - 1].rollTime + "Z");
+            //appInfo.rollTime = new Date(window.turnsObject[window.turnsObject.length - 1].rollTime + "Z");
             window.turn = window.turnsObject[window.turnsObject.length - 1];
             resolve(window.turnsObject);
         }, function() { reject("Error"); });
