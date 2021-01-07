@@ -6,20 +6,32 @@ use rocket::State;
 use rocket_contrib::json::Json;
 
 #[get("/players?<team>")]
-pub fn players(team: String, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
-    let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
-        urlencoding::decode(&team);
-    match parsed_team_name {
-        Ok(team) => {
-            println!("{}", team);
-            let users = TeamPlayer::load(vec![team], &conn);
+pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
+    match team {
+        Some(team) => {
+            let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
+            urlencoding::decode(&team);
+        match parsed_team_name {
+            Ok(team) => {
+                println!("{}", team);
+                let users = TeamPlayer::load(vec![team], &conn);
+                if users.len() as i32 >= 1 {
+                    std::result::Result::Ok(Json(users))
+                } else {
+                    std::result::Result::Err(Status::NotFound)
+                }
+            }
+            _ => std::result::Result::Err(Status::Conflict),
+        }
+        }
+        None => {
+            let users = TeamPlayer::loadall(&conn);
             if users.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(users))
             } else {
                 std::result::Result::Err(Status::NotFound)
-            }
+            }  
         }
-        _ => std::result::Result::Err(Status::Conflict),
     }
 }
 

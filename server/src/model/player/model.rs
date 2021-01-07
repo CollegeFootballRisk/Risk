@@ -215,6 +215,18 @@ impl TeamPlayer {
             .load::<TeamPlayer>(conn)
             .expect("Error loading players")
     }
+    pub fn loadall(conn: &PgConnection) -> Vec<TeamPlayer> {
+        moves::table
+            .select((
+                moves::tname,
+                moves::uname,
+                moves::turns,
+                moves::mvps,
+                (moves::season, moves::day, moves::stars),
+            ))
+            .load::<TeamPlayer>(conn)
+            .expect("Error loading players")
+    }
 }
 
 impl PlayerInTurns {
