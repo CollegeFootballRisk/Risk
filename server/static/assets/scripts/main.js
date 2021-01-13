@@ -698,14 +698,16 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     console.log("Maxmin", maxmin);
                     for (territory in heat) {
                         red = (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power) || 0;
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
-                        _("old-map-county-info").innerHTML = "Leaderboard";
-                        _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
-                        _("old-map-owner-info").setAttribute('selectitem', 'true')
+			try {
+				_('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
+                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
+                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
+                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
+                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
+                        	_("old-map-county-info").innerHTML = "Leaderboard";
+                        	_("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
+                        	_("old-map-owner-info").setAttribute('selectitem', 'true')
+			} catch {}
                     }
                     var li = "<br/><br/><ul id=\"spot\">";
                     for (var i = 0, l = 10; i <= l; i++) {
