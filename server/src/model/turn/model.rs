@@ -118,10 +118,31 @@ impl Latest {
                     .first::<Option<i32>>(conn);
                 match day {
                     Ok(day) => {
-                        Ok(Latest {
-                            season: season.unwrap_or(0),
-                            day: day.unwrap_or(0),
-                        })
+                            match (season, day){
+                                (Some(season), Some(day)) => {
+                                    Ok(Latest {
+                                        season: season,
+                                        day: day,
+                                    })
+                                },
+                                (Some(season), None) => {
+                                    let dayz = turninfo::table
+                                    .select(max(turninfo::day))
+                                    .filter(turninfo::season.eq(season))
+                                    .first::<Option<i32>>(conn);
+                                    let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
+                                    Ok(Latest {
+                                        season: season,
+                                        day: day,
+                                    })
+                                }
+                                _ => {
+                                    Ok(Latest {
+                                        season: 0,
+                                        day: 0,
+                                    })
+                                }
+                            }
                     }
                     _ => Err("Database Error"),
                 }
