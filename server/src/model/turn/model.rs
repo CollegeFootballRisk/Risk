@@ -53,7 +53,7 @@ pub struct TurnInfo {
     pub complete: Option<bool>,
     pub active: Option<bool>,
     pub finale: Option<bool>,
-    pub rollTime: Option<chrono::NaiveDateTime>
+    pub rollTime: Option<chrono::NaiveDateTime>,
 }
 
 #[derive(Queryable, Serialize, Deserialize)]
@@ -81,12 +81,14 @@ impl TurnInfo {
                 turninfo::complete,
                 turninfo::active,
                 turninfo::finale,
-                turninfo::rollstarttime
+                turninfo::rollstarttime,
             ))
             .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
+            .order_by(turninfo::id)
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }
+
     pub fn loadall(conn: &PgConnection) -> Vec<TurnInfo> {
         turninfo::table
             .select((
@@ -96,7 +98,7 @@ impl TurnInfo {
                 turninfo::complete,
                 turninfo::active,
                 turninfo::finale,
-                turninfo::rollstarttime
+                turninfo::rollstarttime,
             ))
             .order_by(turninfo::id)
             .load::<TurnInfo>(conn)
@@ -106,7 +108,7 @@ impl TurnInfo {
 
 impl Latest {
     pub fn latest(conn: &PgConnection) -> Result<Latest, &str> {
-        use diesel::dsl::{min,max};
+        use diesel::dsl::{max, min};
         let season = turninfo::table.select(max(turninfo::season)).first::<Option<i32>>(conn);
         match season {
             Ok(season) => {
@@ -118,31 +120,31 @@ impl Latest {
                     .first::<Option<i32>>(conn);
                 match day {
                     Ok(day) => {
-                            match (season, day){
-                                (Some(season), Some(day)) => {
-                                    Ok(Latest {
-                                        season: season,
-                                        day: day,
-                                    })
-                                },
-                                (Some(season), None) => {
-                                    let dayz = turninfo::table
+                        match (season, day) {
+                            (Some(season), Some(day)) => {
+                                Ok(Latest {
+                                    season,
+                                    day,
+                                })
+                            }
+                            (Some(season), None) => {
+                                let dayz = turninfo::table
                                     .select(max(turninfo::day))
                                     .filter(turninfo::season.eq(season))
                                     .first::<Option<i32>>(conn);
-                                    let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
-                                    Ok(Latest {
-                                        season: season,
-                                        day: day,
-                                    })
-                                }
-                                _ => {
-                                    Ok(Latest {
-                                        season: 0,
-                                        day: 0,
-                                    })
-                                }
+                                let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
+                                Ok(Latest {
+                                    season,
+                                    day,
+                                })
                             }
+                            _ => {
+                                Ok(Latest {
+                                    season: 0,
+                                    day: 0,
+                                })
+                            }
+                        }
                     }
                     _ => Err("Database Error"),
                 }

@@ -1,10 +1,19 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A fun game of Risk written in Rust to determine the best things in Texas.">
+<meta name="keywords" content="texas, open source, rust, risk, aggie, tamu, texas a&m, university, collegefootballrisk, aggierisk">
+<meta name="robots" content="index, follow">
+<meta name="copyright" content="2021">
+<meta name="language" content="EN">
+<meta name="author" content="Mautamu">
+<meta name="creationdate" content="2021-01-01">
+<meta name="distribution" content="global">
+<meta name="rating" content="general">
     <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
@@ -35,44 +44,44 @@
     <header>
         <h2>
             <a href="/" class="loader" target="_self">
-                <img src="/images/logo-christmas.svg">
-                <img src="/images/logo-white.svg" id="loadicon" class="brand-image spin">
+                <img alt="logo" src="/images/logo-text-new.svg">
+                <img alt="spinny icon" src="/images/logo-white.svg" id="loadicon" class="brand-image spin">
             </a>
         </h2>
         <h2 class="hamburger" id="burger">
             ☰
         </h2>
         <nav id="nav">
-            <li><a href="/">Home</a></li>
+            <ul><li><a href="/">Home</a></li>
             <li><a href="/leaderboard">Leaderboard</a></li>
             <li><a href="/odds/">Odds</a></li>
             <li><a href="/info">Info</a></li>
-            <li><a href="https://github.com/mautamu/Risk/blob/stable/documentation/API.md">API</a></li>
-            <li><a href="/bug">Bugs</a></li>
+            <li><a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/documentation/API.md">API</a></li>
+            <li><a href="/bug">Bugs</a></li></ul>
         </nav>
     </header>
     <ul class="ugrid redditlogin" id="reddit-login-top" style="background: var(--theme-bg-05); display:none;">
-        <a href="/login/reddit">
-            <div style="margin-top:50%;"><img src="images/reddit-logo.png"><br><br>LOGIN</div>
-        </a>
+        <li><a href="/login/reddit">
+            <div style="margin-top:50%;"><img alt="reddit login" src="images/reddit-logo.png"><br><br>LOGIN</div>
+        </a></li>
     </ul>
     <div id="content-wrapper">
     </div>
 
     <footer>
-        <p>Rust Risk is an <a href="https://github.com/mautamu/Risk" target="_blank">open source project</a> developed by u/Mautamu and the Aggie College Football Risk team.</p>
+        <p>Rust Risk is an <a rel="noreferrer" href="https://github.com/mautamu/Risk" target="_blank">open source project</a> developed by u/Mautamu and the Aggie College Football Risk team.</p>
         <p>
-            The Rust Risk logo is a derivative work of the <a href="https://www.rust-lang.org/policies/media-guide" style="background-color:#B9420F;">Rust</a> logo, created by Mozilla and licensed under <a href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.
+            The Rust Risk logo is a derivative work of the <a rel="noreferrer" href="https://www.rust-lang.org/policies/media-guide" style="background-color:#B9420F;">Rust</a> logo, created by Mozilla and licensed under <a rel="noreferrer" href="https://creativecommons.org/licenses/by/4.0/">CC-BY 4.0</a>.
         </p>
         <p>
-            This project is largely based off of the design of <a href="https://github.com/bluescar">u/BlueSCar's</a> <a href="https://collegefootballrisk.com">College Football Risk.</a>
+            This project is largely based off of the design of <a rel="noreferrer" href="https://github.com/bluescar">u/BlueSCar's</a> <a rel="noreferrer" href="https://collegefootballrisk.com">College Football Risk.</a>
         </p>
         <p>
-            All other <a href="https://pixnio.com/nature-landscapes/night/cosmos-galaxy-wallpaper-night-silhouette-sky-stars-tree#img_info">parts</a>
-            <a href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this</a>            website are <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
+            All other <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/cosmos-galaxy-wallpaper-night-silhouette-sky-stars-tree#img_info">parts</a>
+            <a rel="noreferrer" href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this website</a> are <a rel="noreferrer" href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
                 v2.</a>
         </p>
-        <p>It's more fun playing with others. Join us on <a href="https://tx.ag/AggieDiscord">Discord</a> or <a href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
+        <p>It's more fun playing with others. Join us on <a rel="noreferrer" href="https://tx.ag/AggieDiscord">Discord</a> or <a rel="noreferrer" href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
     </footer>
     <script id="templateTerritoryHistory" type="text/template">
         <section class="grid-history">
@@ -102,7 +111,7 @@
             <iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>
             <h3> What is Rust Risk? </h3>
             <p id="#what">
-                Aggie Risk is similar to <u><a href="https://collegefootballrisk.com/">College Football Risk</a></u>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the
+                Aggie Risk is similar to <u><a rel="noreferrer" href="https://collegefootballrisk.com/">College Football Risk</a></u>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the
                 largest number of territories of any team at the end of the season.
             </p>
             <h3> How does the game work? </h3>
@@ -113,12 +122,12 @@
             </p>
             <h3> How is this different from College Football Risk? </h3>
             <p>
-                This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a href="https://github.com/mautamu/Risk">code</a>, and submit pull requests to change the game.
-                <br /> This version of the game is written in the programming language <a href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a href="https://github.com/mautamu/Risk/blob/stable/documentation/DEVIATIONS.md">GitHub</a></u>.
+                This game is quite similar to CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a rel="noreferrer" href="https://github.com/mautamu/Risk">code</a>, and submit pull requests to change the game.
+                <br /> This version of the game is written in the programming language <a rel="noreferrer" href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/documentation/DEVIATIONS.md">GitHub</a></u>.
             </p>
             <p>
                 Unlike in CFR, this game also implements the continents multiplier (although we refer to them as regions). For each region of the map that a team controls, they get a 2x multiplier. The regions are divided on the map as follows:
-                <img src="/images/map-regions-fill.svg" />
+                <img alt="Regions" src="/images/map-regions-fill.svg" />
             </p>
             <p>
                 Another way in which this game differs from CFR is that for each turn, if a team controls only one territory each player is granted the ability to quintuple or nothing their power. This means that teams which are on the verge of being eliminated may be
@@ -158,9 +167,9 @@
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
             <h1 id="old-map-county-info">Map</h1>
-            <h3 id="old-map-owner-info"><a href="/map">See past maps</a></h3>
+            <h2 id="old-map-owner-info"><a href="/map">See past maps</a></h2>
             <h3 id="map-day-info" style="display:none;"></h3>
-            <div id="map-container" style="width:100vw;">
+            <div id="map-container">
             </div>
             <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/></u></text>
         </section>
@@ -202,7 +211,7 @@
             </ul>
             <hr>
             <div id="rollInfo"></div>
-            <ul id="pollInfo" style="margin-bottom:100px;"><text style="color:red;"><a onclick="doPoll();"><!--You can take <u>the poll</u> to extend game play now.--></a></text></ul>
+            <ul id="pollInfo" style="margin-bottom:100px;"><li><text style="color:red;"><a onclick="doPoll();"><!--You can take <u>the poll</u> to extend game play now.--></a></text></li></ul>
             <hr>
             <h2><text style="color:red;" id="last-day-notice"></text></h2>
         </section>
@@ -250,7 +259,7 @@
             <div id="team-header"></div>
             <ul class="ugrid">
                 <li>
-                    <img id="team-logo" style="width:400px;height:400px;"></img>
+                    <img alt="Team Logo" id="team-logo" style="width:400px;height:400px;"></img>
                 </li>
                 <li style="width:400px;height:400px;display: flex;
                 text-align: center;
@@ -317,8 +326,8 @@
         </section>
     </script>
     <script id="bug_form" type="text/template">
-        <p>Shucks, did we miss something? <br/> <br/>If it's truly an error and not a <u><a alt="feature requests go here" href="https://github.com/mautamu/risk">feature request</a></u> or <u><a alt="those go here" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">complaint about the results of a turn</a></u>,
-            <br/><br/><u><a href="mailto:rustrisk@aggierisk.ml">let us know</a></u><br/><br/> what you were doing and what unexpected behaviour happened please.</p><br/> (You can also include the following trace):
+        <p>Shucks, did we miss something? <br/> <br/>If it's truly an error and not a <u><a alt="feature requests go here" href="https://github.com/mautamu/risk" rel="noreferrer">feature request</a></u> or <u><a alt="those go here" rel="noreferrer" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">complaint about the results of a turn</a></u>,
+            <br/><br/><u><a rel="noreferrer" href="mailto:rustrisk@aggierisk.ml">let us know</a></u><br/><br/> what you were doing and what unexpected behaviour happened please.</p><br/> (You can also include the following trace):
         <textarea id="bug-trace-text" style="width:90%;height:100px;">User-Agent: {{uinf}}  Errors: {{errors}}  Pending: {{pending}} </textarea>
         <p><br/><i>On behalf of the Rust Risk team, thank you for reporting this error!</i></p>
     </script>
@@ -379,7 +388,7 @@
             <!--// style="background-image: url(/assets/img/bluebonnet.jpg);">-->
             <center>
                 <h2><a href="/team/{{team}}">{{team}}</a><br/> <i> {{team_2}} </i><br>
-                    <img src="{{team_logo}}" width="128" height="128">
+                    <img alt="Team Logo" src="{{team_logo}}" width="128" height="128">
                     <div class="lrow">
                         <div class="lcol2">
                             {{team_players_yesterday}}<br>

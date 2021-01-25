@@ -22,7 +22,6 @@ use std::{fs, thread, time};
 #[cfg(feature = "risk_security")]
 mod security;
 
-
 struct User {
     pub username: String,
 }
@@ -65,6 +64,14 @@ fn main() {
     }
 }
 
+#[get("/robots.txt")]
+fn robots() -> String {
+    "User-agent: *
+    Disallow:
+    Disallow: /auth/"
+        .to_string()
+}
+
 // These are JS Routes
 #[get("/<_data>", rank = 1)]
 fn js_api_leaderboard(_data: Option<String>) -> NamedFile {
@@ -90,7 +97,6 @@ fn js_api_team_players(_data: Option<String>) -> NamedFile {
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
-
 #[get("/player/<_data>", rank = 1)]
 fn js_api_player(_data: Option<String>) -> NamedFile {
     NamedFile::open("static/index.html").ok().unwrap()
@@ -102,7 +108,6 @@ fn js_api_map(_data: Option<String>, _data2: Option<String>) -> NamedFile {
     NamedFile::open("static/index.html").ok().unwrap()
     // We are assuming index.html exists. If it does not, uh oh!
 }
-
 
 #[get("/territory/<_territory>/<_data>/<_data2>", rank = 1)]
 fn js_api_territories(
@@ -122,58 +127,8 @@ fn start() {
         day: dotenv::var("day").unwrap().parse::<i32>().unwrap(),
     };
 
-       #[cfg(not(feature = "risk_security"))]
-        rocket::ignite()
-            .manage(db::init_pool())
-            .manage(key)
-            .manage(latest)
-            .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
-            .register(catchers![catchers::not_found, catchers::internal_error])
-            .mount("/api", routes![
-                player::route::player,
-                player::route::me,
-                player::route::players,
-                player::route::player_multifetch,
-                turn::route::turns,
-                turn::route::all_turns,
-                turn::route::rolllog,
-                team::route::teams,
-                team::route::teamplayersbymoves,
-                territory::route::territories,
-                territory::route::territoryhistory,
-                territory::route::territory_turn,
-                stats::route::heat,
-                stats::route::stathistory,
-                stats::route::currentstrength,
-                stats::route::leaderboard,
-                stats::route::odds,
-            ])
-            .mount("/auth", routes![
-                reddit::route::reddit_callback,
-                reddit::route::reddit_logout,
-                captchasvc::route::captchaServe,
-                auth::route::make_move,
-                auth::route::my_move,
-                auth::route::join_team,
-                auth::route::view_response,
-                auth::route::submit_poll,
-                auth::route::get_polls,
-            ])
-            .mount("/login", routes![reddit::route::reddit_login])
-            .mount("/", StaticFiles::from("static").rank(2))
-            .mount("/", routes![
-                js_api_leaderboard,
-                js_api_territory,
-                js_api_territories,
-                js_api_team,
-                js_api_map,
-                js_api_team_players,
-                js_api_player
-            ])
-            .launch();
-
-    #[cfg(feature = "risk_security")]
-        rocket::ignite()
+    #[cfg(not(feature = "risk_security"))]
+    rocket::ignite()
         .manage(db::init_pool())
         .manage(key)
         .manage(latest)
@@ -198,10 +153,6 @@ fn start() {
             stats::route::leaderboard,
             stats::route::odds,
         ])
-        .mount("/", routes![
-            security::route::one, 
-            security::route::two, 
-            security::route::three])
         .mount("/auth", routes![
             reddit::route::reddit_callback,
             reddit::route::reddit_logout,
@@ -222,8 +173,60 @@ fn start() {
             js_api_team,
             js_api_map,
             js_api_team_players,
-            js_api_player
+            js_api_player,
+            robots
         ])
         .launch();
 
+    #[cfg(feature = "risk_security")]
+    rocket::ignite()
+        .manage(db::init_pool())
+        .manage(key)
+        .manage(latest)
+        .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
+        .register(catchers![catchers::not_found, catchers::internal_error])
+        .mount("/api", routes![
+            player::route::player,
+            player::route::me,
+            player::route::players,
+            player::route::player_multifetch,
+            turn::route::turns,
+            turn::route::all_turns,
+            turn::route::rolllog,
+            team::route::teams,
+            team::route::teamplayersbymoves,
+            territory::route::territories,
+            territory::route::territoryhistory,
+            territory::route::territory_turn,
+            stats::route::heat,
+            stats::route::stathistory,
+            stats::route::currentstrength,
+            stats::route::leaderboard,
+            stats::route::odds,
+        ])
+        .mount("/", routes![security::route::one, security::route::two, security::route::three])
+        .mount("/auth", routes![
+            reddit::route::reddit_callback,
+            reddit::route::reddit_logout,
+            captchasvc::route::captchaServe,
+            auth::route::make_move,
+            auth::route::my_move,
+            auth::route::join_team,
+            auth::route::view_response,
+            auth::route::submit_poll,
+            auth::route::get_polls,
+        ])
+        .mount("/login", routes![reddit::route::reddit_login])
+        .mount("/", StaticFiles::from("static").rank(2))
+        .mount("/", routes![
+            js_api_leaderboard,
+            js_api_territory,
+            js_api_territories,
+            js_api_team,
+            js_api_map,
+            js_api_team_players,
+            js_api_player,
+            robots
+        ])
+        .launch();
 }

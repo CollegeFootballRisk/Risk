@@ -7,10 +7,10 @@
     --theme-bg-05: rgba(146, 146, 255, 0.5);
     --theme-icon-bg: rgba(0, 0, 0, 0.5);
     --theme-fg: rgba(255, 255, 255, 1);
-    --theme-accent-1: rgba(0, 200, 0, 1);
+    --theme-accent-1: rgba(50, 0, 200, 1);
     --theme-accent-2: rgba(200, 0, 0, 1);
     --theme-accent-3: rgba(200, 0, 200, 1);
-    --theme-accent-4: rgba(200, 200, 0, 1);
+    --theme-accent-4: rgba(0, 100, 0, 1);
 }
 
 * {
@@ -28,6 +28,10 @@ html {
 ul,
 nav {
     list-style: none;
+}
+
+nav li {
+    display:inline;
 }
 
 nav a {
@@ -336,6 +340,13 @@ header nav li:last-child {
     }
 }
 
+@media (max-width: 1400px) {
+    #oddmap_map, #heatmap_map, #map {
+        width: 100vw !important;
+        height: 100vw !important;
+    }
+}
+
 @media (max-width: 700px) {
     .map-wrap .ugrid li center i {
         font-size: 0.25em;
@@ -346,11 +357,12 @@ header nav li:last-child {
 }
 
 .map-container {
-    width: 100vw !important;
+    width: 100% !important;
 }
 
 .map-wrap {
-    width: 100vw;
+    width: 100%;
+    padding: 10vh 0 !important;
 }
 
 
@@ -656,6 +668,13 @@ h3[selectitem]::after {
     .leaderboard-wrap .grid li {
         flex-basis: 100%;
     }
+    #content-wrapper{
+        width: 100vw;
+    }
+    #spot li {
+    float: left;
+    width: 9vw !important;
+    }
 }
 
 .p20 {
@@ -803,7 +822,7 @@ footer ul li:last-child {
 footer p {
     text-transform: uppercase;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(255, 255, 255, 0.75);
     margin-bottom: 10px;
 }
 
@@ -1169,7 +1188,7 @@ footer p a {
 }
 
 #leaderboard,
-#history {
+#history, #odds-players {
     max-width: 90vw;
     overflow-x: scroll;
 }

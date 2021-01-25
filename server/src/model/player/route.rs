@@ -10,19 +10,19 @@ pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer
     match team {
         Some(team) => {
             let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
-            urlencoding::decode(&team);
-        match parsed_team_name {
-            Ok(team) => {
-                println!("{}", team);
-                let users = TeamPlayer::load(vec![team], &conn);
-                if users.len() as i32 >= 1 {
-                    std::result::Result::Ok(Json(users))
-                } else {
-                    std::result::Result::Err(Status::NotFound)
+                urlencoding::decode(&team);
+            match parsed_team_name {
+                Ok(team) => {
+                    println!("{}", team);
+                    let users = TeamPlayer::load(vec![team], &conn);
+                    if users.len() as i32 >= 1 {
+                        std::result::Result::Ok(Json(users))
+                    } else {
+                        std::result::Result::Err(Status::NotFound)
+                    }
                 }
+                _ => std::result::Result::Err(Status::Conflict),
             }
-            _ => std::result::Result::Err(Status::Conflict),
-        }
         }
         None => {
             let users = TeamPlayer::loadall(&conn);
@@ -30,7 +30,7 @@ pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer
                 std::result::Result::Ok(Json(users))
             } else {
                 std::result::Result::Err(Status::NotFound)
-            }  
+            }
         }
     }
 }
@@ -50,13 +50,15 @@ pub fn me(
                         false,
                         &conn,
                     );
-                    match users{
-                        Some(user) => {if user.name.to_lowercase() == c.0.user.to_lowercase() {
-                            std::result::Result::Ok(Json(user))
-                        } else {
-                            std::result::Result::Err(Status::NotFound)
-                        }}
-                        None => std::result::Result::Err(Status::NotFound)
+                    match users {
+                        Some(user) => {
+                            if user.name.to_lowercase() == c.0.user.to_lowercase() {
+                                std::result::Result::Ok(Json(user))
+                            } else {
+                                std::result::Result::Err(Status::NotFound)
+                            }
+                        }
+                        None => std::result::Result::Err(Status::NotFound),
                     }
                 }
                 Err(_e) => std::result::Result::Err(Status::BadRequest),
@@ -106,14 +108,17 @@ pub fn player_multifetch(
 }
 
 #[get("/player?<player>")]
-pub fn player(player: String, conn: DbConn) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
+pub fn player(
+    player: String,
+    conn: DbConn,
+) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
     let mut users = PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, &conn);
     //if users.len() as i32 == 1 {
-        match users{
-            Some(user) => std::result::Result::Ok(Json(user)),
-            None => std::result::Result::Err(Status::NotFound)
-        }
-   // } else {
-     //   std::result::Result::Err(Status::NotFound)
+    match users {
+        Some(user) => std::result::Result::Ok(Json(user)),
+        None => std::result::Result::Err(Status::NotFound),
+    }
+    // } else {
+    //   std::result::Result::Err(Status::NotFound)
     //}
 }

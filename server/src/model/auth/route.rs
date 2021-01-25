@@ -2,7 +2,9 @@ use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
     PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
 };
-use crate::schema::{cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users};
+use crate::schema::{
+    cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users,
+};
 use diesel::prelude::*;
 use diesel::result::Error;
 use rocket::http::{Cookies, Status};
@@ -10,14 +12,14 @@ use rocket::State;
 use std::net::SocketAddr;
 extern crate rand;
 use crate::db::DbConn;
+use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
-use diesel_citext::types::CiString;
 
 #[cfg(feature = "risk_security")]
 use crate::security::*;
 
-#[get("/join?<team>",rank=1)]
+#[get("/join?<team>", rank = 1)]
 pub fn join_team(
     team: i32,
     mut cookies: Cookies,
@@ -34,8 +36,8 @@ pub fn join_team(
                         false,
                         &conn,
                     );
-                    match users{
-                        Some(users)=> {
+                    match users {
+                        Some(users) => {
                             if users.name.to_lowercase() == c.0.user.to_lowercase() {
                                 //see if user needs a new team, or a team in general
                                 match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
@@ -49,7 +51,9 @@ pub fn join_team(
                                                         if strength.territories > 0 {
                                                             match users
                                                                 .team
-                                                                .unwrap_or_else(TeamWithColors::blank)
+                                                                .unwrap_or_else(
+                                                                    TeamWithColors::blank,
+                                                                )
                                                                 .name
                                                             {
                                                                 Some(_e) => {
@@ -88,15 +92,21 @@ pub fn join_team(
                                                                 }
                                                             }
                                                         } else {
-                                                            std::result::Result::Err(Status::Forbidden)
+                                                            std::result::Result::Err(
+                                                                Status::Forbidden,
+                                                            )
                                                         }
                                                     }
                                                     Err(_e) => {
-                                                        std::result::Result::Err(Status::NotAcceptable)
+                                                        std::result::Result::Err(
+                                                            Status::NotAcceptable,
+                                                        )
                                                     }
                                                 }
                                             }
-                                            false => std::result::Result::Err(Status::NotAcceptable),
+                                            false => {
+                                                std::result::Result::Err(Status::NotAcceptable)
+                                            }
                                         }
                                     }
                                     Some(_e) => {
@@ -108,7 +118,7 @@ pub fn join_team(
                                 std::result::Result::Err(Status::Unauthorized)
                             }
                         }
-                        None => std::result::Result::Err(Status::Unauthorized)
+                        None => std::result::Result::Err(Status::Unauthorized),
                     }
                 }
                 Err(_e) => std::result::Result::Err(Status::Unauthorized),
@@ -118,7 +128,7 @@ pub fn join_team(
     }
 }
 
-#[get("/my_move",rank=1)]
+#[get("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn my_move(
     mut cookies: Cookies,
@@ -154,7 +164,7 @@ pub fn my_move(
     }
 }
 
-#[get("/move?<target>&<aon>",rank=1)]
+#[get("/move?<target>&<aon>", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn make_move(
     target: i32,
@@ -184,7 +194,8 @@ pub fn make_move(
                                     season: latest.season,
                                     day: latest.day,
                                 },
-                                &conn, aon
+                                &conn,
+                                aon,
                             ) {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
@@ -268,7 +279,7 @@ pub fn make_move(
     }
 }
 
-#[get("/polls",rank=1)]
+#[get("/polls", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     match Latest::latest(&conn) {
@@ -282,7 +293,7 @@ pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     }
 }
 
-#[get("/poll/respond?<poll>&<response>",rank=1)]
+#[get("/poll/respond?<poll>&<response>", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn submit_poll(
     mut cookies: Cookies,
@@ -322,7 +333,7 @@ pub fn submit_poll(
     }
 }
 
-#[get("/poll/response?<poll>",rank=1)]
+#[get("/poll/response?<poll>", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn view_response(
     mut cookies: Cookies,
@@ -348,22 +359,27 @@ pub fn view_response(
     }
 }
 
-pub fn handleregionalownership(latest: &Latest, team: i32, conn: &PgConnection) -> QueryResult<i64>{
+pub fn handleregionalownership(
+    latest: &Latest,
+    team: i32,
+    conn: &PgConnection,
+) -> QueryResult<i64> {
     use diesel::dsl::count;
     region_ownership::table
-    .filter(region_ownership::season.eq(latest.season))
-    .filter(region_ownership::day.eq(latest.day))
-    .filter(region_ownership::owner_count.eq(1 as i64))
-    .filter(region_ownership::owners.contains(vec![team]))
-    .select(count(region_ownership::owners))
-    .first(conn)
+        .filter(region_ownership::season.eq(latest.season))
+        .filter(region_ownership::day.eq(latest.day))
+        .filter(region_ownership::owner_count.eq(1 as i64))
+        .filter(region_ownership::owners.contains(vec![team]))
+        .select(count(region_ownership::owners))
+        .first(conn)
 }
 
 pub fn handle_territory_info(
     c: &Claims,
     target: i32,
     latest: Latest,
-    conn: &PgConnection, aon: Option<bool>
+    conn: &PgConnection,
+    aon: Option<bool>,
 ) -> Result<
     (
         (
@@ -413,22 +429,34 @@ pub fn handle_territory_info(
                     match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
                         Some(_tuple_of_territory) => {
                             let pos = adjacent_territory_owners.iter().position(|&x| x.1 == target);
-                            match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0){
+                            match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0) {
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
-                                        let mut regional_multiplier = 2 * handleregionalownership(&latest, team_id.0, &conn).unwrap_or(0);
+                                        let mut regional_multiplier =
+                                            2 * handleregionalownership(&latest, team_id.0, &conn)
+                                                .unwrap_or(0);
                                         if regional_multiplier == 0 {
                                             regional_multiplier = 1;
                                         }
                                         let mut aon_multiplier: i32 = 1;
-                                        if aon == Some(true) && get_territory_number(team_id.0, &latest, &conn) == 1{
+                                        if aon == Some(true)
+                                            && get_territory_number(team_id.0, &latest, &conn) == 1
+                                        {
                                             let mut rng = thread_rng();
                                             aon_multiplier = 5 * rng.gen_range(0, 2);
                                         }
                                         if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                            Ok((team_id, 1.5 * regional_multiplier as f32 * aon_multiplier as f32))
+                                            Ok((
+                                                team_id,
+                                                1.5 * regional_multiplier as f32
+                                                    * aon_multiplier as f32,
+                                            ))
                                         } else {
-                                            Ok((team_id, 1.0 * regional_multiplier as f32 * aon_multiplier as f32))
+                                            Ok((
+                                                team_id,
+                                                1.0 * regional_multiplier as f32
+                                                    * aon_multiplier as f32,
+                                            ))
                                         }
                                     } else {
                                         let mut rng = thread_rng();
@@ -466,27 +494,30 @@ pub fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32{
+pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
-    .filter(territory_ownership::season.eq(latest.season))
-    .filter(territory_ownership::day.eq(latest.day))
-    .filter(territory_ownership::owner_id.eq(team))
-    .select(count(territory_ownership::owner_id))
-    .first(conn).unwrap_or(0) as i32
+        .filter(territory_ownership::season.eq(latest.season))
+        .filter(territory_ownership::day.eq(latest.day))
+        .filter(territory_ownership::owner_id.eq(team))
+        .select(count(territory_ownership::owner_id))
+        .first(conn)
+        .unwrap_or(0) as i32
 }
 
 pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     match cfbr_stats::table
-    .filter(cfbr_stats::player.eq(CiString::from(name)))
-    .select(cfbr_stats::stars)
-    .first(conn).unwrap_or(1) {
+        .filter(cfbr_stats::player.eq(CiString::from(name)))
+        .select(cfbr_stats::stars)
+        .first(conn)
+        .unwrap_or(1)
+    {
         1 => 1,
         2 => 2,
         3 => 3,
         4 => 4,
         5 => 5,
-        _ => 1
+        _ => 1,
     }
 }
 
@@ -544,7 +575,12 @@ pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> Quer
                 .set((users::current_team.eq(team), users::playing_for.eq(team)))
                 .execute(conn)
         }
-        false => diesel::update(users::table).filter(users::id.eq(user)).set(users::playing_for.eq(team)).execute(conn),
+        false => {
+            diesel::update(users::table)
+                .filter(users::id.eq(user))
+                .set(users::playing_for.eq(team))
+                .execute(conn)
+        }
     }
 }
 
@@ -560,22 +596,22 @@ use hyper::{
 //hyper::header::{Authorization, Bearer, UserAgent},
 //use hyper::{net::HttpsConnector, Client};
 //use std::io::Read;
-    /*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
-    let client = Client::with_connector(https);
-    let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
-    url.push_str(&name);
-    let mut res = client.get(&url).send().unwrap();
+/*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
+let client = Client::with_connector(https);
+let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
+url.push_str(&name);
+let mut res = client.get(&url).send().unwrap();
 
-    let mut body = String::new();
-    match res.read_to_string(&mut body) {
-        Ok(_ok) => {
-            match serde_json::from_str(&body[0..]) {
-                Ok(v) => {
-                    let v: serde_json::Value = v;
-                    v["ratings"]["overall"].as_i64().unwrap_or(1)
-                }
-                _ => 1,
+let mut body = String::new();
+match res.read_to_string(&mut body) {
+    Ok(_ok) => {
+        match serde_json::from_str(&body[0..]) {
+            Ok(v) => {
+                let v: serde_json::Value = v;
+                v["ratings"]["overall"].as_i64().unwrap_or(1)
             }
+            _ => 1,
         }
-        Err(_e) => 1,
-    }*/
+    }
+    Err(_e) => 1,
+}*/

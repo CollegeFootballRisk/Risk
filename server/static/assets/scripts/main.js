@@ -18,7 +18,7 @@ var appInfo = {
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
     map: '/images/map2.svg',
-    viewbox: '0 0 700 800'
+    viewbox: '0 0 700 700'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -362,7 +362,7 @@ function getUserInfo(resolve, reject) {
                 //display reddit login info
                 _("playerCard").classList.add("redditlogin");
                 _("reddit-login-top").style.display = "flex";
-                _("playerCard").innerHTML = "<a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a>";
+                _("playerCard").innerHTML = "<li><a href=\"/login/reddit\"><div style=\"margin-top:50%;\" ><img alt=\"reddit logo\" src=\"images/reddit-logo.png\"><br/><br/>LOGIN</div></a></li>";
                 _("roll-container").innerHTML = _("playerCard").outerHTML;
                 resolve("Okay");
             });
@@ -587,7 +587,9 @@ function drawActionBoard(resolve, reject) {
     }
     if (!window.turnsObject[window.turnsObject.length - 1].active) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
-        _('action-container').innerHTML = '<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+        appInfo.attackable_territory_names=[];
+        appInfo.defendable_territory_names=[];
+        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
             console.log("Drawing Actions.");
@@ -633,13 +635,27 @@ function drawActionBoard(resolve, reject) {
 }
 
 function resizeMap() {
-    let width = _('map-container').clientWidth;
+/*    let width = _('map-container').clientWidth;
     if (width < 1000) {
         _('map').setAttribute('width', width);
         _('map').setAttribute('height', width);
+    }*/
+    try{
+        _('map').setAttribute('preserveAspectRatio', 'xMinYMin');
+        _('map').setAttribute('viewBox', appInfo.viewbox);
+    } catch{
+        try{
+        _('heatmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
+        _('heatmap_map').setAttribute('viewBox', appInfo.viewbox);
+        _('oddmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
+        _('oddmap_map').setAttribute('viewBox', appInfo.viewbox);
+       /* _('heatmap_map').style.height = "100vw";
+        _('heatmap_map').style.width = "100vw";
+        _('oddmap_map').style.height = "100vw";
+        _('oddmap_map').style.width = "100vw";*/
+        }
+        catch { console.log("No map detected."); }
     }
-    _('map').setAttribute('preserveAspectRatio', 'xMinYMin');
-    _('map').setAttribute('viewBox', appInfo.viewbox);
 }
 
 function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
@@ -815,7 +831,7 @@ function drawLeaderboard(season, day) {
             for (var p in leaderboardObject[i]) {
                 if (leaderboardObject[i].hasOwnProperty(p) && display_headings.indexOf(p) != -1) {
                     if (p == 'name') {
-                        obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
+                        obj.data[i].push("<a href=\"/team/" + leaderboardObject[i][p] + "\"><img width='30px' alt='team logo' src='" + leaderboardObject[i]['logo'] + "'/>".concat(leaderboardObject[i][p]));
                     } else if (p == 'efficiency') {
                         obj.data[i].push((leaderboardObject[i][p] || 0).toFixed(2));
                     } else {
@@ -1194,7 +1210,7 @@ function drawOddsPage(junk) {
             ]);
         }
         regionsNBridgesInit()
-            //resizeMap();
+            resizeMap();
         try {
             window.datatable.destroy();
         } catch {
