@@ -23,8 +23,7 @@ pub struct ClientInfo {
 pub struct Move {
     pub attack: Option<i32>,
     pub defend: Option<i32>,
-    /* = "risk_security")] */
-    /* pub information: DebuggingInformation, */
+    /* = "risk_security")]  pub information: DebuggingInformation, */
 }
 
 #[derive(Serialize, Deserialize)]
