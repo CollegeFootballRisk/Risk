@@ -112,7 +112,7 @@ pub fn player(
     player: String,
     conn: DbConn,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
-    let mut users = PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, &conn);
+    let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, &conn);
     //if users.len() as i32 == 1 {
     match users {
         Some(user) => std::result::Result::Ok(Json(user)),

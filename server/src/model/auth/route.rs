@@ -16,9 +16,6 @@ use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
 
-#[cfg(feature = "risk_security")]
-use crate::security::*;
-
 #[get("/join?<team>", rank = 1)]
 pub fn join_team(
     team: i32,
@@ -614,4 +611,5 @@ match res.read_to_string(&mut body) {
         }
     }
     Err(_e) => 1,
-}*/
+}#[cfg(feature = "risk_security")]
+use crate::security::;*/
