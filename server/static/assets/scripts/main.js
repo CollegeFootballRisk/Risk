@@ -677,8 +677,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
                         //red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage((heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
-                        _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute('owner', heat[territory].winner);
+                        _('map').getElementById(heat[territory].territory.replace(/ /g, "")).style.fill = getColorForPercentage((heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
+                        _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute('owner', heat[territory].winner);
                         _("old-map-county-info").innerHTML = "Leaderboard";
                         _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
                         _("old-map-owner-info").setAttribute('selectitem', 'true')
@@ -698,16 +698,16 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     console.log("Maxmin", maxmin);
                     for (territory in heat) {
                         red = (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power) || 0;
-			try {
-				_('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
-                        	_("old-map-county-info").innerHTML = "Leaderboard";
-                        	_("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
-                        	_("old-map-owner-info").setAttribute('selectitem', 'true')
-			} catch {}
+                        try {
+                            _('map').getElementById(heat[territory].territory.replace(/ /g, "")).style.fill = getColorForPercentage(red);
+                            _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute("owner", heat[territory].winner);
+                            _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute("power", heat[territory].power);
+                            _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute("players", heat[territory].players);
+                            _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute("mapname", "leaderboard");
+                            _("old-map-county-info").innerHTML = "Leaderboard";
+                            _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
+                            _("old-map-owner-info").setAttribute('selectitem', 'true')
+                        } catch {}
                     }
                     var li = "<br/><br/><ul id=\"spot\">";
                     for (var i = 0, l = 10; i <= l; i++) {
@@ -727,10 +727,10 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     window.territories = JSON.parse(territory_data.response);
                     for (territory in window.territories) {
                         console.log(window.territories[territory].name);
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('mapname', "map");
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('territoryid', territories[territory].id);
+                        _('map').getElementById(window.territories[territory].name.replace(/ /g, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
+                        _('map').getElementById(window.territories[territory].name.replace(/ /g, "")).setAttribute('owner', territories[territory].owner);
+                        _('map').getElementById(window.territories[territory].name.replace(/ /g, "")).setAttribute('mapname', "map");
+                        _('map').getElementById(window.territories[territory].name.replace(/ /g, "")).setAttribute('territoryid', territories[territory].id);
                     }
                     resizeMap();
                     regionsNBridgesInit()
@@ -1174,10 +1174,10 @@ function drawOddsPage(junk) {
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
             player_red = (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players) || 0;
             odds_red = (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance) || 0;
-            _("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = getColorForPercentage(player_red);
-            _("heatmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('players', oddsObject[i].players);
-            _("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).style.fill = getColorForPercentage(odds_red);
-            _("oddmap_".concat(oddsObject[i].territory.replace(/ /, ""))).setAttribute('odds', oddsObject[i].chance);
+            _("heatmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).style.fill = getColorForPercentage(player_red);
+            _("heatmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).setAttribute('players', oddsObject[i].players);
+            _("oddmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).style.fill = getColorForPercentage(odds_red);
+            _("oddmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).setAttribute('odds', oddsObject[i].chance);
             obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["winner"]),
@@ -2104,7 +2104,7 @@ function highlightTerritory(territory) {
     for (i = 0; i < highlighted.length; i++) {
         highlighted[i].classList.remove('map-animated-highlight');
     }
-    _('map').getElementById(territory.replace(/ /, '')).classList = 'map-animated-highlight';
+    _('map').getElementById(territory.replace(/ /g, '')).classList = 'map-animated-highlight';
 }
 
 function link_is_external(link_element) {
