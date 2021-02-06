@@ -107,7 +107,6 @@ pub fn join_team(
                                         }
                                     }
                                     Some(_e) => {
-                                        dbg!(_e);
                                         std::result::Result::Err(Status::InternalServerError)
                                     }
                                 }

@@ -1,7 +1,7 @@
 //use anyhow::Context;
 //extern crate time;
 //use time::Duration;
-use crate::model::{Claims, RedditUserInfo, UpsertableUser};
+use crate::model::{Claims, DiscordUserInfo, UpsertableUser};
 use hyper::{
     header::{Authorization, Bearer, UserAgent},
     net::HttpsConnector,
@@ -20,13 +20,13 @@ use chrono::prelude::*;
 use chrono::Duration;
 use diesel_citext::types::CiString;
 
-#[get("/reddit")]
-pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
-    oauth2.get_redirect(&mut cookies, &["identity"]).unwrap()
+#[get("/discord")]
+pub fn discord_login(oauth2: OAuth2<DiscordUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
+    oauth2.get_redirect(&mut cookies, &["identify"]).unwrap()
 }
 
 #[get("/logout")]
-pub fn reddit_logout(mut cookies: Cookies) -> Flash<Redirect> {
+pub fn discord_logout(mut cookies: Cookies) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -47,27 +47,27 @@ pub fn reddit_logout(mut cookies: Cookies) -> Flash<Redirect> {
     //TODO: Implement a deletion call to reddit.
 }
 
-#[get("/reddit")]
-pub fn reddit_callback(
-    token: TokenResponse<RedditUserInfo>,
+#[get("/discord")]
+pub fn discord_callback(
+    token: TokenResponse<DiscordUserInfo>,
     mut cookies: Cookies,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Redirect, Status> {
-    match getRedditUserInfo(&token) {
+    match getDiscordUserInfo(&token) {
         Ok(user_info) => {
             let new_user = UpsertableUser {
-                uname: CiString::from(user_info.name.clone()),
-                platform: CiString::from("reddit"),
+                uname: CiString::from(user_info.name()),
+                platform: CiString::from("discord"),
             };
             match UpsertableUser::upsert(new_user, &conn) {
                 Ok(_n) => {
-                    match User::load(user_info.name.clone(), "reddit".to_string(), &conn) {
+                    match User::load(user_info.name(), "discord".to_string(), &conn) {
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
                             let timestamp: usize = 604800 + datetime.timestamp() as usize;
-                            //dbg!(&token);
+                            dbg!(&token);
                             let new_claims = Claims {
                                 id: user.id,
                                 user: user.uname.to_string(),
@@ -76,7 +76,7 @@ pub fn reddit_callback(
                                 exp: timestamp,
                             };
                             cookies.add_private(
-                                Cookie::build("username", user_info.name)
+                                Cookie::build("username", user_info.name())
                                     .same_site(SameSite::Lax)
                                     .domain(dotenv::var("uri").unwrap_or_default())
                                     .path("/")
@@ -108,11 +108,11 @@ pub fn reddit_callback(
     }
 }
 
-fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUserInfo, String> {
+fn getDiscordUserInfo(token: &TokenResponse<DiscordUserInfo>) -> Result<DiscordUserInfo, String> {
     let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
     let client = Client::with_connector(https);
     match client
-        .get("https://oauth.reddit.com/api/v1/me")
+        .get("https://discord.com/api/users/@me")
         .header(Authorization(Bearer {
             token: token.access_token().to_string(),
         }))
@@ -120,11 +120,18 @@ fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUser
         .send()
     {
         Ok(response) => {
+            dbg!(&response);
             match serde_json::from_reader(response.take(2 * 1024 * 1024)) {
                 Ok(send) => Ok(send),
-                Err(_e) => Err("Error in getting user data #2".to_string()),
+                Err(e) => {
+                    dbg!(e);
+                    Err("Error in getting user data #2".to_string())
+                },
             }
         }
-        Err(_e) => Err("Error in getting user data #1".to_string()),
+        Err(e) => {
+            dbg!(e);
+            Err("Error in getting user data #1".to_string())
+        },
     }
 }

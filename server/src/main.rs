@@ -14,33 +14,21 @@ mod model;
 mod schema;
 #[cfg(feature = "risk_security")]
 mod security;
-use crate::model::{auth, player, reddit, stats, team, territory, turn, Latest};
-use rocket::http::Cookies;
-use rocket::request::{self, FromRequest, Request};
-use rocket::{routes, Outcome};
+use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
-
-struct User {
-    pub username: String,
-}
-
-impl<'a, 'r> FromRequest<'a, 'r> for User {
-    type Error = ();
-
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<User, ()> {
-        let mut cookies = request.guard::<Cookies<'_>>().expect("request cookies");
-        if let Some(cookie) = cookies.get_private("username") {
-            return Outcome::Success(User {
-                username: cookie.value().to_string(),
-            });
-        }
-
-        Outcome::Forward(())
-    }
-}
+use rocket::config::{Config, Environment};
 
 fn main() {
+    let global_info_private = sys::SysInfo {
+        name: String::from("AggieRisk"),
+        base_url: String::from("Howdy"),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        discord: cfg!(feature = "risk_discord"),
+        reddit: cfg!(feature = "risk_reddit"),
+        groupme: cfg!(feature = "risk_groupme"),
+    };
+    dbg!(global_info_private);
     dotenv::from_filename("../.env").ok();
     let key = dotenv::var("SECRET").unwrap();
     let latest = Latest {
@@ -82,6 +70,7 @@ fn main() {
     let mut auth_paths = routes![
         reddit::route::reddit_callback,
         reddit::route::reddit_logout,
+        discord::route::discord_callback,
         auth::route::make_move,
         auth::route::my_move,
         auth::route::join_team,
@@ -102,10 +91,11 @@ fn main() {
         .manage(key)
         .manage(latest)
         .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
+        .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
         .register(catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
         .mount("/auth", auth_paths)
-        .mount("/login", routes![reddit::route::reddit_login])
+        .mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login ])
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
         .launch();
