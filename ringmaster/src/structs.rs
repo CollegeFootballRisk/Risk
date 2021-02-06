@@ -184,8 +184,8 @@ impl Stats {
             }
             territories = i.territorycount;
             let teamefficiency: f64 = match territories {
-               0 =>  0.0,
-                _ =>  i.starpower / i.territorycount as f64,
+                0 => 0.0,
+                _ => i.starpower / i.territorycount as f64,
             };
             amended_stats.push(Stats {
                 sequence,
@@ -300,7 +300,8 @@ impl TurnInfo {
             .set((
                 turninfo::active.eq(&Some(active)),
                 turninfo::complete.eq(&Some(false)),
-                turninfo::finale.eq(&Some(finale))))
+                turninfo::finale.eq(&Some(finale)),
+            ))
             .execute(conn)
     }
 

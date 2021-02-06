@@ -1,6 +1,6 @@
 [package]
 name = "ringmaster"
-version = "0.1.14"
+version = "0.1.15"
 authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2018"
 

@@ -149,28 +149,28 @@ fn process_territories(
                     })
                     .territorycount += 1;
                 stats
-                .entry(territory.owner_id)
-                .or_insert_with(|| {
-                    Stats::new(
-                        territory.season * 1000 + territory.season + 1,
-                        territory.season,
-                        territory.day,
-                        territory.owner_id,
-                    )
-                })
-                .territorycount += 0;
-                /*stats
-                    .entry(teams[0])
+                    .entry(territory.owner_id)
                     .or_insert_with(|| {
                         Stats::new(
                             territory.season * 1000 + territory.season + 1,
                             territory.season,
                             territory.day,
-                            teams[0],
+                            territory.owner_id,
                         )
                     })
-                    .starpower +=
-                    territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();*/
+                    .territorycount += 0;
+                /*stats
+                .entry(teams[0])
+                .or_insert_with(|| {
+                    Stats::new(
+                        territory.season * 1000 + territory.season + 1,
+                        territory.season,
+                        territory.day,
+                        teams[0],
+                    )
+                })
+                .starpower +=
+                territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();*/
                 // add team stats
                 handleteamstats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
@@ -201,19 +201,19 @@ fn process_territories(
                 continue;
             }
             _ => {
-                 dbg!(&teams);
+                dbg!(&teams);
                 let mut map = HashMap::new();
                 stats
-                .entry(territory.owner_id)
-                .or_insert_with(|| {
-                    Stats::new(
-                        territory.season * 1000 + territory.season + 1,
-                        territory.season,
-                        territory.day,
-                        territory.owner_id,
-                    )
-                })
-                .territorycount += 0;
+                    .entry(territory.owner_id)
+                    .or_insert_with(|| {
+                        Stats::new(
+                            territory.season * 1000 + territory.season + 1,
+                            territory.season,
+                            territory.day,
+                            territory.owner_id,
+                        )
+                    })
+                    .territorycount += 0;
                 for team in teams {
                     map.insert(team, (0, 0f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
                 }
@@ -349,19 +349,18 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                     )
                 })
                 .merccount += 1;
-        }
-        else{
+        } else {
             stats
-            .entry(i.team)
-            .or_insert_with(|| {
-                Stats::new(
-                    i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                    i.season.unwrap_or(0),
-                    i.day.unwrap_or(0),
-                    i.team,
-                )
-            })
-            .playercount += 1;
+                .entry(i.team)
+                .or_insert_with(|| {
+                    Stats::new(
+                        i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
+                        i.season.unwrap_or(0),
+                        i.day.unwrap_or(0),
+                        i.team,
+                    )
+                })
+                .playercount += 1;
         }
         match i.stars {
             1 => {
