@@ -126,12 +126,12 @@ fn getDiscordUserInfo(token: &TokenResponse<DiscordUserInfo>) -> Result<DiscordU
                 Err(e) => {
                     dbg!(e);
                     Err("Error in getting user data #2".to_string())
-                },
+                }
             }
         }
         Err(e) => {
             dbg!(e);
             Err("Error in getting user data #1".to_string())
-        },
+        }
     }
 }

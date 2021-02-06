@@ -1,4 +1,4 @@
-#[derive(Deserialize,Debug)]
+#[derive(Deserialize, Debug)]
 pub struct DiscordUserInfo {
     #[serde(default)]
     pub id: String,
@@ -8,6 +8,6 @@ pub struct DiscordUserInfo {
 
 impl DiscordUserInfo {
     pub fn name(&self) -> String {
-        String::from(self.username.clone() + &String::from("#")+ &self.discriminator)
+        String::from(self.username.clone() + &String::from("#") + &self.discriminator)
     }
 }

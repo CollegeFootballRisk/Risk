@@ -1,4 +1,4 @@
-use crate::schema::{past_turns, rollinfo, turninfo};
+use crate::schema::{rollinfo, turninfo};
 use diesel::prelude::*;
 use diesel::result::Error;
 use serde_json::Value;
@@ -22,27 +22,12 @@ pub struct LastTurn {
 
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct PastTurn {
-    pub season: Option<i32>,
-    pub day: Option<i32>,
-    pub stars: Option<i32>,
+    pub season: i32,
+    pub day: i32,
+    pub stars: i32,
     pub mvp: bool,
-    pub territory: String,    //should be string
-    pub team: Option<String>, //should be string
-}
-
-#[derive(Insertable, Serialize, Deserialize)]
-#[table_name = "past_turns"]
-pub struct NewTurn {
-    pub user_id: Option<i32>,
-    pub season: Option<i32>,
-    pub day: Option<i32>,
-    pub territory: Option<i32>,
-    pub mvp: bool,
-    pub power: Option<f64>,
-    pub multiplier: Option<f64>,
-    pub weight: Option<i32>,
-    pub stars: Option<i32>,
-    pub team: Option<i32>,
+    pub territory: String, //should be string
+    pub team: String,      //should be string
 }
 
 #[derive(Queryable, Serialize, Deserialize)]

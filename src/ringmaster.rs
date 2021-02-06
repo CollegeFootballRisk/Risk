@@ -20,15 +20,12 @@ use std::fs::OpenOptions;
 use std::io::Read;
 use std::io::Write;
 
-extern crate image;
-extern crate nsvg;
-
 use structs::{
-    PlayerMoves, Stats, Team, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
+    PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
 };
 
 pub fn establish_connection() -> PgConnection {
-    dotenv::from_filename("../.env").ok();
+    dotenv::from_filename(".env").ok();
     let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
@@ -316,50 +313,22 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
     for i in territory_players {
         stats
             .entry(i.team)
-            .or_insert_with(|| {
-                Stats::new(
-                    i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                    i.season.unwrap_or(0),
-                    i.day.unwrap_or(0),
-                    i.team,
-                )
-            })
-            .starpower += i.power / i.multiplier.unwrap_or(1.0);
+            .or_insert_with(|| Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team))
+            .starpower += i.power / i.multiplier;
         stats
             .entry(i.team)
-            .or_insert_with(|| {
-                Stats::new(
-                    i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                    i.season.unwrap_or(0),
-                    i.day.unwrap_or(0),
-                    i.team,
-                )
-            })
+            .or_insert_with(|| Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team))
             .effectivepower += i.power.round() as f64;
 
         if i.merc {
             stats
                 .entry(i.team)
-                .or_insert_with(|| {
-                    Stats::new(
-                        i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                        i.season.unwrap_or(0),
-                        i.day.unwrap_or(0),
-                        i.team,
-                    )
-                })
+                .or_insert_with(|| Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team))
                 .merccount += 1;
         } else {
             stats
                 .entry(i.team)
-                .or_insert_with(|| {
-                    Stats::new(
-                        i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                        i.season.unwrap_or(0),
-                        i.day.unwrap_or(0),
-                        i.team,
-                    )
-                })
+                .or_insert_with(|| Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team))
                 .playercount += 1;
         }
         match i.stars {
@@ -367,12 +336,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .ones += 1;
             }
@@ -380,12 +344,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .twos += 1;
             }
@@ -393,12 +352,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .threes += 1;
             }
@@ -406,12 +360,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .fours += 1;
             }
@@ -419,12 +368,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .fives += 1;
             }
@@ -432,12 +376,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
                 stats
                     .entry(i.team)
                     .or_insert_with(|| {
-                        Stats::new(
-                            i.season.unwrap_or(0) * 1000 + i.day.unwrap_or(0) + 1,
-                            i.season.unwrap_or(0),
-                            i.day.unwrap_or(0),
-                            i.team,
-                        )
+                        Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team)
                     })
                     .ones += 1;
             }
@@ -445,7 +384,10 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
     }
 }
 
+#[cfg(feature = "risk_image")]
 fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
+    extern crate image;
+    extern crate nsvg;
     // first we got get the SVG image
     use std::fs;
     let teams = Team::load(&conn);
@@ -455,7 +397,7 @@ fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
     match teams {
         Ok(teams) => {
             for team in teams {
-                team_map.insert(team.id, team.color.unwrap_or_else(|| "#fff".to_string()));
+                team_map.insert(team.id, team.color);
             }
             for item in territories {
                 vec = vec.replace(
@@ -532,7 +474,7 @@ fn main() {
                                                                     struct Bar {
                                                                         #[sql_type = "Bool"]
                                                                         do_user_update: bool,
-                                                                    };
+                                                                    }
                                                                     let query = format!(
                                                                         "SELECT do_user_update({},{})",
                                                                         &turninfoblock.day.unwrap().to_string(),
@@ -591,11 +533,11 @@ fn main() {
                                                                         .read(true)
                                                                         .write(true)
                                                                         .create(true)
-                                                                        .open("../.env");
+                                                                        .open(".env");
                                                                     let f_out = OpenOptions::new()
                                                                         .create(true)
                                                                         .write(true)
-                                                                        .open("../.env");
+                                                                        .open(".env");
                                                                     let mut buffer = String::new();
                                                                     let mut f_in = f_in.unwrap();
                                                                     match f_in
@@ -610,10 +552,8 @@ fn main() {
                                                                             dbg!("Error", e);
                                                                         }
                                                                     }
-                                                                    dotenv::from_filename(
-                                                                        "../.env",
-                                                                    )
-                                                                    .ok();
+                                                                    dotenv::from_filename(".env")
+                                                                        .ok();
                                                                     let day =
                                                                         dotenv::var("day").unwrap();
                                                                     let new_day = &day
@@ -633,6 +573,8 @@ fn main() {
                                                                             buffer.as_bytes(),
                                                                         )
                                                                         .expect("error");
+
+                                                                    #[cfg(feature = "risk_image")]
                                                                     make_image(owners, &conn);
                                                                 }
                                                                 Err(e) => {

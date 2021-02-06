@@ -1,28 +1,30 @@
 table! {
     past_turns (id) {
         id -> Int4,
-        user_id -> Nullable<Int4>,
-        season -> Nullable<Int4>,
-        day -> Nullable<Int4>,
+        user_id -> Int4,
+        season -> Int4,
+        day -> Int4,
         territory -> Int4,
         mvp -> Bool,
-        power -> Nullable<Double>,
-        multiplier -> Nullable<Double>,
-        weight -> Nullable<Int4>,
-        stars -> Nullable<Int4>,
+        power -> Double,
+        multiplier -> Double,
+        weight -> Double,
+        stars -> Int4,
         team -> Int4,
+        alt_score -> Int4,
+        merc -> Bool,
     }
 }
 
 table! {
     teams (id) {
         id -> Int4,
-        tname -> Nullable<diesel_citext::sql_types::Citext>,
-        tshortname -> Nullable<diesel_citext::sql_types::Citext>,
-        creation_date -> Nullable<Timestamp>,
+        tname -> diesel_citext::sql_types::Citext,
+        tshortname -> diesel_citext::sql_types::Citext,
+        creation_date -> Timestamp,
         logo -> Nullable<Text>,
-        color_1 -> Nullable<Text>,
-        color_2 -> Nullable<Text>,
+        color_1 -> Text,
+        color_2 -> Text,
         seasons -> Array<Int4>,
     }
 }
@@ -78,6 +80,9 @@ table! {
         complete -> Nullable<Bool>,
         active -> Nullable<Bool>,
         finale -> Nullable<Bool>,
+        chaosrerolls -> Nullable<Int4>,
+        chaosweight -> Nullable<Int4>,
+        rollendtime -> Nullable<Timestamp>,
         rollstarttime -> Nullable<Timestamp>,
     }
 }
@@ -151,7 +156,7 @@ table! {
         season -> Int4,
         previous_owner_id -> Int4,
         random_number -> Double,
-        mvp -> Int4,
+        mvp -> Nullable<Int4>,
     }
 }
 
@@ -199,10 +204,49 @@ table! {
 }
 
 table! {
+    stats (sequence) {
+        sequence -> Int4,
+        season -> Int4,
+        day -> Int4,
+        team -> Int4,
+        rank -> Int4,
+        territorycount -> Int4,
+        playercount -> Int4,
+        merccount -> Int4,
+        starpower -> Double,
+        efficiency -> Double,
+        effectivepower -> Double,
+        ones -> Int4,
+        twos -> Int4,
+        threes -> Int4,
+        fours -> Int4,
+        fives -> Int4,
+    }
+}
+
+table! {
     territory_adjacency (id) {
         id -> Int4,
         territory_id -> Int4,
         adjacent_id -> Int4,
+    }
+}
+
+table! {
+    territory_stats (id) {
+        team -> Int4,
+        season -> Int4,
+        day -> Int4,
+        ones -> Int4,
+        twos -> Int4,
+        threes -> Int4,
+        fours -> Int4,
+        fives -> Int4,
+        teampower -> Double,
+        chance -> Double,
+        id -> Int4,
+        territory -> Int4,
+        territory_power -> Double,
     }
 }
 
@@ -237,9 +281,9 @@ table! {
         day -> Int4,
         territory -> Int4,
         mvp -> Bool,
-        power -> Float,
-        multiplier -> Float,
-        weight -> Float,
+        power -> Double,
+        multiplier -> Double,
+        weight -> Double,
         stars -> Int4,
         team -> Int4,
         alt_score -> Int4,

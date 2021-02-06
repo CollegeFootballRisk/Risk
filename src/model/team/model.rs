@@ -18,13 +18,13 @@ pub struct TeamWithColors {
 }
 #[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
 pub struct Colors {
-    pub primary: Option<String>,
-    pub secondary: Option<String>,
+    pub primary: String,
+    pub secondary: String,
 }
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct TeamInfo {
     pub id: i32,
-    pub name: Option<String>,
+    pub name: String,
     pub logo: Option<String>,
     pub colors: Colors,
     pub seasons: Vec<i32>,
@@ -75,8 +75,8 @@ impl TeamWithColors {
         TeamWithColors {
             name: None,
             colors: Colors {
-                primary: None,
-                secondary: None,
+                primary: String::from("#000"),
+                secondary: String::from("#000"),
             },
         }
     }

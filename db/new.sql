@@ -158,7 +158,7 @@ BEGIN
 ALTER FUNCTION public.do_user_update() OWNER TO risk;
 
 --
--- Name: do_user_update(integer, integer); Type: FUNCTION; Schema: public; Owner: risk
+-- Name: do_user_update(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
 CREATE FUNCTION public.do_user_update(day integer, season integer) RETURNS boolean
@@ -224,7 +224,7 @@ update users set playing_for = -1 where playing_for not in (select distinct(owne
     $$;
 
 
-ALTER FUNCTION public.do_user_update(day integer, season integer) OWNER TO risk;
+ALTER FUNCTION public.do_user_update(day integer, season integer) OWNER TO postgres;
 
 --
 -- Name: territorypower(integer, integer, integer); Type: FUNCTION; Schema: public; Owner: risk
@@ -303,23 +303,110 @@ ALTER SEQUENCE public.captchas_id_seq OWNED BY public.captchas.id;
 
 
 --
+-- Name: cfbr_stats; Type: TABLE; Schema: public; Owner: risk
+--
+
+CREATE TABLE public.cfbr_stats (
+    player public.citext,
+    team public.citext,
+    turnsplayed integer,
+    stars integer
+);
+
+
+ALTER TABLE public.cfbr_stats OWNER TO risk;
+
+--
+-- Name: continuation_polls; Type: TABLE; Schema: public; Owner: risk
+--
+
+CREATE TABLE public.continuation_polls (
+    id integer NOT NULL,
+    season integer,
+    day integer,
+    question text DEFAULT 'Should this season be extended by seven more days?'::text,
+    incrment integer DEFAULT 7
+);
+
+
+ALTER TABLE public.continuation_polls OWNER TO risk;
+
+--
+-- Name: continuation_polls_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
+--
+
+CREATE SEQUENCE public.continuation_polls_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.continuation_polls_id_seq OWNER TO risk;
+
+--
+-- Name: continuation_polls_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
+--
+
+ALTER SEQUENCE public.continuation_polls_id_seq OWNED BY public.continuation_polls.id;
+
+
+--
+-- Name: continuation_responses; Type: TABLE; Schema: public; Owner: risk
+--
+
+CREATE TABLE public.continuation_responses (
+    id integer NOT NULL,
+    poll_id integer,
+    user_id integer,
+    response boolean
+);
+
+
+ALTER TABLE public.continuation_responses OWNER TO risk;
+
+--
+-- Name: continuation_responses_id_seq; Type: SEQUENCE; Schema: public; Owner: risk
+--
+
+CREATE SEQUENCE public.continuation_responses_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.continuation_responses_id_seq OWNER TO risk;
+
+--
+-- Name: continuation_responses_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: risk
+--
+
+ALTER SEQUENCE public.continuation_responses_id_seq OWNED BY public.continuation_responses.id;
+
+
+--
 -- Name: past_turns; Type: TABLE; Schema: public; Owner: risk
 --
 
 CREATE TABLE public.past_turns (
     id integer NOT NULL,
-    user_id integer,
-    season integer,
-    day integer,
-    territory integer,
+    user_id integer NOT NULL,
+    season integer NOT NULL,
+    day integer NOT NULL,
+    territory integer NOT NULL,
     mvp boolean DEFAULT false NOT NULL,
-    power double precision,
-    multiplier double precision,
-    weight integer,
-    stars integer,
-    team integer,
-    alt_score integer,
-    merc boolean DEFAULT false
+    power double precision NOT NULL,
+    multiplier double precision NOT NULL,
+    weight integer NOT NULL,
+    stars integer NOT NULL,
+    team integer NOT NULL,
+    alt_score integer DEFAULT 0 NOT NULL,
+    merc boolean DEFAULT false NOT NULL
 );
 
 
@@ -331,7 +418,8 @@ ALTER TABLE public.past_turns OWNER TO risk;
 
 CREATE TABLE public.territories (
     id integer NOT NULL,
-    name public.citext
+    name public.citext NOT NULL,
+    region integer
 );
 
 
@@ -385,12 +473,14 @@ ALTER TABLE public.heat OWNER TO risk;
 
 CREATE TABLE public.teams (
     id integer NOT NULL,
-    tname public.citext,
-    tshortname public.citext,
-    creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    color_1 text,
-    color_2 text,
-    logo text
+    tname public.citext NOT NULL,
+    tshortname public.citext NOT NULL,
+    creation_date timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    color_1 text DEFAULT '#000' NOT NULL,
+    color_2 text DEFAULT '#FFF' NOT NULL,
+    logo text,
+    seasons integer[],
+    discord_role_id text
 );
 
 
@@ -434,7 +524,9 @@ CREATE TABLE public.users (
     streak integer DEFAULT 0,
     awards integer DEFAULT 0,
     role_id integer DEFAULT 0,
-    playing_for integer DEFAULT '-1'::integer
+    playing_for integer DEFAULT '-1'::integer,
+    past_teams integer[],
+    awards_bak integer
 );
 
 
@@ -449,7 +541,6 @@ CREATE VIEW public.territory_ownership_without_neighbors AS
     territory_ownership.day,
     territory_ownership.season,
     territories.name,
-    territories.region,
     teams.tname AS owner,
     tex.tname AS prev_owner,
     territory_ownership."timestamp",
@@ -475,7 +566,10 @@ CREATE VIEW public.heat_full AS
     heat.day,
     heat.cumulative_players,
     heat.cumulative_power,
-    case when territory_ownership_without_neighbors.owner is null then 'None' else territory_ownership_without_neighbors.owner end as owner
+        CASE
+            WHEN (territory_ownership_without_neighbors.owner IS NULL) THEN 'None'::public.citext
+            ELSE territory_ownership_without_neighbors.owner
+        END AS owner
    FROM (public.heat
      LEFT JOIN public.territory_ownership_without_neighbors ON ((((territory_ownership_without_neighbors.name)::text = (heat.name)::text) AND (territory_ownership_without_neighbors.day = heat.day) AND (territory_ownership_without_neighbors.season = heat.season))));
 
@@ -519,18 +613,18 @@ ALTER TABLE public.moves OWNER TO risk;
 
 CREATE TABLE public.new_turns (
     id integer NOT NULL,
-    user_id integer,
-    season integer,
-    day integer,
-    territory integer,
+    user_id integer NOT NULL,
+    season integer NOT NULL,
+    day integer NOT NULL,
+    territory integer NOT NULL,
     mvp boolean DEFAULT false NOT NULL,
-    power double precision,
-    multiplier double precision,
-    weight double precision,
-    stars integer,
-    team integer,
-    alt_score integer,
-    merc boolean DEFAULT false
+    power double precision NOT NULL,
+    multiplier double precision NOT NULL,
+    weight double precision NOT NULL,
+    stars integer NOT NULL,
+    team integer NOT NULL,
+    alt_score integer DEFAULT 0 NOT NULL,
+    merc boolean DEFAULT false NOT NULL
 );
 
 
@@ -658,25 +752,41 @@ CREATE VIEW public.players AS
 ALTER TABLE public.players OWNER TO risk;
 
 --
+-- Name: region_ownership; Type: VIEW; Schema: public; Owner: risk
+--
+
+CREATE VIEW public.region_ownership AS
+ SELECT count(DISTINCT territory_ownership.owner_id) AS owner_count,
+    array_agg(DISTINCT territory_ownership.owner_id) AS owners,
+    territory_ownership.day,
+    territory_ownership.season,
+    territories.region
+   FROM (public.territory_ownership
+     LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
+  GROUP BY territory_ownership.day, territory_ownership.season, territories.region
+  ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
+
+
+ALTER TABLE public.region_ownership OWNER TO risk;
+
+--
 -- Name: rollinfo; Type: VIEW; Schema: public; Owner: risk
 --
+
 CREATE VIEW public.rollinfo AS
  SELECT (turninfo.rollstarttime)::text AS rollstarttime,
     (turninfo.rollendtime)::text AS rollendtime,
     turninfo.chaosrerolls,
     turninfo.chaosweight,
-    territory_ownership_without_neighbors.day,
+    (territory_ownership_without_neighbors.day - 1) AS day,
     territory_ownership_without_neighbors.season,
     json_agg(json_build_object('territory', territory_ownership_without_neighbors.name, 'timestamp', territory_ownership_without_neighbors."timestamp", 'winner', territory_ownership_without_neighbors.owner, 'randomNumber', territory_ownership_without_neighbors.random_number)) AS json_agg
    FROM (public.territory_ownership_without_neighbors
-     JOIN public.turninfo ON (((turninfo.day = territory_ownership_without_neighbors.day) AND (turninfo.season = territory_ownership_without_neighbors.season))))
+     JOIN public.turninfo ON (((turninfo.day = (territory_ownership_without_neighbors.day - 1)) AND (turninfo.season = territory_ownership_without_neighbors.season))))
   GROUP BY territory_ownership_without_neighbors.day, territory_ownership_without_neighbors.season, turninfo.chaosrerolls, turninfo.rollstarttime, turninfo.rollendtime, turninfo.chaosweight;
 
 
 ALTER TABLE public.rollinfo OWNER TO risk;
-
-
-
 
 --
 -- Name: stats; Type: TABLE; Schema: public; Owner: risk
@@ -922,6 +1032,7 @@ ALTER TABLE public.turninfo_id_seq OWNER TO risk;
 ALTER SEQUENCE public.turninfo_id_seq OWNED BY public.turninfo.id;
 
 
+
 --
 -- Name: users_bak; Type: TABLE; Schema: public; Owner: postgres
 --
@@ -1013,6 +1124,20 @@ ALTER TABLE ONLY public.captchas ALTER COLUMN id SET DEFAULT nextval('public.cap
 
 
 --
+-- Name: continuation_polls id; Type: DEFAULT; Schema: public; Owner: risk
+--
+
+ALTER TABLE ONLY public.continuation_polls ALTER COLUMN id SET DEFAULT nextval('public.continuation_polls_id_seq'::regclass);
+
+
+--
+-- Name: continuation_responses id; Type: DEFAULT; Schema: public; Owner: risk
+--
+
+ALTER TABLE ONLY public.continuation_responses ALTER COLUMN id SET DEFAULT nextval('public.continuation_responses_id_seq'::regclass);
+
+
+--
 -- Name: new_turns id; Type: DEFAULT; Schema: public; Owner: risk
 --
 
@@ -1085,6 +1210,14 @@ ALTER TABLE ONLY public.captchas
 
 
 --
+-- Name: continuation_responses continuation_responses_poll_id_user_id_key; Type: CONSTRAINT; Schema: public; Owner: risk
+--
+
+ALTER TABLE ONLY public.continuation_responses
+    ADD CONSTRAINT continuation_responses_poll_id_user_id_key UNIQUE (user_id, poll_id);
+
+
+--
 -- Name: new_turns new_turns_user_id_season_day_key; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
@@ -1096,7 +1229,7 @@ ALTER TABLE ONLY public.new_turns
 -- Name: past_turns past_turns_pkey; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
-ALTER TABLE ONLY public.past_turnsc
+ALTER TABLE ONLY public.past_turns
     ADD CONSTRAINT past_turns_pkey PRIMARY KEY (id);
 
 
@@ -1141,6 +1274,14 @@ ALTER TABLE ONLY public.turninfo
 
 
 --
+-- Name: turninfo unique_season_day; Type: CONSTRAINT; Schema: public; Owner: risk
+--
+
+ALTER TABLE ONLY public.turninfo
+    ADD CONSTRAINT unique_season_day UNIQUE (season, day);
+
+
+--
 -- Name: users unique_table; Type: CONSTRAINT; Schema: public; Owner: risk
 --
 
@@ -1166,26 +1307,4 @@ GRANT ALL ON SCHEMA public TO risk;
 --
 -- PostgreSQL database dump complete
 --
-create table continuation_polls (id serial, season int, day int, question text default 'Should this season be extended by seven more days?', incrment int default 7);
-create table continuation_responses (id serial, poll_id int, user_id int, response bool);
-ALTER TABLE ONLY public.continuation_responses
-    ADD CONSTRAINT continuation_responses_poll_id_user_id_key UNIQUE (user_id, poll_id);
 
-
-alter table territories add column region integer;
-update territories set region = 1 where name in ('Pampa', 'Amarillo', 'Lubbock', 'Turkey', 'Odessa', 'Alpine', 'El Paso');
-update territories set region = 2 where name in ('Ozona', 'Uvalde','Austin','San Antonio','Laredo','Corpus Christi');
-update territories set region = 3 where name in ('Victoria','College Station', 'El Campo', 'Houston','Nacogdoches','Waco');    update territories set region = 4 where name in ('Dallas', 'Fort Worth', 'San Angelo', 'Abilene', 'Wichita Falls', 'Tyler', 'Denton');
-
-CREATE VIEW public.region_ownership AS
- SELECT count(distinct(territory_ownership.owner_id)) as owner_count,
- array_agg(distinct(territory_ownership.owner_id)) as owners,
-    territory_ownership.day as day,
-    territory_ownership.season as season,
-    territories.region as region
-   FROM (public.territory_ownership
-     LEFT JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
- group by territory_ownership.day, territory_ownership.season, territories.region   ORDER BY territory_ownership.season DESC, territory_ownership.day DESC;
-
-
-ALTER TABLE public.region_ownership OWNER TO risk;

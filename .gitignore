@@ -23,9 +23,9 @@ tests/snippets/resources
 
 .env
 
-server/target
-server/migrations
-server/src/security
+target
+migrations
+src/security
 
 Rocket.toml
 

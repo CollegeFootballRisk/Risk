@@ -6,6 +6,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::{insert_into, update};
+use diesel_citext::types::CiString;
 use std::collections::HashMap;
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
@@ -13,13 +14,13 @@ use std::collections::HashMap;
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
-    pub season: Option<i32>,
-    pub day: Option<i32>,
+    pub season: i32,
+    pub day: i32,
     pub territory: i32,
     pub mvp: bool,
     pub power: f64,
-    pub multiplier: Option<f64>,
-    pub weight: Option<f64>,
+    pub multiplier: f64,
+    pub weight: f64,
     pub stars: i32,
     pub team: i32,
     pub alt_score: i32,
@@ -50,7 +51,7 @@ pub struct Stats {
 #[derive(Deserialize, Queryable)]
 pub struct Team {
     pub id: i32,
-    pub color: Option<String>,
+    pub color: String,
 }
 
 #[derive(Deserialize, Insertable, Queryable)]
@@ -58,7 +59,7 @@ pub struct Team {
 pub struct TerritoryOwners {
     pub id: i32,
     pub territory_id: i32,
-    pub territory_name: Option<String>,
+    pub territory_name: Option<CiString>,
     pub owner_id: i32,
     pub day: i32,
     pub season: i32,
@@ -71,7 +72,7 @@ pub struct TerritoryOwners {
 #[table_name = "territory_ownership"]
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
-    pub territory_name: Option<String>,
+    pub territory_name: Option<CiString>,
     pub owner_id: i32,
     pub day: i32,
     pub season: i32,

@@ -1,6 +1,6 @@
 [package]
 name = "rust-risk"
-version = "0.1.14"
+version = "0.1.16"
 authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2018"
 
@@ -14,8 +14,11 @@ diesel_migrations = "1.4"
 dotenv = "0.15.0"
 hyper = "0.10"
 hyper-sync-rustls = "=0.3.0-rc.17"
+image = {version = "0.23.12", optional=true}
+nsvg = {version = "0.5.1", optional=true}
 jsonwebtoken = "7.2.0"
 rand = "0.7.3"
+rand_chacha="0.2.2"
 r2d2 = "0.8.9"
 r2d2-diesel = "1.0.0"
 rocket = {version = "0.4.6", features = ["private-cookies"] }
@@ -25,11 +28,21 @@ serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 urlencoding = "1.1.1"
+xdg = "2.2.0"
 
 [features]
 default = ["risk_reddit"]
 risk_discord = []
 risk_groupme = []
+risk_image = ["image", "nsvg"]
 risk_reddit = []
 risk_security = []
 risk_captcha = ["captcha", "base64"]
+
+[[bin]]
+name = "rrserver"
+path = "src/server.rs"
+
+[[bin]]
+name = "rrringmaster"
+path = "src/ringmaster.rs"

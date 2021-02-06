@@ -207,7 +207,7 @@ pub fn make_move(
                                         awards: awards as i32,
                                     };
                                     let user_ratings = Ratings::load(&user_stats);
-                                    let user_weight: f32 = match user_ratings.overall {
+                                    let user_weight: f64 = match user_ratings.overall {
                                         1 => 1.0,
                                         2 => 2.0,
                                         3 => 3.0,
@@ -215,7 +215,7 @@ pub fn make_move(
                                         5 => 5.0,
                                         _ => 1.0,
                                     };
-                                    let user_power: f32 = multiplier * user_weight as f32;
+                                    let user_power: f64 = multiplier * user_weight as f64;
                                     let mut merc: bool = false;
                                     if user.0 != user.8 {
                                         merc = true;
@@ -389,7 +389,7 @@ pub fn handle_territory_info(
             Option<i32>,
             i32,
         ),
-        f32,
+        f64,
     ),
     String,
 > {
@@ -444,20 +444,20 @@ pub fn handle_territory_info(
                                         if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
                                             Ok((
                                                 team_id,
-                                                1.5 * regional_multiplier as f32
-                                                    * aon_multiplier as f32,
+                                                1.5 * regional_multiplier as f64
+                                                    * aon_multiplier as f64,
                                             ))
                                         } else {
                                             Ok((
                                                 team_id,
-                                                1.0 * regional_multiplier as f32
-                                                    * aon_multiplier as f32,
+                                                1.0 * regional_multiplier as f64
+                                                    * aon_multiplier as f64,
                                             ))
                                         }
                                     } else {
                                         let mut rng = thread_rng();
                                         let n: i32 = rng.gen_range(4, 6);
-                                        Ok((team_id, (n / 4) as f32))
+                                        Ok((team_id, (n / 4) as f64))
                                     }
                                 }
                                 None => Err("You own all the surrounding territories".to_string()),
@@ -532,9 +532,9 @@ pub fn insert_turn(
     user_ratings: Ratings,
     latest: &Latest,
     target: i32,
-    multiplier: f32,
-    user_weight: f32,
-    user_power: f32,
+    multiplier: f64,
+    user_weight: f64,
+    user_power: f64,
     merc: bool,
     conn: &PgConnection,
 ) -> QueryResult<usize> {

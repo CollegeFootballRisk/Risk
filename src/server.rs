@@ -17,9 +17,14 @@ mod security;
 use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
-use rocket::config::{Config, Environment};
+use xdg::BaseDirectories;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
+//use rocket::config::{Config, Environment};
 
 fn main() {
+    let config = getConfig();
     let global_info_private = sys::SysInfo {
         name: String::from("AggieRisk"),
         base_url: String::from("Howdy"),
@@ -29,7 +34,7 @@ fn main() {
         groupme: cfg!(feature = "risk_groupme"),
     };
     dbg!(global_info_private);
-    dotenv::from_filename("../.env").ok();
+    dotenv::from_filename(".env").ok();
     let key = dotenv::var("SECRET").unwrap();
     let latest = Latest {
         season: dotenv::var("season").unwrap().parse::<i32>().unwrap(),
@@ -95,8 +100,25 @@ fn main() {
         .register(catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
         .mount("/auth", auth_paths)
-        .mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login ])
+        .mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login])
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
         .launch();
+}
+
+
+fn getConfig() -> Result<(),std::io::Error>{
+    let path = BaseDirectories::with_prefix("rust-risk")?;
+    let config_filename = path.place_config_file("config.toml")?;
+    if Path::new(&config_filename).exists() {
+        let contents = fs::read_to_string(config_filename);
+        Ok(())
+    } else {
+        /*let config = Config::default();
+        let toml = toml::to_string(&config).unwrap();
+        let mut file = File::create(&config_filename)?;
+        file.write_all(&toml.as_bytes())?;*/
+        dbg!("No config file!");
+        Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
+    }
 }
