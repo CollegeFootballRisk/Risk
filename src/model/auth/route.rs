@@ -439,7 +439,7 @@ pub fn handle_territory_info(
                                             && get_territory_number(team_id.0, &latest, &conn) == 1
                                         {
                                             let mut rng = thread_rng();
-                                            aon_multiplier = 5 * rng.gen_range(0, 2);
+                                            aon_multiplier = 5 * rng.gen_range(0..2);
                                         }
                                         if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
                                             Ok((
@@ -456,7 +456,7 @@ pub fn handle_territory_info(
                                         }
                                     } else {
                                         let mut rng = thread_rng();
-                                        let n: i32 = rng.gen_range(4, 6);
+                                        let n: i32 = rng.gen_range(4..6);
                                         Ok((team_id, (n / 4) as f64))
                                     }
                                 }

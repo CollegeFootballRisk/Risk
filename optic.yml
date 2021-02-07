@@ -1,6 +1,6 @@
 name: "rust-risk"
 tasks:
   start:
-    command: ROCKET_PORT=8080 ROCKET_ADDRESS=localhost cargo run --release
+    command: ROCKET_PORT=8080 ROCKET_ADDRESS=localhost cargo run --release --bin rrserver
     targetUrl: http://localhost:8080
     inboundUrl: http://localhost:8000

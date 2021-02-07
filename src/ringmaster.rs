@@ -56,7 +56,7 @@ fn determinevictor(lottery: f64, map: HashMap<i32, (i32, f64, i32, i32, i32, i32
 fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
     let rng = match territory_players.len() {
         1 => 0,
-        _ => rand::thread_rng().gen_range(1, territory_players.len()),
+        _ => rand::thread_rng().gen_range(1..territory_players.len()),
     };
     territory_players.remove(rng)
 }
@@ -248,7 +248,7 @@ fn process_territories(
 
                 let totalpower: f64 = map.values().map(|x| (x.1)).sum();
                 //dbg!(totalpower);
-                let lottery = ChaCha12Rng::from_entropy().gen_range(0f64, totalpower);
+                let lottery = ChaCha12Rng::from_entropy().gen_range(0f64..totalpower);
 
                 let victor = determinevictor(lottery, map.clone());
 
@@ -386,6 +386,7 @@ fn handleteamstats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Playe
 
 #[cfg(feature = "risk_image")]
 fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
+    use crate::structs::Team;
     extern crate image;
     extern crate nsvg;
     // first we got get the SVG image
