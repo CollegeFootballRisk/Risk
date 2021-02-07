@@ -12,6 +12,7 @@ var appInfo = {
     loadTime: new Date(),
     burger: false,
     burgerTrigger: false,
+    debug: false,
     teamsObject: null,
     userObject: null,
     lockDisplay: false,
@@ -35,6 +36,16 @@ if (appInfo.rollTime < new Date()) {
 
 // JS is enabled, so hide that notif
 _('error-notif').style.display = "none";
+
+if (getCookie('debug') == "true") {
+    appInfo.debug = true;
+}
+
+function dbg(statement) {
+    if (appInfo.debug == true) {
+        console.log(statement);
+    }
+}
 
 
 function returnHover() {
@@ -98,8 +109,8 @@ function doAjaxGetRequest(url, source, callback, errorcallback = defaultErrorNot
                 try {
                     callback(this);
                 } catch (err) {
-                    console.log("Error with callback function");
-                    console.log(err);
+                    dbg("Error with callback function");
+                    dbg(err);
                 }
             } else {
                 return JSON.parse(this.response);
@@ -262,7 +273,7 @@ function drawPlayerCard(userObject, teamObject) {
 function getUserInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/me', 'UserLoader', function(userObject) {
-                console.log("Making req");
+                dbg("Making req");
                 appInfo.userObject = JSON.parse(userObject.response);
                 //see if user has a team, if not, prompt them and halt
                 let active_team = appInfo.userObject.active_team || {
@@ -311,7 +322,7 @@ function getUserInfo(resolve, reject) {
                         });
                     } else {
                         //oh no! your team has been e l i m i n a t e d 
-                        console.log("Elimed");
+                        dbg("Elimed");
                         select_team = "<p>Oh no! Your team has been <b>eliminated.</b> Select a new one to play as: </p><form action=\"auth/join\" method=\"GET\" id=\"team-submit-form\"> <select name=\"team\" id=\"team\">";
                         approved_teams = [];
                         season = window.turnsObject[window.turnsObject.length - 1].season;
@@ -517,7 +528,7 @@ function getTeamInfo(resolve, reject) {
     try {
         doAjaxGetRequest('/api/teams', 'Teams', function(team_data) {
             appInfo.teamsObject = JSON.parse(team_data.response);
-            //console.log(appInfo.teamsObject);
+            dbg(appInfo.teamsObject);
             for (team in appInfo.teamsObject) {
                 document.documentElement.style
                     .setProperty('--'.concat(appInfo.teamsObject[team].name.replace(/\W/g, '')).concat('-primary'), appInfo.teamsObject[team].colors.primary);
@@ -587,19 +598,19 @@ function drawActionBoard(resolve, reject) {
     }
     if (!window.turnsObject[window.turnsObject.length - 1].active) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
-        appInfo.attackable_territory_names=[];
-        appInfo.defendable_territory_names=[];
+        appInfo.attackable_territory_names = [];
+        appInfo.defendable_territory_names = [];
         _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
-            console.log("Drawing Actions.");
+            dbg("Drawing Actions.");
             let userteam = appInfo.userObject.active_team.name;
-            console.log(userteam);
+            dbg(userteam);
             appInfo.attackable_territories = {};
             appInfo.attackable_territory_names = [];
             appInfo.defendable_territories = {};
             appInfo.defendable_territory_names = [];
-            console.log(territories);
+            dbg(territories);
             for (i in territories) {
                 if (territories[i].owner == userteam) {
                     neighbors = 0;
@@ -624,37 +635,36 @@ function drawActionBoard(resolve, reject) {
             for (l in appInfo.defendable_territories) {
                 _('defend-list').innerHTML += action_item.replace(/{{name}}/, appInfo.defendable_territories[l].name).replace(/{{id}}/, appInfo.defendable_territories[l].id);
             }
-            console.log("Territory actions drawn");
+            dbg("Territory actions drawn");
             resolve("Okay");
         } catch (error) {
-            console.log('could not do territory analysis');
-            //console.log(error);
+            dbg('could not do territory analysis');
+            dbg(error);
             reject("Error");
         }
     }
 }
 
 function resizeMap() {
-/*    let width = _('map-container').clientWidth;
-    if (width < 1000) {
-        _('map').setAttribute('width', width);
-        _('map').setAttribute('height', width);
-    }*/
-    try{
+    /*    let width = _('map-container').clientWidth;
+        if (width < 1000) {
+            _('map').setAttribute('width', width);
+            _('map').setAttribute('height', width);
+        }*/
+    try {
         _('map').setAttribute('preserveAspectRatio', 'xMinYMin');
         _('map').setAttribute('viewBox', appInfo.viewbox);
-    } catch{
-        try{
-        _('heatmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
-        _('heatmap_map').setAttribute('viewBox', appInfo.viewbox);
-        _('oddmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
-        _('oddmap_map').setAttribute('viewBox', appInfo.viewbox);
-       /* _('heatmap_map').style.height = "100vw";
-        _('heatmap_map').style.width = "100vw";
-        _('oddmap_map').style.height = "100vw";
-        _('oddmap_map').style.width = "100vw";*/
-        }
-        catch { console.log("No map detected."); }
+    } catch {
+        try {
+            _('heatmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
+            _('heatmap_map').setAttribute('viewBox', appInfo.viewbox);
+            _('oddmap_map').setAttribute('preserveAspectRatio', 'xMinYMin');
+            _('oddmap_map').setAttribute('viewBox', appInfo.viewbox);
+            /* _('heatmap_map').style.height = "100vw";
+             _('heatmap_map').style.width = "100vw";
+             _('oddmap_map').style.height = "100vw";
+             _('oddmap_map').style.width = "100vw";*/
+        } catch { dbg("No map detected."); }
     }
 }
 
@@ -711,19 +721,19 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     heat = JSON.parse(heat_data.response);
                     // find maximum
                     maxmin = getMaxMin(heat, "power");
-                    console.log("Maxmin", maxmin);
+                    dbg("Maxmin", maxmin);
                     for (territory in heat) {
                         red = (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power) || 0;
-			try {
-				_('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
-                        	_('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
-                        	_("old-map-county-info").innerHTML = "Leaderboard";
-                        	_("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
-                        	_("old-map-owner-info").setAttribute('selectitem', 'true')
-			} catch {}
+                        try {
+                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
+                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
+                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
+                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
+                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
+                            _("old-map-county-info").innerHTML = "Leaderboard";
+                            _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
+                            _("old-map-owner-info").setAttribute('selectitem', 'true')
+                        } catch {}
                     }
                     var li = "<br/><br/><ul id=\"spot\">";
                     for (var i = 0, l = 10; i <= l; i++) {
@@ -742,7 +752,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                 doAjaxGetRequest('/api/territories' + addendum, 'Territories', function(territory_data) {
                     window.territories = JSON.parse(territory_data.response);
                     for (territory in window.territories) {
-                        console.log(window.territories[territory].name);
+                        dbg(window.territories[territory].name);
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
                         _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('mapname', "map");
@@ -868,7 +878,7 @@ function page_leaderboard_update(seasonday) {
     season = Number(seasonday[0]) || 0;
     day = Number(seasonday[1]) || 0;
     drawLeaderboard(season, day, templateLeaderboard, contentTag, season, day);
-    drawMap(console.log, console.log, 'leaderboard', season, day);
+    drawMap(dbg, dbg, 'leaderboard', season, day);
     let selectOpt = _('day_select').getElementsByTagName('option');
     for (ely = 0; ely < selectOpt.length; ely++) {
         selectOpt[ely].removeAttribute("selected");
@@ -880,7 +890,7 @@ function page_info(contentTag) {
     updateLoaderVisibility();
     var templateInfo = _("templateInfo");
     contentTag.innerHTML += templateInfo.innerHTML;
-    console.log(contentTag);
+    dbg(contentTag);
 }
 
 function page_leaderboard(contentTag) {
@@ -1029,7 +1039,7 @@ function page_territory(contentTag, t_object) {
                 } catch {
                     // don't do anything, nor output to table ;)
                 } finally {
-                    console.log(obj_players);
+                    dbg(obj_players);
                     window.datatable2 = new DataTable("#territory-complete-players-table", {
                         data: obj_players,
                         columns: obj_players.columns,
@@ -1042,7 +1052,7 @@ function page_territory(contentTag, t_object) {
                     });
                 }
 
-            }, console.log
+            }, dbg
         )
     }
 }
@@ -1069,7 +1079,7 @@ function page_territory_cover(contentTag, tname) {
             } else {
                 contentTag.innerHTML = templateTerritoryHistory.innerHTML.replace(/{{objs}}/, str).replace(/{{TerritoryName}}/gi, territoryHistoryObject[0].territory); // use the first element to capitalize if the url requires it. otherwise territoryHistoryObject[objr].day
             }
-        }, console.log)
+        }, dbg)
     });
 }
 
@@ -1087,7 +1097,7 @@ function page_index(contentTag) {
     contentTag.innerHTML += templateRoll.innerHTML;
     let index = Promise.all([new Promise(drawMap), new Promise(getTeamInfo)])
         .then((values) => {
-            console.log(values);
+            dbg(values);
         })
         .then(() => {
             return new Promise((resolve, reject) => {
@@ -1123,7 +1133,7 @@ function page_index(contentTag) {
                 doPoll(false);
             })
         })
-        .catch((values) => { console.log(values) });
+        .catch((values) => { dbg(values) });
 }
 
 function hideUnselectableTeams(season) {
@@ -1131,7 +1141,7 @@ function hideUnselectableTeams(season) {
         if (option_element.getAttribute("season") != season || option_element.value == "Unjoinable Placeholder") {
             option_element.style.display = "none";
         } else {
-            //console.log(option_element);
+            dbg(option_element);
             option_element.style.display = "flex";
         }
     });
@@ -1210,7 +1220,7 @@ function drawOddsPage(junk) {
             ]);
         }
         regionsNBridgesInit()
-            resizeMap();
+        resizeMap();
         try {
             window.datatable.destroy();
         } catch {
@@ -1258,7 +1268,7 @@ function page_odds(contentTag) {
             _("map-owner-teams").innerHTML = str;
             _("map-owner-info").setAttribute('selectitem', 'true');
             hideUnselectableTeams(maxSeason);
-            console.log(values);
+            dbg(values);
         }).then(() => {
             return new Promise((resolve, reject) => {
                 setupMapHover(resolve, reject);
@@ -1270,7 +1280,7 @@ function page_odds(contentTag) {
 function drawTeamPage(teamsObject, teamTurnsObject, team) {
     var capname = decodeURIComponent(team);
     for (x in teamsObject) {
-        console.log(team, teamsObject[x].name);
+        dbg(team, teamsObject[x].name);
         if (teamsObject[x].name.replace(/\W/g, '').toLowerCase() == capname.replace(/\W/g, '').toLowerCase()) {
             _("team-logo").setAttribute('src', teamsObject[x].logo);
             capname = teamsObject[x].name.replace(/\W/g, '');
@@ -1454,7 +1464,7 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
         obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
     }
 
-    console.log(obj);
+    dbg(obj);
 
     try {
         _('team-header').innerHTML = "<h1>" + teamPlayersObject[0]['team'] + "</h1>";
@@ -1524,7 +1534,7 @@ function page_player(contentTag, pid) {
     doAjaxGetRequest('/api/player?player=' + pid, 'UserLoader', function(playerObject) {
             //Get team
             playerObject = JSON.parse(playerObject.response);
-            console.log(playerObject);
+            dbg(playerObject);
             let active_team = playerObject.team || {
                 name: null
             };
@@ -1545,7 +1555,7 @@ function page_player(contentTag, pid) {
 }
 
 function page_bug() {
-    console.log("buggy!");
+    dbg("buggy!");
     if (typeof BrowserInfo === "undefined") {
         var Browserinfo = {
             init: function() {
@@ -1710,7 +1720,7 @@ function page_bug() {
     errorNotif('Bug Report', bug_form, {
         text: "Okay",
         action: function() {
-            console.log("Submit");
+            dbg("Submit");
             window.history.back();
         },
     }, {
@@ -1739,7 +1749,7 @@ function page_map(content, data = { season: 0, day: 0 }) {
             setupMapHover(resolve, reject);
             // find the turn element
             const dayId = !(data.season == 0) ? window.turnsObject.find(el => el.season == data.season && el.day == data.day).id : window.turnsObject[window.turnsObject.length - 1].id;
-            console.log(dayId);
+            dbg(dayId);
             var tagtemplate = '';
             if (typeof window.turnsObject.find(el => el.id == dayId - 1) != "undefined") {
                 tagtemplate += '<a href="/map/{{pseason}}/{{pday}}">&#11160;</a>'
@@ -1780,11 +1790,11 @@ function handleNewPage(title, contentTag, call, vari) {
 function paintPoll() {
     if (appInfo.pollResponses.length == appInfo.pollData.length) {
         //whoop!
-        console.log("Okay.");
+        dbg("Okay.");
         //present them with the poll machine!
         askPoll(0);
     } else {
-        console.log("Shoot! Couldn't get poll responses.");
+        dbg("Shoot! Couldn't get poll responses.");
     }
 }
 
@@ -1849,9 +1859,9 @@ function doPoll(realize = true) {
         try {
             pollData = JSON.parse(pollData.response);
             appInfo.pollData = pollData;
-            console.log(pollData);
+            dbg(pollData);
             appInfo.pollResponses = [];
-            console.log("Polling...");
+            dbg("Polling...");
             for (i = 0; i < pollData.length; i++) {
                 if (realize || (pollData[i].season == window.turnsObject[window.turnsObject.length - 1].season && pollData[i].day == window.turnsObject[window.turnsObject.length - 1].day && getCookie('polled') != "true")) {
                     doAjaxGetRequest('/auth/poll/response?poll=' + pollData[i].id, 'Poll Response Requests', function(data) {
@@ -1928,7 +1938,7 @@ class Router {
             let fragment = '';
             if (this.mode === 'history') {
                 fragment = this.clearSlashes(decodeURI(window.location.pathname + window.location.search));
-                console.log(fragment);
+                dbg(fragment);
                 fragment = fragment.replace(/\?(.*)$/, '');
                 fragment = this.root !== '/' ? fragment.replace(this.root, '') : fragment;
             } else {
@@ -1994,22 +2004,22 @@ router
         handleNewPage(team, contentTag, page_team, team.replace('#', ''));
     })
     .add('/territory/(.*)/(.*)/(.*)', (territoryName, season, day) => {
-        console.log(territoryName, season, day);
+        dbg(territoryName, season, day);
         handleNewPage(territoryName, contentTag, page_territory, { name: territoryName, season: season.replace('#', ''), day: day.replace('#', '') });
     })
     .add('/territory/(.*)', (territoryName) => {
         handleNewPage(territoryName, contentTag, page_territory_cover, territoryName);
     })
     .add('/map/(.*)/(.*)', (season, day) => {
-        console.log("Loading map: season {{season}} day {{day}}".replace(/{{season}}/, season).replace(/{{day}}/, day));
+        dbg("Loading map: season {{season}} day {{day}}".replace(/{{season}}/, season).replace(/{{day}}/, day));
         handleNewPage('Map', contentTag, page_map, { season: season.replace('#', ''), day: day.replace('#', '') });
     })
     .add('/map', () => {
-        console.log("Loading map");
+        dbg("Loading map");
         handleNewPage('Map', contentTag, page_map);
     })
     .add('/bug', () => {
-        console.log("Loading Bug Page");
+        dbg("Loading Bug Page");
         page_bug();
     })
     .add('/player/(.*)', (pid) => {
@@ -2020,7 +2030,7 @@ router
         handleNewPage('Home', contentTag, page_index);
     })
     .add('', () => {
-        console.log('404');
+        dbg('404');
     });
 
 
@@ -2080,7 +2090,7 @@ function doDate2() {
 }
 
 function getAndHighlightMove() {
-    console.log("Making request for current move.");
+    dbg("Making request for current move.");
     doAjaxGetRequest('/auth/my_move', 'Plotting Pretty Map', function(data) {
         highlightTerritory(data.response.replace(/"/g, ''));
     });
@@ -2115,7 +2125,7 @@ function getMaxMin(arr, prop) {
 }
 
 function highlightTerritory(territory) {
-    console.log("Highlighting {{Territory}}".replace(/{{Territory}}/, territory));
+    dbg("Highlighting {{Territory}}".replace(/{{Territory}}/, territory));
     let highlighted = document.getElementsByClassName('map-animated-highlight');
     for (i = 0; i < highlighted.length; i++) {
         highlighted[i].classList.remove('map-animated-highlight');
@@ -2143,7 +2153,7 @@ function resizeGlobal() {
         resizeMap();
     } catch {
         //we're not on the main page. :shrug:
-        console.log("Could not resize map. Not on main page.");
+        dbg("Could not resize map. Not on main page.");
     }
 }
 
@@ -2215,7 +2225,7 @@ function sky() {
                 _('content-wrapper').style.opacity = appInfo.fullOpacity;
                 document.getElementsByTagName('footer')[0].style.opacity = appInfo.fullOpacity;
                 if (appInfo.fullOpacity <= 0) {
-                    console.log("Exit");
+                    dbg("Exit");
                     document.cookie += "seen=true; expires=Thu, 28 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
                     clearInterval(window.pulse);
                     clearTimeout(appInfo.fadeTimer);
