@@ -19,19 +19,29 @@ use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
 use xdg::BaseDirectories;
 use std::fs;
-use std::fs::File;
 use std::path::Path;
+use rocket_oauth2::{OAuthConfig, StaticProvider};
+
 //use rocket::config::{Config, Environment};
 
 fn main() {
     let config = getConfig();
+    dbg!(config);
+    let provider = StaticProvider::Reddit;
+    let client_id = "...".to_string();
+    let client_secret = "...".to_string();
+    let redirect_uri = Some("http://localhost:8000/auth/github".to_string());
+    let oauth_config = OAuthConfig::new(provider, client_id, client_secret, redirect_uri);
+
     let global_info_private = sys::SysInfo {
         name: String::from("AggieRisk"),
-        base_url: String::from("Howdy"),
+        base_url: String::from("https://aggierisk.com/"),
         version: env!("CARGO_PKG_VERSION").to_string(),
         discord: cfg!(feature = "risk_discord"),
         reddit: cfg!(feature = "risk_reddit"),
         groupme: cfg!(feature = "risk_groupme"),
+        image: cfg!(feature = "risk_image"),
+        captcha: cfg!(feature = "risk_captcha"),
     };
     dbg!(global_info_private);
     dotenv::from_filename(".env").ok();
@@ -107,11 +117,44 @@ fn main() {
 }
 
 
+use serde_derive::Deserialize;
+
+#[derive(Deserialize, Debug)]
+struct Config {
+    name: String,
+    base_uri: Option<u16>,
+    port: i32,
+    keys: Keys,
+    postgres_string: String,
+    log: Option<String>,
+    workers: Option<i32>,
+    keep_alive: Option<i32>,
+    timeout: Option<i32>,
+    tls: Option<bool>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Keys {
+    reddit: Option<OAuthCredentials>,
+    discord: Option<OAuthCredentials>,
+    groupme: Option<OAuthCredentials>,
+}
+
+#[derive(Deserialize, Debug)]
+struct OAuthCredentials{
+    client_id: String,
+    client_secret: String,
+    auth_uri: Option<String>,
+    token_uri: Option<String>
+}
+
 fn getConfig() -> Result<(),std::io::Error>{
     let path = BaseDirectories::with_prefix("rust-risk")?;
     let config_filename = path.place_config_file("config.toml")?;
     if Path::new(&config_filename).exists() {
-        let contents = fs::read_to_string(config_filename);
+        let contents = fs::read_to_string(config_filename)?;
+        let config: Config = toml::from_str(&contents)?;
+        dbg!(config);
         Ok(())
     } else {
         /*let config = Config::default();
