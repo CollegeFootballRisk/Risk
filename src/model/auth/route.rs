@@ -364,7 +364,7 @@ pub fn handleregionalownership(
     region_ownership::table
         .filter(region_ownership::season.eq(latest.season))
         .filter(region_ownership::day.eq(latest.day))
-        .filter(region_ownership::owner_count.eq(1 as i64))
+        .filter(region_ownership::owner_count.eq(1_i64))
         .filter(region_ownership::owners.contains(vec![team]))
         .select(count(region_ownership::owners))
         .first(conn)

@@ -11,7 +11,7 @@ pub struct SysInfo {
 }
 
 impl SysInfo {
-    pub fn default() -> SysInfo{
+    pub fn default() -> SysInfo {
         SysInfo {
             name: String::from("AggieRisk Local"),
             base_url: String::from("http://localhost:8000"),
@@ -20,7 +20,7 @@ impl SysInfo {
             reddit: true,
             groupme: false,
             image: false,
-            captcha: false
+            captcha: false,
         }
     }
 }

@@ -17,21 +17,23 @@ mod security;
 use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
-use xdg::BaseDirectories;
+use rocket_oauth2::{OAuthConfig, StaticProvider};
 use std::fs;
 use std::path::Path;
-use rocket_oauth2::{OAuthConfig, StaticProvider};
+use xdg::BaseDirectories;
 
 //use rocket::config::{Config, Environment};
 
 fn main() {
-    let config = getConfig();
-    dbg!(config);
+    match getConfig(){
+        Ok(_config) => {}
+        Err(error) => {dbg!(error);}
+    }
     let provider = StaticProvider::Reddit;
     let client_id = "...".to_string();
     let client_secret = "...".to_string();
     let redirect_uri = Some("http://localhost:8000/auth/github".to_string());
-    let oauth_config = OAuthConfig::new(provider, client_id, client_secret, redirect_uri);
+    let _oauth_config = OAuthConfig::new(provider, client_id, client_secret, redirect_uri);
 
     let global_info_private = sys::SysInfo {
         name: String::from("AggieRisk"),
@@ -116,7 +118,6 @@ fn main() {
         .launch();
 }
 
-
 use serde_derive::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -141,14 +142,14 @@ struct Keys {
 }
 
 #[derive(Deserialize, Debug)]
-struct OAuthCredentials{
+struct OAuthCredentials {
     client_id: String,
     client_secret: String,
     auth_uri: Option<String>,
-    token_uri: Option<String>
+    token_uri: Option<String>,
 }
 
-fn getConfig() -> Result<(),std::io::Error>{
+fn getConfig() -> Result<(), std::io::Error> {
     let path = BaseDirectories::with_prefix("rust-risk")?;
     let config_filename = path.place_config_file("config.toml")?;
     if Path::new(&config_filename).exists() {

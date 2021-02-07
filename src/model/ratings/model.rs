@@ -18,7 +18,7 @@ impl Ratings {
         let awards = Self::fromarr(stat.awards, [0, 1, 2, 3, 4]);
         let streak = Self::fromarr(stat.streak, [0, 3, 5, 10, 25]);
         let mut numbers = vec![totalTurns, gameTurns, mvps, awards, streak];
-        numbers.sort();
+        numbers.sort_unstable();
         let mid = numbers.len() / 2;
         overall = numbers[mid];
         Ratings {
