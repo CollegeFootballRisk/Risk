@@ -1,5 +1,6 @@
 # Risk
 A Risk game similar to CollegeFootballRisk, written in Rust
+![Ringmaster Flamegraph](/documentation/screenshot.png)
 
 - [API](/documentation/API.md)
 - [Deviations from College Football Risk's API](/documentation/DEVIATIONS.md)

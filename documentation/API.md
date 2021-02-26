@@ -1,7 +1,4 @@
 # API
-  ## Server
-  Context: `/`
-  >
   Context: `/api`
    - Players
   	 - GET /player
@@ -48,4 +45,3 @@
   	 - GET /team/odds
   		>Response:
   		>> ```JSON```
-  ## Database
