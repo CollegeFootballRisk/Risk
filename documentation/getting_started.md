@@ -198,16 +198,7 @@ season=2
 day=1
 ```
 
-You are almost there! Next, enter rocket_oauth2/ folder and edit src/hyper_sync_rustls_adapter.rs, where:
-```rust
-ser.append_pair("redirect_uri", "https://aggierisk.com/auth/reddit");
-```
-write it to YOUR REDIRECT_URI as set in reddit setup above:
-```rust
-ser.append_pair("redirect_uri", "https://localhost:8000/auth/reddit");
-```
-
-Now go back to Risk/ and enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
+Now enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
 ```toml
 [global.oauth.reddit]
 provider = "Reddit"

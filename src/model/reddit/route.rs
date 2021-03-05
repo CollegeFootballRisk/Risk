@@ -19,7 +19,7 @@ use diesel_citext::types::CiString;
 
 #[get("/reddit")]
 pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
-    oauth2.get_redirect(&mut cookies, &["identity"]).unwrap()
+    oauth2.get_redirect_extras(&mut cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
 #[get("/logout")]

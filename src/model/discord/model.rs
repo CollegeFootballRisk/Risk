@@ -8,6 +8,6 @@ pub struct DiscordUserInfo {
 
 impl DiscordUserInfo {
     pub fn name(&self) -> String {
-        self.username.clone() + &String::from("#") + &self.discriminatoràà
+        self.username.clone() + &String::from("#") + &self.discriminator
     }
 }
