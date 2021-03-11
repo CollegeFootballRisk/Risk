@@ -1,6 +1,3 @@
-//use anyhow::Context;
-//extern crate time;
-//use time::Duration;
 use crate::model::{Claims, DiscordUserInfo, UpsertableUser};
 use hyper::{
     header::{Authorization, Bearer, UserAgent},
@@ -8,25 +5,24 @@ use hyper::{
     Client,
 };
 
-use rocket::http::{Cookie, Cookies, SameSite, Status};
+use crate::{db::DbConn, model::User};
+use chrono::prelude::*;
+use diesel_citext::types::CiString;
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 use serde_json::{self};
 use std::io::Read;
-extern crate chrono;
-use crate::{db::DbConn, model::User};
-use chrono::prelude::*;
-use chrono::Duration;
-use diesel_citext::types::CiString;
+use time::Duration;
 
 #[get("/discord")]
-pub fn discord_login(oauth2: OAuth2<DiscordUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
+pub fn discord_login(oauth2: OAuth2<DiscordUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
     oauth2.get_redirect(&mut cookies, &["identify"]).unwrap()
 }
 
 #[get("/logout")]
-pub fn discord_logout(mut cookies: Cookies) -> Flash<Redirect> {
+pub fn discord_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -50,7 +46,7 @@ pub fn discord_logout(mut cookies: Cookies) -> Flash<Redirect> {
 #[get("/discord")]
 pub fn discord_callback(
     token: TokenResponse<DiscordUserInfo>,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Redirect, Status> {
@@ -109,7 +105,7 @@ pub fn discord_callback(
 }
 
 fn getDiscordUserInfo(token: &TokenResponse<DiscordUserInfo>) -> Result<DiscordUserInfo, String> {
-    let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
+    let https = HttpsConnector::new(hyper_rustls::TlsClient::new());
     let client = Client::with_connector(https);
     match client
         .get("https://discord.com/api/users/@me")

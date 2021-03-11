@@ -103,8 +103,12 @@ impl PlayerWithTurnsAndAdditionalTeam {
                             active_team: Some(TeamWithColors {
                                 name: results.name,
                                 colors: Colors {
-                                    primary: results.color_1.unwrap_or_else(|| String::from("#000")),
-                                    secondary: results.color_2.unwrap_or_else(|| String::from("#000")),
+                                    primary: results
+                                        .color_1
+                                        .unwrap_or_else(|| String::from("#000")),
+                                    secondary: results
+                                        .color_2
+                                        .unwrap_or_else(|| String::from("#000")),
                                 },
                             }),
                             platform: me[0].platform.clone(),

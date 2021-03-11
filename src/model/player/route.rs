@@ -1,12 +1,12 @@
 use crate::db::DbConn;
 use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
-use rocket::http::Cookies;
+use rocket::http::CookieJar;
 use rocket::http::Status;
 use rocket::State;
 use rocket_contrib::json::Json;
 
 #[get("/players?<team>")]
-pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
+pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
         Some(team) => {
             let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
@@ -14,7 +14,7 @@ pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer
             match parsed_team_name {
                 Ok(team) => {
                     println!("{}", team);
-                    let users = TeamPlayer::load(vec![team], &conn);
+                    let users = conn.run(|c| TeamPlayer::load(vec![team], c)).await;
                     if users.len() as i32 >= 1 {
                         std::result::Result::Ok(Json(users))
                     } else {
@@ -25,7 +25,7 @@ pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer
             }
         }
         None => {
-            let users = TeamPlayer::loadall(&conn);
+            let users = conn.run(|c| TeamPlayer::loadall(c)).await;
             if users.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(users))
             } else {
@@ -36,8 +36,8 @@ pub fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer
 }
 
 #[get("/me")]
-pub fn me(
-    mut cookies: Cookies,
+pub async fn me(
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
@@ -45,11 +45,15 @@ pub fn me(
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
-                    let users = PlayerWithTurnsAndAdditionalTeam::load(
-                        vec![c.0.user.clone()],
-                        false,
-                        &conn,
-                    );
+                    let users = conn
+                        .run(move |connection| {
+                            PlayerWithTurnsAndAdditionalTeam::load(
+                                vec![c.0.user.clone()],
+                                false,
+                                connection,
+                            )
+                        })
+                        .await;
                     match users {
                         Some(user) => {
                             if user.name.to_lowercase() == c.0.user.to_lowercase() {
@@ -91,28 +95,33 @@ match cookies
 //}
 
 #[get("/players/batch?<players>")]
-pub fn player_multifetch(
+pub async fn player_multifetch(
     players: Option<String>,
     conn: DbConn,
 ) -> Result<Json<Vec<PlayerWithTurns>>, Status> {
     match players {
         Some(player) => {
-            std::result::Result::Ok(Json(PlayerWithTurns::load(
-                player.split(',').map(|s| s.to_string()).collect::<Vec<String>>(),
-                true,
-                &conn,
-            )))
+            std::result::Result::Ok(Json(
+                conn.run(move |c| {
+                    PlayerWithTurns::load(
+                        player.split(',').map(|s| s.to_string()).collect::<Vec<String>>(),
+                        true,
+                        &c,
+                    )
+                })
+                .await,
+            ))
         }
         None => std::result::Result::Err(Status::NotFound),
     }
 }
 
 #[get("/player?<player>")]
-pub fn player(
+pub async fn player(
     player: String,
     conn: DbConn,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
-    let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, &conn);
+    let users = conn.run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c)).await;
     //if users.len() as i32 == 1 {
     match users {
         Some(user) => std::result::Result::Ok(Json(user)),

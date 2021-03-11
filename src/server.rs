@@ -3,6 +3,8 @@
 #[macro_use]
 extern crate rocket;
 #[macro_use]
+extern crate rocket_contrib;
+#[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
@@ -14,6 +16,7 @@ mod model;
 mod schema;
 #[cfg(feature = "risk_security")]
 mod security;
+use crate::db::DbConn;
 use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
@@ -25,9 +28,11 @@ use xdg::BaseDirectories;
 //use rocket::config::{Config, Environment};
 
 fn main() {
-    match getConfig(){
+    match getConfig() {
         Ok(_config) => {}
-        Err(error) => {dbg!(error);}
+        Err(error) => {
+            dbg!(error);
+        }
     }
     let provider = StaticProvider::Reddit;
     let client_id = "...".to_string();
@@ -104,9 +109,10 @@ fn main() {
     root_paths.append(&mut crate::security::route::routes());
 
     rocket::ignite()
-        .manage(db::init_pool())
+//        .manage(db::init_pool())
         .manage(key)
         .manage(latest)
+        .attach(DbConn::fairing())
         .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
         .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
         .register(catchers![catchers::not_found, catchers::internal_error])

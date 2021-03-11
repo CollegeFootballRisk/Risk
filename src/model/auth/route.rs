@@ -7,7 +7,7 @@ use crate::schema::{
 };
 use diesel::prelude::*;
 use diesel::result::Error;
-use rocket::http::{Cookies, Status};
+use rocket::http::{CookieJar, Status};
 use rocket::State;
 use std::net::SocketAddr;
 extern crate rand;
@@ -19,7 +19,7 @@ use rocket_contrib::json::Json;
 #[get("/join?<team>", rank = 1)]
 pub fn join_team(
     team: i32,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Json<String>, Status> {
@@ -127,7 +127,7 @@ pub fn join_team(
 #[get("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn my_move(
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
     key: State<String>,
@@ -165,7 +165,7 @@ pub fn my_move(
 pub fn make_move(
     target: i32,
     aon: Option<bool>,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
     key: State<String>,
@@ -292,7 +292,7 @@ pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 #[get("/poll/respond?<poll>&<response>", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn submit_poll(
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
     poll: i32,
@@ -332,7 +332,7 @@ pub fn submit_poll(
 #[get("/poll/response?<poll>", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub fn view_response(
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
     poll: i32,

@@ -5,25 +5,26 @@ use hyper::{
     Client,
 };
 
-use rocket::http::{Cookie, Cookies, SameSite, Status};
+use crate::{db::DbConn, model::User};
+use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 use serde_json::{self};
 use std::io::Read;
-extern crate chrono;
-use crate::{db::DbConn, model::User};
-use chrono::prelude::*;
-use chrono::Duration;
+/*use chrono::prelude::*;
+use chrono::Duration;*/
+use chrono::Utc;
 use diesel_citext::types::CiString;
+use time::Duration;
 
 #[get("/reddit")]
-pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, mut cookies: Cookies<'_>) -> Redirect {
+pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
     oauth2.get_redirect_extras(&mut cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
 #[get("/logout")]
-pub fn reddit_logout(mut cookies: Cookies) -> Flash<Redirect> {
+pub fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -47,7 +48,7 @@ pub fn reddit_logout(mut cookies: Cookies) -> Flash<Redirect> {
 #[get("/reddit")]
 pub fn reddit_callback(
     token: TokenResponse<RedditUserInfo>,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     key: State<String>,
 ) -> Result<Redirect, Status> {
@@ -106,7 +107,7 @@ pub fn reddit_callback(
 }
 
 fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUserInfo, String> {
-    let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
+    let https = HttpsConnector::new(hyper_rustls::TlsClient::new());
     let client = Client::with_connector(https);
     match client
         .get("https://oauth.reddit.com/api/v1/me")
