@@ -9,14 +9,14 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[get("/captcha")]
-pub fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
+pub async fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
     let (_solution, png) = create_captcha(Difficulty::Easy).unwrap();
     let insert_captcha = Captchas {
-        title: &calculate_hash(&_solution).to_string()[0..7],
-        content: &_solution[..],
+        title: calculate_hash(&_solution).to_string()[0..7].to_string(),
+        content: _solution[..].to_string(),
     };
 
-    let result: QueryResult<usize> = Captchas::insert(insert_captcha, &conn);
+    let result: QueryResult<usize> = conn.run(|c| Captchas::insert(insert_captcha, c)).await;
     let outlet = result.unwrap_or(0);
     match outlet {
         1 => {

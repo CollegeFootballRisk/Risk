@@ -1,16 +1,16 @@
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use crate::{db::DbConn, model::User};
+use chrono::Utc;
+use diesel_citext::types::CiString;
+use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
-use chrono::Utc;
-use diesel_citext::types::CiString;
 use time::Duration;
 
 #[get("/reddit")]
-pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect{
+pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
     oauth2.get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
@@ -29,7 +29,26 @@ pub async fn reddit_callback(
     conn: DbConn,
     key: State<'_, String>,
 ) -> Result<Redirect, Status> {
-    match getRedditUserInfo(&token) {
+    let userinfo: Result<RedditUserInfo, _> = match reqwest::Client::builder().build() {
+        Ok(rclient) => {
+            match rclient
+                .get("https://oauth.reddit.com/api/v1/me")
+                .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
+                .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
+                .send()
+                .await
+            {
+                Ok(text) => text.json().await,
+                Err(_) => {
+                    return std::result::Result::Err(Status::BadRequest);
+                }
+            }
+        }
+        Err(_) => {
+            return std::result::Result::Err(Status::BadRequest);
+        }
+    };
+    match userinfo {
         Ok(user_info) => {
             let new_user = UpsertableUser {
                 uname: CiString::from(user_info.name.clone()),
@@ -37,10 +56,8 @@ pub async fn reddit_callback(
             };
             match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
-                    match conn
-                        .run(move |c| User::load(user_info.name.clone(), "reddit".to_string(), c))
-                        .await
-                    {
+                    let name = user_info.name.clone();
+                    match conn.run(move |c| User::load(name, "reddit".to_string(), c)).await {
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
@@ -84,17 +101,4 @@ pub async fn reddit_callback(
         }
         _ => std::result::Result::Err(Status::Gone),
     }
-}
-
-async fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUserInfo, Box<dyn std::error::Error>> {
-    reqwest::Client::builder()
-    .build()?
-    .get("https://oauth.reddit.com/api/v1/me")
-    .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
-    .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
-    .send()
-    .await
-    .json()
-    .await
-    .context("failed to deserialize response")?
 }

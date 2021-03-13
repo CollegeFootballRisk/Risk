@@ -41,7 +41,7 @@ pub struct TurnInfo {
     pub rollTime: Option<chrono::NaiveDateTime>,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, Clone)]
 pub struct Latest {
     pub season: i32,
     pub day: i32,

@@ -2,9 +2,9 @@ use crate::schema::captchas;
 use diesel::prelude::*;
 #[derive(Deserialize, Insertable)]
 #[table_name = "captchas"]
-pub struct Captchas<'a> {
-    pub title: &'a str,
-    pub content: &'a str,
+pub struct Captchas {
+    pub title: String,
+    pub content: String,
 }
 #[derive(Serialize, Deserialize)]
 pub struct UserCaptcha {
@@ -22,7 +22,7 @@ pub struct UserCaptcha {
 //    Unexpected,
 //}
 
-impl Captchas<'_> {
+impl Captchas {
     pub fn insert(insert_captcha: Captchas, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(captchas::table).values(&insert_captcha).execute(conn)
     }

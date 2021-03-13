@@ -1,5 +1,5 @@
 use crate::db::DbConn;
-use crate::model::{PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer}; //Claims
+use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
 use rocket::http::CookieJar;
 use rocket::http::Status;
 use rocket::State;
@@ -35,7 +35,7 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
     }
 }
 
-/*#[get("/me")]
+#[get("/me")]
 pub async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
@@ -72,29 +72,6 @@ pub async fn me(
         None => std::result::Result::Err(Status::Unauthorized),
     }
 }
-/* let player: String = cookies
-.get("username")
-.and_then(|cookie| cookie.value().parse().ok());
-let player: String = cookies
-.get("username")
-.and_then(|cookie| cookie.value().parse())
-.unwrap_or_else(|| "".to_string());
-match cookies
-.get("username") {
-    Some(user) => {
-        let users = PlayerWithTurnsAndAdditionalTeam::load(vec![player.clone()], false, &conn);
-        if users.name.to_lowercase() == player.to_lowercase() {
-            std::result::Result::Ok(Json(users))
-        } else {
-            std::result::Result::Err(Status::NotFound)
-        }
-    }
-    None => {
-        std::result::Result::Err(Status::Unauthorized)
-    }
-}*/
-//}
-*/
 
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(

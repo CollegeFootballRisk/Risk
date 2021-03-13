@@ -28,7 +28,7 @@ pub async fn join_team(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     //see if user already has team, and if user has current_team
-                    let username= c.0.user.clone();
+                    let username = c.0.user.clone();
                     let users = conn
                         .run(move |connection| {
                             PlayerWithTurnsAndAdditionalTeam::load(
@@ -181,7 +181,6 @@ pub async fn my_move(
 }
 
 #[get("/move?<target>&<aon>", rank = 1)]
-//#[cfg(feature = "risk_security")]
 pub async fn make_move(
     target: i32,
     aon: Option<bool>,
@@ -203,26 +202,25 @@ pub async fn make_move(
                             };
                             // id, name Json(c.0.user)
                             //get user's team information, and whether they can make that move
+                            let temp_pfix = c.0.clone();
+                            let temp_ltst = Latest {
+                                season: latest.season,
+                                day: latest.day,
+                            };
                             match conn
-                                .run(|connection| {
+                                .run(move |connection| {
                                     handle_territory_info(
-                                        &c.0,
-                                        target,
-                                        Latest {
-                                            season: latest.season,
-                                            day: latest.day,
-                                        },
-                                        connection,
-                                        aon,
+                                        &temp_pfix, target, temp_ltst, connection, aon,
                                     )
                                 })
                                 .await
                             {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
+                                    let tmp_usname = c.0.user.clone();
                                     let awards = conn
                                         .run(move |connection| {
-                                            get_cfb_points(c.0.user.clone(), connection)
+                                            get_cfb_points(tmp_usname, connection)
                                         })
                                         .await;
                                     //get user's current information from Reddit to ensure they still exist
@@ -250,7 +248,7 @@ pub async fn make_move(
                                         merc = true;
                                     }
                                     match conn
-                                        .run(|connection| {
+                                        .run(move |connection| {
                                             insert_turn(
                                                 &user,
                                                 user_ratings,
@@ -268,7 +266,7 @@ pub async fn make_move(
                                         Ok(_ok) => {
                                             //now we go update the user
                                             match conn
-                                                .run(|connection| {
+                                                .run(move |connection| {
                                                     UpdateUser::do_update(
                                                         UpdateUser {
                                                             id: user.1,
@@ -385,7 +383,10 @@ pub async fn view_response(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match conn.run(move |connection| PollResponse::get(poll, c.0.id, connection)).await {
+                    match conn
+                        .run(move |connection| PollResponse::get(poll, c.0.id, connection))
+                        .await
+                    {
                         Ok(responses) => std::result::Result::Ok(Json(responses)),
                         Err(_E) => std::result::Result::Err(Status::InternalServerError),
                     }
@@ -397,7 +398,7 @@ pub async fn view_response(
     }
 }
 
-pub async fn handleregionalownership(
+pub fn handleregionalownership(
     latest: &Latest,
     team: i32,
     conn: &PgConnection,
@@ -470,8 +471,8 @@ pub fn handle_territory_info(
                             match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0) {
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
-                                        let mut regional_multiplier: i32 =
-                                            2 * handleregionalownership(&latest, team_id.0, &conn).await
+                                        let mut regional_multiplier =
+                                            2 * handleregionalownership(&latest, team_id.0, &conn)
                                                 .unwrap_or(0);
                                         if regional_multiplier == 0 {
                                             regional_multiplier = 1;
@@ -532,7 +533,7 @@ pub fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub async fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
+pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
         .filter(territory_ownership::season.eq(latest.season))
@@ -605,12 +606,7 @@ pub fn insert_turn(
         .execute(conn)
 }
 
-pub fn update_user(
-    new: bool,
-    user: i32,
-    team: i32,
-    conn: &PgConnection,
-) -> QueryResult<usize> {
+pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
         true => {
             diesel::update(users::table)

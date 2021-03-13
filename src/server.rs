@@ -17,7 +17,7 @@ mod schema;
 #[cfg(feature = "risk_security")]
 mod security;
 use crate::db::DbConn;
-use crate::model::{player, stats, sys, team, territory, turn, Latest}; //auth, discord, reddit
+use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
 use rocket_oauth2::{OAuthConfig, StaticProvider};
@@ -59,6 +59,8 @@ fn rocket() -> _ {
         day: dotenv::var("day").unwrap().parse::<i32>().unwrap(),
     };
 
+    // Allowed to silence warning when we only _sometimes_ modify the routes.
+    #[allow(unused_mut)]
     let mut root_paths = routes![
         hardcode::js_api_leaderboard,
         hardcode::js_api_territory,
@@ -70,9 +72,10 @@ fn rocket() -> _ {
         hardcode::robots
     ];
 
+    #[allow(unused_mut)]
     let api_paths = routes![
         player::route::player,
-        //player::route::me,
+        player::route::me,
         player::route::players,
         player::route::player_multifetch,
         turn::route::turns,
@@ -90,17 +93,27 @@ fn rocket() -> _ {
         stats::route::odds,
     ];
 
+    #[allow(unused_mut)]
     let mut auth_paths = routes![
-        /*reddit::route::reddit_callback,
+        reddit::route::reddit_callback,
         reddit::route::reddit_logout,
-        discord::route::discord_callback,
+        //discord::route::discord_callback,
         auth::route::make_move,
         auth::route::my_move,
         auth::route::join_team,
         auth::route::view_response,
         auth::route::submit_poll,
-        auth::route::get_polls,*/
+        auth::route::get_polls,
     ];
+
+    #[allow(unused_mut)]
+    let mut login_paths = routes![];
+
+    #[cfg(feature = "risk_reddit")]
+    login_paths.append(&mut routes![reddit::route::reddit_login]);
+
+    #[cfg(feature = "risk_discord")]
+    login_paths.append(&mut routes![discord::route::discord_login]);
 
     #[cfg(feature = "risk_captcha")]
     use crate::model::captchasvc;
@@ -109,30 +122,22 @@ fn rocket() -> _ {
     #[cfg(feature = "risk_security")]
     root_paths.append(&mut crate::security::route::routes());
 
-   /* rocket::ignite()
-//        .manage(db::init_pool())
+    /*
+        We attach all the fairings, even if not required, those fairings must therefore be compiled
+        However, we won't actually append the non-specified routes so they are in effect disabled.
+    */
+    rocket::ignite()
         .manage(key)
         .manage(latest)
         .attach(DbConn::fairing())
-        //.attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
-        //.attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
+        .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
+        .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
         .register(catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
-        //.mount("/auth", auth_paths)
-        //.mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login])
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
-        .launch()*/
-
-        rocket::ignite()
-    
-                .manage(key)
-                .manage(latest)
-                .attach(DbConn::fairing())
-                .register(catchers![catchers::not_found, catchers::internal_error])
-                .mount("/api", api_paths)
-                .mount("/", StaticFiles::from("static").rank(2))
-                .mount("/", root_paths)
+        .mount("/login", login_paths)
+        .mount("/auth", auth_paths)
 }
 
 use serde_derive::Deserialize;
