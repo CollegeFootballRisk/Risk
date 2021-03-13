@@ -182,29 +182,22 @@ insert into stats (sequence, season, day, team, rank, territorycount, playercoun
 ```
 
 ### Environmental Variables
-Now, go to /Risk and edit .env
-For localhost, .env should look like (edit base to the current directory's location, edit the DATABASE_URL to be `postgresql://<username>:<password>@<hostname>:<port>/<database>`):
+Enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
 ```toml
-uri = localhost
-base = /srv/rust/Risk/
-version = 0.1.11
-DATABASE_URL=postgresql://risk:{{password}}@localhost/risk
-reddit_oauth = false
-reddit_client_id = {{this is APP_ID made in reddit setup above}}
-reddit_client_secret = {{this is SECRET made in reddit setup above}}
-reddit_user_agent = {{this is up to you, best to use Alabama Rust-Risk v0.1.11, for example}}
-SECRET= {{base64 string, see rocket.rs/}}
-season=2
-day=1
-```
-
-Now enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
-```toml
+[global.databases.postgres_global]
+url = "postgresql://{{username}}:{{password}}@{{hostname}}:{{port}}/{{database}}"
 [global.oauth.reddit]
 provider = "Reddit"
 client_id = "{{APP_ID}}"
 client_secret = "{{SECRET}}"
 redirect_uri = "{{same redirect_URI as above, leave the apostrophes not the brackets}}"
+
+[global.oauth.discord]
+provider = "Discord"
+client_id = "{{APP_ID}}"
+client_secret = "{{SECRET}}"
+redirect_uri = "{{same redirect_URI as above, leave the apostrophes not the brackets}}"
+
 [staging]
 address = "127.0.0.1"
 port = 8080
