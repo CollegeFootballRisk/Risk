@@ -19,12 +19,12 @@ use diesel_citext::types::CiString;
 use time::Duration;
 
 #[get("/reddit")]
-pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
-    oauth2.get_redirect_extras(&mut cookies, &["identity"], &[("duration", "permanent")]).unwrap()
+pub async fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
+    oauth2.get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
 #[get("/logout")]
-pub fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
+pub async fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -46,11 +46,11 @@ pub fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
 }
 
 #[get("/reddit")]
-pub fn reddit_callback(
+pub async fn reddit_callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Redirect, Status> {
     match getRedditUserInfo(&token) {
         Ok(user_info) => {
@@ -58,9 +58,9 @@ pub fn reddit_callback(
                 uname: CiString::from(user_info.name.clone()),
                 platform: CiString::from("reddit"),
             };
-            match UpsertableUser::upsert(new_user, &conn) {
+            match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
-                    match User::load(user_info.name.clone(), "reddit".to_string(), &conn) {
+                    match conn.run(move |c| User::load(user_info.name.clone(), "reddit".to_string(), c)).await {
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();

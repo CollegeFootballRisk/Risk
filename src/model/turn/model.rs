@@ -92,7 +92,7 @@ impl TurnInfo {
 }
 
 impl Latest {
-    pub fn latest(conn: &PgConnection) -> Result<Latest, &str> {
+    pub fn latest(conn: &PgConnection) -> Result<Latest, String> {
         use diesel::dsl::{max, min};
         let season = turninfo::table.select(max(turninfo::season)).first::<Option<i32>>(conn);
         match season {
@@ -131,10 +131,10 @@ impl Latest {
                             }
                         }
                     }
-                    _ => Err("Database Error"),
+                    _ => Err("Database Error".to_owned()),
                 }
             }
-            _ => Err("Database Error"),
+            _ => Err("Database Error".to_owned()),
         }
     }
 }

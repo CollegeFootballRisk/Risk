@@ -1,4 +1,3 @@
-use diesel::pg::PgConnection;
 use rocket_contrib::databases::diesel;
 /*use r2d2_diesel::ConnectionManager;
 use rocket::http::Status;

@@ -17,22 +17,22 @@ use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
 
 #[get("/join?<team>", rank = 1)]
-pub fn join_team(
+pub async fn join_team(
     team: i32,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     //see if user already has team, and if user has current_team
-                    let users = PlayerWithTurnsAndAdditionalTeam::load(
+                    let users = conn.run(move |connection| PlayerWithTurnsAndAdditionalTeam::load(
                         vec![c.0.user.clone()],
                         false,
-                        &conn,
-                    );
+                        connection
+                    )).await;
                     match users {
                         Some(users) => {
                             if users.name.to_lowercase() == c.0.user.to_lowercase() {
@@ -40,10 +40,10 @@ pub fn join_team(
                                 match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
                                     None => {
                                         //check team exists
-                                        match TeamInfo::load(&conn).iter().any(|e| e.id == team) {
+                                        match conn.run(move |connection| TeamInfo::load(&connection).iter().any(|e| e.id == team)).await {
                                             true => {
                                                 // check that team has territories
-                                                match CurrentStrength::load_id(team, &conn) {
+                                                match conn.run(move |connection| CurrentStrength::load_id(team, connection)).await {
                                                     Ok(strength) => {
                                                         if strength.territories > 0 {
                                                             match users
@@ -126,13 +126,13 @@ pub fn join_team(
 
 #[get("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub fn my_move(
+pub async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
-    match Latest::latest(&conn) {
+    match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
@@ -145,7 +145,7 @@ pub fn my_move(
                             };
                             // get the territory the user has attacked
                             std::result::Result::Ok(Json(
-                                MoveInfo::get(latest.season, latest.day, c.0.id, &conn)
+                                conn.run(|connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection)).await
                                     .territory
                                     .unwrap_or_else(|| String::from("")),
                             ))
@@ -162,15 +162,15 @@ pub fn my_move(
 
 #[get("/move?<target>&<aon>", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub fn make_move(
+pub async fn make_move(
     target: i32,
     aon: Option<bool>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
-    match Latest::latest(&conn) {
+    match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
@@ -183,19 +183,19 @@ pub fn make_move(
                             };
                             // id, name Json(c.0.user)
                             //get user's team information, and whether they can make that move
-                            match handle_territory_info(
+                            match conn.run(|connection| handle_territory_info(
                                 &c.0,
                                 target,
                                 Latest {
                                     season: latest.season,
                                     day: latest.day,
                                 },
-                                &conn,
+                                connection,
                                 aon,
-                            ) {
+                            )).await {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
-                                    let awards = get_cfb_points(c.0.user.clone(), &conn);
+                                    let awards = conn.run(|connection| get_cfb_points(c.0.user.clone(), connection)).await;
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -220,7 +220,7 @@ pub fn make_move(
                                     if user.0 != user.8 {
                                         merc = true;
                                     }
-                                    match insert_turn(
+                                    match conn.run(|connection| insert_turn(
                                         &user,
                                         user_ratings,
                                         &latest,
@@ -229,11 +229,11 @@ pub fn make_move(
                                         user_weight,
                                         user_power,
                                         merc,
-                                        &conn,
-                                    ) {
+                                        connection,
+                                    )).await {
                                         Ok(_ok) => {
                                             //now we go update the user
-                                            match UpdateUser::do_update(
+                                            match conn.run(|connection| UpdateUser::do_update(
                                                 UpdateUser {
                                                     id: user.1,
                                                     overall: user_power as i32,
@@ -243,8 +243,8 @@ pub fn make_move(
                                                     streak: user_stats.streak,
                                                     awards: user_stats.awards,
                                                 },
-                                                &conn,
-                                            ) {
+                                                connection,
+                                            )).await {
                                                 Ok(_oka) => {
                                                     std::result::Result::Ok(Json(String::from(
                                                         "Okay",
@@ -277,10 +277,10 @@ pub fn make_move(
 
 #[get("/polls", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
-    match Latest::latest(&conn) {
+pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
+    match conn.run(move |connection| Latest::latest(connection)).await {
         Ok(latest) => {
-            match Poll::get(latest.season, latest.day, &conn) {
+            match conn.run(move |c| Poll::get(latest.season, latest.day, c)).await {
                 Ok(polls) => std::result::Result::Ok(Json(polls)),
                 Err(_E) => std::result::Result::Err(Status::InternalServerError),
             }
@@ -290,11 +290,10 @@ pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 }
 
 #[get("/poll/respond?<poll>&<response>", rank = 1)]
-//#[cfg(feature = "risk_security")]
-pub fn submit_poll(
+pub async fn submit_poll(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
     poll: i32,
     response: bool,
 ) -> Result<Json<bool>, Status> {
@@ -304,15 +303,15 @@ pub fn submit_poll(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match PollResponse::upsert(
+                    match conn.run(|connection| PollResponse::upsert(
                         PollResponse {
                             id: -1,
                             poll,
                             user_id: c.0.id,
                             response,
                         },
-                        &conn,
-                    ) {
+                        connection,
+                    )).await {
                         Ok(inner) => {
                             match inner {
                                 1 => std::result::Result::Ok(Json(true)),
@@ -330,11 +329,10 @@ pub fn submit_poll(
 }
 
 #[get("/poll/response?<poll>", rank = 1)]
-//#[cfg(feature = "risk_security")]
-pub fn view_response(
+pub async fn view_response(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
     poll: i32,
 ) -> Result<Json<Vec<PollResponse>>, Status> {
     // get user id
@@ -343,7 +341,7 @@ pub fn view_response(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match PollResponse::get(poll, c.0.id, &conn) {
+                    match conn.run(|connection| PollResponse::get(poll, c.0.id, connection)).await {
                         Ok(responses) => std::result::Result::Ok(Json(responses)),
                         Err(_E) => std::result::Result::Err(Status::InternalServerError),
                     }
@@ -355,7 +353,7 @@ pub fn view_response(
     }
 }
 
-pub fn handleregionalownership(
+pub async fn handleregionalownership(
     latest: &Latest,
     team: i32,
     conn: &PgConnection,
@@ -490,7 +488,7 @@ pub fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
+pub async fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
         .filter(territory_ownership::season.eq(latest.season))
@@ -501,7 +499,7 @@ pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> 
         .unwrap_or(0) as i32
 }
 
-pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
+pub async fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     match cfbr_stats::table
         .filter(cfbr_stats::player.eq(CiString::from(name)))
         .select(cfbr_stats::stars)
@@ -517,7 +515,7 @@ pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     }
 }
 
-pub fn insert_turn(
+pub async fn insert_turn(
     user: &(
         i32,
         i32,
@@ -563,7 +561,7 @@ pub fn insert_turn(
         .execute(conn)
 }
 
-pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+pub async fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
         true => {
             diesel::update(users::table)

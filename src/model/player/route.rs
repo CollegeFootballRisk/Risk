@@ -39,7 +39,7 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
 pub async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {

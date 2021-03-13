@@ -4,8 +4,8 @@ use rocket::http::Status;
 use rocket_contrib::json::Json;
 
 #[get("/teams")]
-pub fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
-    let teams = TeamInfo::load(&conn);
+pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
+    let teams = conn.run(move |c| TeamInfo::load(c)).await;
     if teams.len() as i32 >= 1 {
         std::result::Result::Ok(Json(teams))
     } else {
@@ -14,13 +14,13 @@ pub fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
 }
 
 #[get("/team/players?<season>&<day>&<team>")]
-pub fn teamplayersbymoves(
+pub async fn teamplayersbymoves(
     season: i32,
     day: i32,
     team: Option<String>,
     conn: DbConn,
 ) -> Result<Json<Vec<TeamPlayerMoves>>, Status> {
-    let moves = TeamPlayerMoves::load(season, day, team, &conn);
+    let moves = conn.run(move |c| TeamPlayerMoves::load(season, day, team, c)).await;
     if moves.len() as i32 >= 1 {
         std::result::Result::Ok(Json(moves))
     } else {

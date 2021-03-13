@@ -17,12 +17,12 @@ use std::io::Read;
 use time::Duration;
 
 #[get("/discord")]
-pub fn discord_login(oauth2: OAuth2<DiscordUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
-    oauth2.get_redirect(&mut cookies, &["identify"]).unwrap()
+pub async fn discord_login(oauth2: OAuth2<DiscordUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
+    oauth2.get_redirect(cookies, &["identify"]).unwrap()
 }
 
 #[get("/logout")]
-pub fn discord_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
+pub async fn discord_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     /*let token: String = cookies
         .get_private("jwt")
         .and_then(|cookie| cookie.value().parse().ok())
@@ -44,11 +44,11 @@ pub fn discord_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
 }
 
 #[get("/discord")]
-pub fn discord_callback(
+pub async fn discord_callback(
     token: TokenResponse<DiscordUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Redirect, Status> {
     match getDiscordUserInfo(&token) {
         Ok(user_info) => {
@@ -56,9 +56,9 @@ pub fn discord_callback(
                 uname: CiString::from(user_info.name()),
                 platform: CiString::from("discord"),
             };
-            match UpsertableUser::upsert(new_user, &conn) {
+            match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
-                    match User::load(user_info.name(), "discord".to_string(), &conn) {
+                    match conn.run(move |c| User::load(user_info.name(), "discord".to_string(), c)).await {
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
