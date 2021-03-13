@@ -4,8 +4,8 @@ use rocket::http::Status;
 use rocket_contrib::json::Json;
 
 #[get("/stats/team?<team>")]
-pub fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
-    let strength = CurrentStrength::load(team, &conn);
+pub async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
+    let strength = conn.run(|c| CurrentStrength::load(team, c)).await;
     match strength {
         Ok(strength) => std::result::Result::Ok(Json(strength)),
         _ => std::result::Result::Err(Status::BadRequest),
@@ -13,24 +13,26 @@ pub fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrengt
 }
 
 #[get("/stats/leaderboard?<season>&<day>")]
-pub fn leaderboard(
+pub async fn leaderboard(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<StatLeaderboard>>, Status> {
     match (season, day) {
         (Some(season), Some(day)) => {
-            let leaderboard = StatLeaderboard::load(season, day, &conn);
+            let leaderboard = conn.run(move |c| StatLeaderboard::load(season, day, c)).await;
             match leaderboard {
                 Ok(strength) => std::result::Result::Ok(Json(strength)),
                 _ => std::result::Result::Err(Status::BadRequest),
             }
         }
         _ => {
-            match Latest::latest(&conn) {
+            match conn.run(|c| Latest::latest(c)).await {
                 Ok(current) => {
                     //dbg!(&current.day - 1);
-                    let leaderboard = StatLeaderboard::load(current.season, current.day - 1, &conn);
+                    let leaderboard = conn
+                        .run(move |c| StatLeaderboard::load(current.season, current.day - 1, c))
+                        .await;
                     match leaderboard {
                         Ok(strength) => std::result::Result::Ok(Json(strength)),
                         _ => std::result::Result::Err(Status::BadRequest),
@@ -43,15 +45,18 @@ pub fn leaderboard(
 }
 
 #[get("/heat?<season>&<day>")]
-pub fn heat(
+pub async fn heat(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<Heat>>, Status> {
-    match Latest::latest(&conn) {
+    match conn.run(|c| Latest::latest(c)).await {
         Ok(current) => {
-            let heat =
-                Heat::load(season.unwrap_or(current.season), day.unwrap_or(current.day - 1), &conn);
+            let heat = conn
+                .run(move |c| {
+                    Heat::load(season.unwrap_or(current.season), day.unwrap_or(current.day - 1), c)
+                })
+                .await;
             if heat.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(heat))
             } else {
@@ -63,8 +68,8 @@ pub fn heat(
 }
 
 #[get("/stats/team/history?<team>")]
-pub fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
-    let history = StatHistory::load(team, &conn);
+pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
+    let history = conn.run(|c| StatHistory::load(team, c)).await;
     if history.len() as i32 >= 1 {
         std::result::Result::Ok(Json(history))
     } else {
@@ -73,8 +78,13 @@ pub fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>,
 }
 
 #[get("/team/odds?<season>&<day>&<team>")]
-pub fn odds(season: i32, day: i32, team: String, conn: DbConn) -> Result<Json<Vec<Odds>>, Status> {
-    let odds = Odds::load(season, day, team, &conn);
+pub async fn odds(
+    season: i32,
+    day: i32,
+    team: String,
+    conn: DbConn,
+) -> Result<Json<Vec<Odds>>, Status> {
+    let odds = conn.run(move |c| Odds::load(season, day, team, c)).await;
     match odds {
         Ok(odds) => {
             if odds.len() as i32 >= 1 {

@@ -7,7 +7,7 @@ use crate::schema::{
 };
 use diesel::prelude::*;
 use diesel::result::Error;
-use rocket::http::{Cookies, Status};
+use rocket::http::{CookieJar, Status};
 use rocket::State;
 use std::net::SocketAddr;
 extern crate rand;
@@ -17,22 +17,27 @@ use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
 
 #[get("/join?<team>", rank = 1)]
-pub fn join_team(
+pub async fn join_team(
     team: i32,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     //see if user already has team, and if user has current_team
-                    let users = PlayerWithTurnsAndAdditionalTeam::load(
-                        vec![c.0.user.clone()],
-                        false,
-                        &conn,
-                    );
+                    let username = c.0.user.clone();
+                    let users = conn
+                        .run(move |connection| {
+                            PlayerWithTurnsAndAdditionalTeam::load(
+                                vec![username],
+                                false,
+                                connection,
+                            )
+                        })
+                        .await;
                     match users {
                         Some(users) => {
                             if users.name.to_lowercase() == c.0.user.to_lowercase() {
@@ -40,10 +45,22 @@ pub fn join_team(
                                 match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
                                     None => {
                                         //check team exists
-                                        match TeamInfo::load(&conn).iter().any(|e| e.id == team) {
+                                        match conn
+                                            .run(move |connection| {
+                                                TeamInfo::load(&connection)
+                                                    .iter()
+                                                    .any(|e| e.id == team)
+                                            })
+                                            .await
+                                        {
                                             true => {
                                                 // check that team has territories
-                                                match CurrentStrength::load_id(team, &conn) {
+                                                match conn
+                                                    .run(move |connection| {
+                                                        CurrentStrength::load_id(team, connection)
+                                                    })
+                                                    .await
+                                                {
                                                     Ok(strength) => {
                                                         if strength.territories > 0 {
                                                             match users
@@ -55,9 +72,9 @@ pub fn join_team(
                                                             {
                                                                 Some(_e) => {
                                                                     //merc!
-                                                                    match update_user(
-                                                                        false, c.0.id, team, &conn,
-                                                                    ) {
+                                                                    match conn.run(move |cn| update_user(
+                                                                        false, c.0.id, team, cn,
+                                                                    )).await {
                                                                         Ok(_e) => {
                                                                             std::result::Result::Ok(Json(
                                                                                 String::from("Okay"),
@@ -72,9 +89,9 @@ pub fn join_team(
                                                                 }
                                                                 None => {
                                                                     //new kid on the block
-                                                                    match update_user(
-                                                                        true, c.0.id, team, &conn,
-                                                                    ) {
+                                                                    match conn.run(move |cn| update_user(
+                                                                        true, c.0.id, team, cn,
+                                                                    )).await {
                                                                         Ok(_e) => {
                                                                             std::result::Result::Ok(Json(
                                                                                 String::from("Okay"),
@@ -126,13 +143,13 @@ pub fn join_team(
 
 #[get("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub fn my_move(
-    mut cookies: Cookies,
+pub async fn my_move(
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
-    match Latest::latest(&conn) {
+    match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
@@ -145,9 +162,12 @@ pub fn my_move(
                             };
                             // get the territory the user has attacked
                             std::result::Result::Ok(Json(
-                                MoveInfo::get(latest.season, latest.day, c.0.id, &conn)
-                                    .territory
-                                    .unwrap_or_else(|| String::from("")),
+                                conn.run(move |connection| {
+                                    MoveInfo::get(latest.season, latest.day, c.0.id, connection)
+                                })
+                                .await
+                                .territory
+                                .unwrap_or_else(|| String::from("")),
                             ))
                         }
                         Err(_err) => std::result::Result::Err(Status::Unauthorized),
@@ -161,16 +181,15 @@ pub fn my_move(
 }
 
 #[get("/move?<target>&<aon>", rank = 1)]
-//#[cfg(feature = "risk_security")]
-pub fn make_move(
+pub async fn make_move(
     target: i32,
     aon: Option<bool>,
-    mut cookies: Cookies,
+    cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<String>,
+    key: State<'_, String>,
 ) -> Result<Json<String>, Status> {
-    match Latest::latest(&conn) {
+    match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
@@ -183,19 +202,27 @@ pub fn make_move(
                             };
                             // id, name Json(c.0.user)
                             //get user's team information, and whether they can make that move
-                            match handle_territory_info(
-                                &c.0,
-                                target,
-                                Latest {
-                                    season: latest.season,
-                                    day: latest.day,
-                                },
-                                &conn,
-                                aon,
-                            ) {
+                            let temp_pfix = c.0.clone();
+                            let temp_ltst = Latest {
+                                season: latest.season,
+                                day: latest.day,
+                            };
+                            match conn
+                                .run(move |connection| {
+                                    handle_territory_info(
+                                        &temp_pfix, target, temp_ltst, connection, aon,
+                                    )
+                                })
+                                .await
+                            {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
-                                    let awards = get_cfb_points(c.0.user.clone(), &conn);
+                                    let tmp_usname = c.0.user.clone();
+                                    let awards = conn
+                                        .run(move |connection| {
+                                            get_cfb_points(tmp_usname, connection)
+                                        })
+                                        .await;
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -220,31 +247,41 @@ pub fn make_move(
                                     if user.0 != user.8 {
                                         merc = true;
                                     }
-                                    match insert_turn(
-                                        &user,
-                                        user_ratings,
-                                        &latest,
-                                        target,
-                                        multiplier,
-                                        user_weight,
-                                        user_power,
-                                        merc,
-                                        &conn,
-                                    ) {
+                                    match conn
+                                        .run(move |connection| {
+                                            insert_turn(
+                                                &user,
+                                                user_ratings,
+                                                &latest,
+                                                target,
+                                                multiplier,
+                                                user_weight,
+                                                user_power,
+                                                merc,
+                                                connection,
+                                            )
+                                        })
+                                        .await
+                                    {
                                         Ok(_ok) => {
                                             //now we go update the user
-                                            match UpdateUser::do_update(
-                                                UpdateUser {
-                                                    id: user.1,
-                                                    overall: user_power as i32,
-                                                    turns: user_stats.totalTurns,
-                                                    game_turns: user_stats.gameTurns,
-                                                    mvps: user_stats.mvps,
-                                                    streak: user_stats.streak,
-                                                    awards: user_stats.awards,
-                                                },
-                                                &conn,
-                                            ) {
+                                            match conn
+                                                .run(move |connection| {
+                                                    UpdateUser::do_update(
+                                                        UpdateUser {
+                                                            id: user.1,
+                                                            overall: user_power as i32,
+                                                            turns: user_stats.totalTurns,
+                                                            game_turns: user_stats.gameTurns,
+                                                            mvps: user_stats.mvps,
+                                                            streak: user_stats.streak,
+                                                            awards: user_stats.awards,
+                                                        },
+                                                        connection,
+                                                    )
+                                                })
+                                                .await
+                                            {
                                                 Ok(_oka) => {
                                                     std::result::Result::Ok(Json(String::from(
                                                         "Okay",
@@ -277,10 +314,10 @@ pub fn make_move(
 
 #[get("/polls", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
-    match Latest::latest(&conn) {
+pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
+    match conn.run(move |connection| Latest::latest(connection)).await {
         Ok(latest) => {
-            match Poll::get(latest.season, latest.day, &conn) {
+            match conn.run(move |c| Poll::get(latest.season, latest.day, c)).await {
                 Ok(polls) => std::result::Result::Ok(Json(polls)),
                 Err(_E) => std::result::Result::Err(Status::InternalServerError),
             }
@@ -290,11 +327,10 @@ pub fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 }
 
 #[get("/poll/respond?<poll>&<response>", rank = 1)]
-//#[cfg(feature = "risk_security")]
-pub fn submit_poll(
-    mut cookies: Cookies,
+pub async fn submit_poll(
+    cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
     poll: i32,
     response: bool,
 ) -> Result<Json<bool>, Status> {
@@ -304,15 +340,20 @@ pub fn submit_poll(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match PollResponse::upsert(
-                        PollResponse {
-                            id: -1,
-                            poll,
-                            user_id: c.0.id,
-                            response,
-                        },
-                        &conn,
-                    ) {
+                    match conn
+                        .run(move |connection| {
+                            PollResponse::upsert(
+                                PollResponse {
+                                    id: -1,
+                                    poll,
+                                    user_id: c.0.id,
+                                    response,
+                                },
+                                connection,
+                            )
+                        })
+                        .await
+                    {
                         Ok(inner) => {
                             match inner {
                                 1 => std::result::Result::Ok(Json(true)),
@@ -330,11 +371,10 @@ pub fn submit_poll(
 }
 
 #[get("/poll/response?<poll>", rank = 1)]
-//#[cfg(feature = "risk_security")]
-pub fn view_response(
-    mut cookies: Cookies,
+pub async fn view_response(
+    cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<String>,
+    key: State<'_, String>,
     poll: i32,
 ) -> Result<Json<Vec<PollResponse>>, Status> {
     // get user id
@@ -343,7 +383,10 @@ pub fn view_response(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match PollResponse::get(poll, c.0.id, &conn) {
+                    match conn
+                        .run(move |connection| PollResponse::get(poll, c.0.id, connection))
+                        .await
+                    {
                         Ok(responses) => std::result::Result::Ok(Json(responses)),
                         Err(_E) => std::result::Result::Err(Status::InternalServerError),
                     }
@@ -420,7 +463,7 @@ pub fn handle_territory_info(
         )>(conn)
     {
         Ok(team_id) => {
-            match get_adjacent_territory_owners(target, &latest, &conn) {
+            match get_adjacent_territory_owners(target, &latest, conn) {
                 Ok(adjacent_territory_owners) => {
                     match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
                         Some(_tuple_of_territory) => {
@@ -436,7 +479,7 @@ pub fn handle_territory_info(
                                         }
                                         let mut aon_multiplier: i32 = 1;
                                         if aon == Some(true)
-                                            && get_territory_number(team_id.0, &latest, &conn) == 1
+                                            && get_territory_number(team_id.0, &latest, conn) == 1
                                         {
                                             let mut rng = thread_rng();
                                             aon_multiplier = 5 * rng.gen_range(0..2);
@@ -579,36 +622,3 @@ pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> Quer
         }
     }
 }
-
-// Code Graveyard
-/*use anyhow::{Context, Error};
-use hyper::{
-    header::{Authorization, Bearer, UserAgent},
-    net::HttpsConnector,
-    Client,
-};*/
-//use rocket_oauth2::{OAuth2, TokenResponse};
-//use rocket::response::{Debug, Redirect};
-//hyper::header::{Authorization, Bearer, UserAgent},
-//use hyper::{net::HttpsConnector, Client};
-//use std::io::Read;
-/*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
-let client = Client::with_connector(https);
-let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
-url.push_str(&name);
-let mut res = client.get(&url).send().unwrap();
-
-let mut body = String::new();
-match res.read_to_string(&mut body) {
-    Ok(_ok) => {
-        match serde_json::from_str(&body[0..]) {
-            Ok(v) => {
-                let v: serde_json::Value = v;
-                v["ratings"]["overall"].as_i64().unwrap_or(1)
-            }
-            _ => 1,
-        }
-    }
-    Err(_e) => 1,
-}#[cfg(feature = "risk_security")]
-use crate::security::;*/

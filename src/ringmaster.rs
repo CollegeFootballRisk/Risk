@@ -33,7 +33,7 @@ pub fn establish_connection() -> PgConnection {
 
 fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
     let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
-    teams.sort();
+    teams.sort_unstable();
     teams.dedup();
     teams
 }
