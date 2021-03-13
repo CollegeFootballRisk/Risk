@@ -11,10 +11,15 @@ pub async fn territories(
 ) -> Result<Json<Vec<TerritoryWithNeighbors>>, Status> {
     match conn.run(move |c| Latest::latest(c)).await {
         Ok(current) => {
-            let territories = conn.run(|c| TerritoryWithNeighbors::load(
-                season.unwrap_or(current.season),
-                day.unwrap_or(current.day),
-                c)).await;
+            let territories = conn
+                .run(move |c| {
+                    TerritoryWithNeighbors::load(
+                        season.unwrap_or(current.season),
+                        day.unwrap_or(current.day),
+                        c,
+                    )
+                })
+                .await;
             if territories.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(territories))
             } else {

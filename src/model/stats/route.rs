@@ -20,7 +20,7 @@ pub async fn leaderboard(
 ) -> Result<Json<Vec<StatLeaderboard>>, Status> {
     match (season, day) {
         (Some(season), Some(day)) => {
-            let leaderboard = conn.run(|c| StatLeaderboard::load(season, day, c)).await;
+            let leaderboard = conn.run(move |c| StatLeaderboard::load(season, day, c)).await;
             match leaderboard {
                 Ok(strength) => std::result::Result::Ok(Json(strength)),
                 _ => std::result::Result::Err(Status::BadRequest),
@@ -30,7 +30,9 @@ pub async fn leaderboard(
             match conn.run(|c| Latest::latest(c)).await {
                 Ok(current) => {
                     //dbg!(&current.day - 1);
-                    let leaderboard = conn.run(|c| StatLeaderboard::load(current.season, current.day - 1, c)).await;
+                    let leaderboard = conn
+                        .run(move |c| StatLeaderboard::load(current.season, current.day - 1, c))
+                        .await;
                     match leaderboard {
                         Ok(strength) => std::result::Result::Ok(Json(strength)),
                         _ => std::result::Result::Err(Status::BadRequest),
@@ -50,8 +52,11 @@ pub async fn heat(
 ) -> Result<Json<Vec<Heat>>, Status> {
     match conn.run(|c| Latest::latest(c)).await {
         Ok(current) => {
-            let heat =
-                conn.run(|c| Heat::load(season.unwrap_or(current.season), day.unwrap_or(current.day - 1), c)).await;
+            let heat = conn
+                .run(move |c| {
+                    Heat::load(season.unwrap_or(current.season), day.unwrap_or(current.day - 1), c)
+                })
+                .await;
             if heat.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(heat))
             } else {
@@ -73,7 +78,12 @@ pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHist
 }
 
 #[get("/team/odds?<season>&<day>&<team>")]
-pub async fn odds(season: i32, day: i32, team: String, conn: DbConn) -> Result<Json<Vec<Odds>>, Status> {
+pub async fn odds(
+    season: i32,
+    day: i32,
+    team: String,
+    conn: DbConn,
+) -> Result<Json<Vec<Odds>>, Status> {
     let odds = conn.run(move |c| Odds::load(season, day, team, c)).await;
     match odds {
         Ok(odds) => {

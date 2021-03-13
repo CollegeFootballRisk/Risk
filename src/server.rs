@@ -17,7 +17,7 @@ mod schema;
 #[cfg(feature = "risk_security")]
 mod security;
 use crate::db::DbConn;
-use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
+use crate::model::{player, stats, sys, team, territory, turn, Latest}; //auth, discord, reddit
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::OAuth2;
 use rocket_oauth2::{OAuthConfig, StaticProvider};
@@ -27,7 +27,8 @@ use xdg::BaseDirectories;
 
 //use rocket::config::{Config, Environment};
 
-fn main() {
+#[rocket::launch]
+fn rocket() -> _ {
     match getConfig() {
         Ok(_config) => {}
         Err(error) => {
@@ -71,7 +72,7 @@ fn main() {
 
     let api_paths = routes![
         player::route::player,
-        player::route::me,
+        //player::route::me,
         player::route::players,
         player::route::player_multifetch,
         turn::route::turns,
@@ -90,7 +91,7 @@ fn main() {
     ];
 
     let mut auth_paths = routes![
-        reddit::route::reddit_callback,
+        /*reddit::route::reddit_callback,
         reddit::route::reddit_logout,
         discord::route::discord_callback,
         auth::route::make_move,
@@ -98,7 +99,7 @@ fn main() {
         auth::route::join_team,
         auth::route::view_response,
         auth::route::submit_poll,
-        auth::route::get_polls,
+        auth::route::get_polls,*/
     ];
 
     #[cfg(feature = "risk_captcha")]
@@ -108,20 +109,30 @@ fn main() {
     #[cfg(feature = "risk_security")]
     root_paths.append(&mut crate::security::route::routes());
 
-    rocket::ignite()
+   /* rocket::ignite()
 //        .manage(db::init_pool())
         .manage(key)
         .manage(latest)
         .attach(DbConn::fairing())
-        .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
-        .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
+        //.attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
+        //.attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
         .register(catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
-        .mount("/auth", auth_paths)
-        .mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login])
+        //.mount("/auth", auth_paths)
+        //.mount("/login", routes![reddit::route::reddit_login, discord::route::discord_login])
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
-        .launch();
+        .launch()*/
+
+        rocket::ignite()
+    
+                .manage(key)
+                .manage(latest)
+                .attach(DbConn::fairing())
+                .register(catchers![catchers::not_found, catchers::internal_error])
+                .mount("/api", api_paths)
+                .mount("/", StaticFiles::from("static").rank(2))
+                .mount("/", root_paths)
 }
 
 use serde_derive::Deserialize;

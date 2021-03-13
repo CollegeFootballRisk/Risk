@@ -1,44 +1,21 @@
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use hyper::{
-    header::{Authorization, Bearer, UserAgent},
-    net::HttpsConnector,
-    Client,
-};
-
+use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use crate::{db::DbConn, model::User};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
-use serde_json::{self};
-use std::io::Read;
-/*use chrono::prelude::*;
-use chrono::Duration;*/
 use chrono::Utc;
 use diesel_citext::types::CiString;
 use time::Duration;
 
 #[get("/reddit")]
-pub async fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
+pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect{
     oauth2.get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
 #[get("/logout")]
 pub async fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    /*let token: String = cookies
-        .get_private("jwt")
-        .and_then(|cookie| cookie.value().parse().ok())
-        .unwrap_or_else(|| "".to_string());
-    let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
-    let client = Client::with_connector(https);
-    let _response = client
-        .get("https://www.reddit.com/api/v1/revoke_token")
-        .header(Authorization(Bearer {
-            token,
-        }))
-        .header(UserAgent("AggieRiskLocal - Dev Edition".into()))
-        .send()
-        .context("failed to send request to API");*/
     cookies.remove_private(Cookie::named("jwt"));
     cookies.remove_private(Cookie::named("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
@@ -60,7 +37,10 @@ pub async fn reddit_callback(
             };
             match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
-                    match conn.run(move |c| User::load(user_info.name.clone(), "reddit".to_string(), c)).await {
+                    match conn
+                        .run(move |c| User::load(user_info.name.clone(), "reddit".to_string(), c))
+                        .await
+                    {
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
@@ -106,23 +86,15 @@ pub async fn reddit_callback(
     }
 }
 
-fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUserInfo, String> {
-    let https = HttpsConnector::new(hyper_rustls::TlsClient::new());
-    let client = Client::with_connector(https);
-    match client
-        .get("https://oauth.reddit.com/api/v1/me")
-        .header(Authorization(Bearer {
-            token: token.access_token().to_string(),
-        }))
-        .header(UserAgent("AggieRiskLocal - Dev Edition".into()))
-        .send()
-    {
-        Ok(response) => {
-            match serde_json::from_reader(response.take(2 * 1024 * 1024)) {
-                Ok(send) => Ok(send),
-                Err(_e) => Err("Error in getting user data #2".to_string()),
-            }
-        }
-        Err(_e) => Err("Error in getting user data #1".to_string()),
-    }
+async fn getRedditUserInfo(token: &TokenResponse<RedditUserInfo>) -> Result<RedditUserInfo, Box<dyn std::error::Error>> {
+    reqwest::Client::builder()
+    .build()?
+    .get("https://oauth.reddit.com/api/v1/me")
+    .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
+    .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
+    .send()
+    .await
+    .json()
+    .await
+    .context("failed to deserialize response")?
 }

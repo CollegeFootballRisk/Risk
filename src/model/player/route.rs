@@ -1,5 +1,5 @@
 use crate::db::DbConn;
-use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
+use crate::model::{PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer}; //Claims
 use rocket::http::CookieJar;
 use rocket::http::Status;
 use rocket::State;
@@ -35,7 +35,7 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
     }
 }
 
-#[get("/me")]
+/*#[get("/me")]
 pub async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
@@ -45,10 +45,11 @@ pub async fn me(
         Some(cookie) => {
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
+                    let username = c.0.user.clone();
                     let users = conn
                         .run(move |connection| {
                             PlayerWithTurnsAndAdditionalTeam::load(
-                                vec![c.0.user.clone()],
+                                vec![username],
                                 false,
                                 connection,
                             )
@@ -93,6 +94,7 @@ match cookies
     }
 }*/
 //}
+*/
 
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(

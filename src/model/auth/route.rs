@@ -28,11 +28,16 @@ pub async fn join_team(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     //see if user already has team, and if user has current_team
-                    let users = conn.run(move |connection| PlayerWithTurnsAndAdditionalTeam::load(
-                        vec![c.0.user.clone()],
-                        false,
-                        connection
-                    )).await;
+                    let username= c.0.user.clone();
+                    let users = conn
+                        .run(move |connection| {
+                            PlayerWithTurnsAndAdditionalTeam::load(
+                                vec![username],
+                                false,
+                                connection,
+                            )
+                        })
+                        .await;
                     match users {
                         Some(users) => {
                             if users.name.to_lowercase() == c.0.user.to_lowercase() {
@@ -40,10 +45,22 @@ pub async fn join_team(
                                 match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
                                     None => {
                                         //check team exists
-                                        match conn.run(move |connection| TeamInfo::load(&connection).iter().any(|e| e.id == team)).await {
+                                        match conn
+                                            .run(move |connection| {
+                                                TeamInfo::load(&connection)
+                                                    .iter()
+                                                    .any(|e| e.id == team)
+                                            })
+                                            .await
+                                        {
                                             true => {
                                                 // check that team has territories
-                                                match conn.run(move |connection| CurrentStrength::load_id(team, connection)).await {
+                                                match conn
+                                                    .run(move |connection| {
+                                                        CurrentStrength::load_id(team, connection)
+                                                    })
+                                                    .await
+                                                {
                                                     Ok(strength) => {
                                                         if strength.territories > 0 {
                                                             match users
@@ -55,9 +72,9 @@ pub async fn join_team(
                                                             {
                                                                 Some(_e) => {
                                                                     //merc!
-                                                                    match update_user(
-                                                                        false, c.0.id, team, &conn,
-                                                                    ) {
+                                                                    match conn.run(move |cn| update_user(
+                                                                        false, c.0.id, team, cn,
+                                                                    )).await {
                                                                         Ok(_e) => {
                                                                             std::result::Result::Ok(Json(
                                                                                 String::from("Okay"),
@@ -72,9 +89,9 @@ pub async fn join_team(
                                                                 }
                                                                 None => {
                                                                     //new kid on the block
-                                                                    match update_user(
-                                                                        true, c.0.id, team, &conn,
-                                                                    ) {
+                                                                    match conn.run(move |cn| update_user(
+                                                                        true, c.0.id, team, cn,
+                                                                    )).await {
                                                                         Ok(_e) => {
                                                                             std::result::Result::Ok(Json(
                                                                                 String::from("Okay"),
@@ -145,9 +162,12 @@ pub async fn my_move(
                             };
                             // get the territory the user has attacked
                             std::result::Result::Ok(Json(
-                                conn.run(|connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection)).await
-                                    .territory
-                                    .unwrap_or_else(|| String::from("")),
+                                conn.run(move |connection| {
+                                    MoveInfo::get(latest.season, latest.day, c.0.id, connection)
+                                })
+                                .await
+                                .territory
+                                .unwrap_or_else(|| String::from("")),
                             ))
                         }
                         Err(_err) => std::result::Result::Err(Status::Unauthorized),
@@ -183,19 +203,28 @@ pub async fn make_move(
                             };
                             // id, name Json(c.0.user)
                             //get user's team information, and whether they can make that move
-                            match conn.run(|connection| handle_territory_info(
-                                &c.0,
-                                target,
-                                Latest {
-                                    season: latest.season,
-                                    day: latest.day,
-                                },
-                                connection,
-                                aon,
-                            )).await {
+                            match conn
+                                .run(|connection| {
+                                    handle_territory_info(
+                                        &c.0,
+                                        target,
+                                        Latest {
+                                            season: latest.season,
+                                            day: latest.day,
+                                        },
+                                        connection,
+                                        aon,
+                                    )
+                                })
+                                .await
+                            {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
-                                    let awards = conn.run(|connection| get_cfb_points(c.0.user.clone(), connection)).await;
+                                    let awards = conn
+                                        .run(move |connection| {
+                                            get_cfb_points(c.0.user.clone(), connection)
+                                        })
+                                        .await;
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -220,31 +249,41 @@ pub async fn make_move(
                                     if user.0 != user.8 {
                                         merc = true;
                                     }
-                                    match conn.run(|connection| insert_turn(
-                                        &user,
-                                        user_ratings,
-                                        &latest,
-                                        target,
-                                        multiplier,
-                                        user_weight,
-                                        user_power,
-                                        merc,
-                                        connection,
-                                    )).await {
+                                    match conn
+                                        .run(|connection| {
+                                            insert_turn(
+                                                &user,
+                                                user_ratings,
+                                                &latest,
+                                                target,
+                                                multiplier,
+                                                user_weight,
+                                                user_power,
+                                                merc,
+                                                connection,
+                                            )
+                                        })
+                                        .await
+                                    {
                                         Ok(_ok) => {
                                             //now we go update the user
-                                            match conn.run(|connection| UpdateUser::do_update(
-                                                UpdateUser {
-                                                    id: user.1,
-                                                    overall: user_power as i32,
-                                                    turns: user_stats.totalTurns,
-                                                    game_turns: user_stats.gameTurns,
-                                                    mvps: user_stats.mvps,
-                                                    streak: user_stats.streak,
-                                                    awards: user_stats.awards,
-                                                },
-                                                connection,
-                                            )).await {
+                                            match conn
+                                                .run(|connection| {
+                                                    UpdateUser::do_update(
+                                                        UpdateUser {
+                                                            id: user.1,
+                                                            overall: user_power as i32,
+                                                            turns: user_stats.totalTurns,
+                                                            game_turns: user_stats.gameTurns,
+                                                            mvps: user_stats.mvps,
+                                                            streak: user_stats.streak,
+                                                            awards: user_stats.awards,
+                                                        },
+                                                        connection,
+                                                    )
+                                                })
+                                                .await
+                                            {
                                                 Ok(_oka) => {
                                                     std::result::Result::Ok(Json(String::from(
                                                         "Okay",
@@ -303,15 +342,20 @@ pub async fn submit_poll(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match conn.run(|connection| PollResponse::upsert(
-                        PollResponse {
-                            id: -1,
-                            poll,
-                            user_id: c.0.id,
-                            response,
-                        },
-                        connection,
-                    )).await {
+                    match conn
+                        .run(move |connection| {
+                            PollResponse::upsert(
+                                PollResponse {
+                                    id: -1,
+                                    poll,
+                                    user_id: c.0.id,
+                                    response,
+                                },
+                                connection,
+                            )
+                        })
+                        .await
+                    {
                         Ok(inner) => {
                             match inner {
                                 1 => std::result::Result::Ok(Json(true)),
@@ -341,7 +385,7 @@ pub async fn view_response(
             match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
-                    match conn.run(|connection| PollResponse::get(poll, c.0.id, connection)).await {
+                    match conn.run(move |connection| PollResponse::get(poll, c.0.id, connection)).await {
                         Ok(responses) => std::result::Result::Ok(Json(responses)),
                         Err(_E) => std::result::Result::Err(Status::InternalServerError),
                     }
@@ -418,7 +462,7 @@ pub fn handle_territory_info(
         )>(conn)
     {
         Ok(team_id) => {
-            match get_adjacent_territory_owners(target, &latest, &conn) {
+            match get_adjacent_territory_owners(target, &latest, conn) {
                 Ok(adjacent_territory_owners) => {
                     match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
                         Some(_tuple_of_territory) => {
@@ -426,15 +470,15 @@ pub fn handle_territory_info(
                             match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0) {
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
-                                        let mut regional_multiplier =
-                                            2 * handleregionalownership(&latest, team_id.0, &conn)
+                                        let mut regional_multiplier: i32 =
+                                            2 * handleregionalownership(&latest, team_id.0, &conn).await
                                                 .unwrap_or(0);
                                         if regional_multiplier == 0 {
                                             regional_multiplier = 1;
                                         }
                                         let mut aon_multiplier: i32 = 1;
                                         if aon == Some(true)
-                                            && get_territory_number(team_id.0, &latest, &conn) == 1
+                                            && get_territory_number(team_id.0, &latest, conn) == 1
                                         {
                                             let mut rng = thread_rng();
                                             aon_multiplier = 5 * rng.gen_range(0..2);
@@ -499,7 +543,7 @@ pub async fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnectio
         .unwrap_or(0) as i32
 }
 
-pub async fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
+pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     match cfbr_stats::table
         .filter(cfbr_stats::player.eq(CiString::from(name)))
         .select(cfbr_stats::stars)
@@ -515,7 +559,7 @@ pub async fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     }
 }
 
-pub async fn insert_turn(
+pub fn insert_turn(
     user: &(
         i32,
         i32,
@@ -561,7 +605,12 @@ pub async fn insert_turn(
         .execute(conn)
 }
 
-pub async fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+pub fn update_user(
+    new: bool,
+    user: i32,
+    team: i32,
+    conn: &PgConnection,
+) -> QueryResult<usize> {
     match new {
         true => {
             diesel::update(users::table)
@@ -577,36 +626,3 @@ pub async fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -
         }
     }
 }
-
-// Code Graveyard
-/*use anyhow::{Context, Error};
-use hyper::{
-    header::{Authorization, Bearer, UserAgent},
-    net::HttpsConnector,
-    Client,
-};*/
-//use rocket_oauth2::{OAuth2, TokenResponse};
-//use rocket::response::{Debug, Redirect};
-//hyper::header::{Authorization, Bearer, UserAgent},
-//use hyper::{net::HttpsConnector, Client};
-//use std::io::Read;
-/*let https = HttpsConnector::new(hyper_sync_rustls::TlsClient::new());
-let client = Client::with_connector(https);
-let mut url = "https://collegefootballrisk.com/api/player?player=".to_owned();
-url.push_str(&name);
-let mut res = client.get(&url).send().unwrap();
-
-let mut body = String::new();
-match res.read_to_string(&mut body) {
-    Ok(_ok) => {
-        match serde_json::from_str(&body[0..]) {
-            Ok(v) => {
-                let v: serde_json::Value = v;
-                v["ratings"]["overall"].as_i64().unwrap_or(1)
-            }
-            _ => 1,
-        }
-    }
-    Err(_e) => 1,
-}#[cfg(feature = "risk_security")]
-use crate::security::;*/
