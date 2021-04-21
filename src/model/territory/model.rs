@@ -2,17 +2,18 @@ use crate::model::*;
 use crate::schema::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
+use schemars::JsonSchema;
 use serde_json::Value;
 use std::result::Result;
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub struct Territory {
     id: i32,
     name: String,
     owner: String,
 }
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub struct TerritoryWithNeighbors {
     pub id: i32,
     pub name: String,
@@ -20,7 +21,7 @@ pub struct TerritoryWithNeighbors {
     pub neighbors: Value,
 }
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub struct TerritoryHistory {
     pub season: i32,
     pub day: i32,
@@ -28,7 +29,7 @@ pub struct TerritoryHistory {
     pub owner: String,
 }
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub struct TerritoryTurn {
     pub occupier: String,
     pub winner: String,

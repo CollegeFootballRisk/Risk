@@ -1,5 +1,6 @@
 use crate::model::stats::Stats;
-#[derive(Serialize, Deserialize, Clone, Debug)]
+use schemars::JsonSchema;
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct Ratings {
     pub overall: i32,
     pub totalTurns: i32,

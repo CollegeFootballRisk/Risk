@@ -1,18 +1,20 @@
+use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{TeamInfo, TeamPlayerMoves};
-use rocket::http::Status;
 use rocket_contrib::json::Json;
 
+#[openapi]
 #[get("/teams")]
 pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
     let teams = conn.run(move |c| TeamInfo::load(c)).await;
     if teams.len() as i32 >= 1 {
         std::result::Result::Ok(Json(teams))
     } else {
-        std::result::Result::Err(Status::NotFound)
+        std::result::Result::Err(Status(rocket::http::Status::NotFound))
     }
 }
 
+#[openapi]
 #[get("/team/players?<season>&<day>&<team>")]
 pub async fn teamplayersbymoves(
     season: i32,
@@ -24,6 +26,6 @@ pub async fn teamplayersbymoves(
     if moves.len() as i32 >= 1 {
         std::result::Result::Ok(Json(moves))
     } else {
-        std::result::Result::Err(Status::NotFound)
+        std::result::Result::Err(Status(rocket::http::Status::NotFound))
     }
 }

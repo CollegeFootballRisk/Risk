@@ -5,6 +5,7 @@ use crate::schema::*;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;
+use schemars::JsonSchema;
 
 #[derive(Serialize)]
 pub struct Player {
@@ -16,7 +17,7 @@ pub struct Player {
     pub turns: Vec<Turn>,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct TeamPlayer {
     pub team: Option<CiString>,
     pub player: Option<CiString>,
@@ -24,7 +25,7 @@ pub struct TeamPlayer {
     pub mvps: Option<i32>,
     pub lastTurn: LastTurn,
 }
-#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     pub id: i32,
     pub uname: CiString,
@@ -36,7 +37,7 @@ pub struct User {
     pub awards: Option<i32>, //    pub team: Option<String>
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct PlayerWithTurns {
     pub name: CiString,
     pub team: Option<TeamWithColors>,
@@ -46,7 +47,7 @@ pub struct PlayerWithTurns {
     pub turns: Vec<PastTurn>,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct PlayerInTurns {
     pub team: Option<CiString>,
     pub player: Option<CiString>,
@@ -57,7 +58,7 @@ pub struct PlayerInTurns {
     pub power: f64,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct PlayerWithTurnsAndAdditionalTeam {
     pub name: CiString,
     pub team: Option<TeamWithColors>,

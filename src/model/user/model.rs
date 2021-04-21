@@ -1,8 +1,9 @@
 use crate::schema::*;
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
+use schemars::JsonSchema;
 
-#[derive(Insertable, Queryable, Serialize, Deserialize, AsChangeset)]
+#[derive(Insertable, Queryable, Serialize, Deserialize, JsonSchema, AsChangeset)]
 #[table_name = "users"]
 pub struct UpsertableUser {
     pub uname: CiString,

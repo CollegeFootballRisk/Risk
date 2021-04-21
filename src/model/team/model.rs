@@ -3,25 +3,26 @@ use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;
+use schemars::JsonSchema;
 
-#[derive(Queryable, Serialize, Deserialize, Associations)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
 #[table_name = "teams"]
 pub struct Team {
     pub name: Option<String>,
     pub color_1: Option<String>,
     pub color_2: Option<String>,
 }
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct TeamWithColors {
     pub name: Option<String>,
     pub colors: Colors,
 }
-#[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct Colors {
     pub primary: String,
     pub secondary: String,
 }
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct TeamInfo {
     pub id: i32,
     pub name: String,
@@ -30,7 +31,7 @@ pub struct TeamInfo {
     pub seasons: Vec<i32>,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct TeamInTurns {
     pub team: CiString,
     pub color: String,
@@ -41,7 +42,7 @@ pub struct TeamInTurns {
     pub breakdown: StarBreakdown64,
 }
 
-#[derive(Queryable, Serialize, Deserialize, Associations)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
 #[table_name = "team_player_moves"]
 pub struct TeamPlayerMoves {
     pub id: i32,

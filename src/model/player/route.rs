@@ -1,10 +1,11 @@
+use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
 use rocket::http::CookieJar;
-use rocket::http::Status;
 use rocket::State;
 use rocket_contrib::json::Json;
 
+#[openapi]
 #[get("/players?<team>")]
 pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
@@ -18,10 +19,10 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
                     if users.len() as i32 >= 1 {
                         std::result::Result::Ok(Json(users))
                     } else {
-                        std::result::Result::Err(Status::NotFound)
+                        std::result::Result::Err(Status(rocket::http::Status::NotFound))
                     }
                 }
-                _ => std::result::Result::Err(Status::Conflict),
+                _ => std::result::Result::Err(Status(rocket::http::Status::Conflict)),
             }
         }
         None => {
@@ -29,12 +30,13 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
             if users.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(users))
             } else {
-                std::result::Result::Err(Status::NotFound)
+                std::result::Result::Err(Status(rocket::http::Status::NotFound))
             }
         }
     }
 }
 
+#[openapi]
 #[get("/me")]
 pub async fn me(
     cookies: &CookieJar<'_>,
@@ -60,19 +62,20 @@ pub async fn me(
                             if user.name.to_lowercase() == c.0.user.to_lowercase() {
                                 std::result::Result::Ok(Json(user))
                             } else {
-                                std::result::Result::Err(Status::NotFound)
+                                std::result::Result::Err(Status(rocket::http::Status::NotFound))
                             }
                         }
-                        None => std::result::Result::Err(Status::NotFound),
+                        None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
                     }
                 }
-                Err(_e) => std::result::Result::Err(Status::BadRequest),
+                Err(_e) => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
             }
         }
-        None => std::result::Result::Err(Status::Unauthorized),
+        None => std::result::Result::Err(Status(rocket::http::Status::Unauthorized)),
     }
 }
 
+#[openapi]
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(
     players: Option<String>,
@@ -91,10 +94,11 @@ pub async fn player_multifetch(
                 .await,
             ))
         }
-        None => std::result::Result::Err(Status::NotFound),
+        None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
     }
 }
 
+#[openapi]
 #[get("/player?<player>")]
 pub async fn player(
     player: String,
@@ -104,9 +108,9 @@ pub async fn player(
     //if users.len() as i32 == 1 {
     match users {
         Some(user) => std::result::Result::Ok(Json(user)),
-        None => std::result::Result::Err(Status::NotFound),
+        None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
     }
     // } else {
-    //   std::result::Result::Err(Status::NotFound)
+    //   std::result::Result::Err(Status(rocket::http::Status::NotFound))
     //}
 }

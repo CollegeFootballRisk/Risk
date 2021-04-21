@@ -8,6 +8,8 @@ extern crate rocket_contrib;
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
+#[macro_use]
+extern crate rocket_okapi;
 
 mod catchers;
 mod db;
@@ -19,8 +21,8 @@ mod security;
 use crate::db::DbConn;
 use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
-use rocket_oauth2::OAuth2;
-use rocket_oauth2::{OAuthConfig, StaticProvider};
+use rocket_oauth2::{OAuth2, OAuthConfig, StaticProvider};
+use rocket_okapi::swagger_ui::{SwaggerUIConfig, make_swagger_ui};
 use std::fs;
 use std::path::Path;
 use xdg::BaseDirectories;
@@ -73,7 +75,7 @@ fn rocket() -> _ {
     ];
 
     #[allow(unused_mut)]
-    let api_paths = routes![
+    let api_paths = routes_with_openapi![
         player::route::player,
         player::route::me,
         player::route::players,
@@ -126,18 +128,25 @@ fn rocket() -> _ {
         We attach all the fairings, even if not required, those fairings must therefore be compiled
         However, we won't actually append the non-specified routes so they are in effect disabled.
     */
-    rocket::ignite()
+    rocket::build()
         .manage(key)
         .manage(latest)
         .attach(DbConn::fairing())
         .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
         .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
-        .register(catchers![catchers::not_found, catchers::internal_error])
+        .register("/", catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
         .mount("/login", login_paths)
         .mount("/auth", auth_paths)
+        .mount(
+            "/docs/",
+            make_swagger_ui(&SwaggerUIConfig {
+                url: "../api/openapi.json".to_owned(),
+                ..Default::default()
+            }),
+        )
 }
 
 use serde_derive::Deserialize;

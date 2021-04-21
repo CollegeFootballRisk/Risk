@@ -1,4 +1,4 @@
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct SysInfo {
     pub name: String,
     pub base_url: String,
