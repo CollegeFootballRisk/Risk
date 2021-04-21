@@ -1,0 +1,52 @@
+[package]
+name = "rust-risk"
+version = "0.1.16"
+authors = ["Mautamu <mautamu@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+base64 = {version = "0.13.0", optional=true}
+captcha = {version = "0.0.8", optional=true}
+chrono = {version = "0.4.19", features = ["serde"]}
+time = "0.2.25"
+diesel = { version = "1.4.5", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
+diesel-citext = {git = "https://github.com/mautamu/diesel-citext"}
+#diesel-citext = {git = "https://github.com/afonso360/diesel-citext"}
+dotenv = "0.15.0"
+hyper = { version = "0.14.2", features = ["full"] }
+image = {version = "0.23.12", optional=true}
+nsvg = {version = "0.5.1", optional=true}
+jsonwebtoken = "7.2.0"
+rand = "0.8"
+rand_chacha="0.3"
+r2d2 = "0.8.9"
+reqwest = { version = "0.11.0", default-features = false, features = ["json", "rustls-tls"] }
+rocket = {git = "https://github.com/SergioBenitez/Rocket", branch = "master", features = ["secrets"] }
+rocket_contrib = {git = "https://github.com/SergioBenitez/Rocket", branch = "master", features=["diesel_postgres_pool"]}
+rocket_oauth2 = {git = "https://github.com/jebrosen/rocket_oauth2/", branch = "next", features = ["hyper_rustls_adapter"]}
+okapi = {git = "https://github.com/mautamu/okapi/", branch = "async2" }
+rocket_okapi = { git = "https://github.com/mautamu/okapi/", branch = "async2" }
+schemars = { version = "0.8", features = ["preserve_order"] }
+serde = "1.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+toml="0.5.8"
+urlencoding = "1.1.1"
+xdg = "2.2.0"
+
+[features]
+default = ["risk_reddit"]
+risk_discord = []
+risk_groupme = []
+risk_image = ["image", "nsvg"]
+risk_reddit = []
+risk_security = []
+risk_captcha = ["captcha", "base64"]
+
+[[bin]]
+name = "rrserver"
+path = "src/server.rs"
+
+[[bin]]
+name = "rrringmaster"
+path = "src/ringmaster.rs"

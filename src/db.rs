@@ -1,0 +1,46 @@
+use rocket_contrib::databases::diesel;
+/*use r2d2_diesel::ConnectionManager;
+use rocket::http::Status;
+use rocket::request::{self, FromRequest};
+use rocket::{Request, State};
+use rocket::outcome::Outcome;
+use std::ops::Deref;
+/*
+type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
+
+pub fn init_pool() -> Pool {
+    let manager = ConnectionManager::<PgConnection>::new(database_url());
+    Pool::new(manager).expect("db pool")
+}
+
+fn database_url() -> String {
+    dotenv::from_filename("../.env").ok();
+    dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set")
+}
+
+pub struct DbConn(pub r2d2::PooledConnection<ConnectionManager<PgConnection>>);
+
+#[rocket::async_trait]
+impl<'a, 'r> FromRequest<'a, 'r> for DbConn {
+    type Error = ();
+
+    async fn from_request(request: &'a Request<'r>) -> request::Outcome<DbConn, Self::Error> {
+        let pool = request.guard::<State<Pool>>()?;
+        match pool.get() {
+            Ok(conn) => Outcome::Success(DbConn(conn)),
+            Err(_) => Outcome::Failure((Status::ServiceUnavailable, ())),
+        }
+    }
+}
+
+impl Deref for DbConn {
+    type Target = PgConnection;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}*/
+*/
+
+#[database("postgres_global")]
+pub struct DbConn(diesel::PgConnection);

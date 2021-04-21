@@ -1,5 +1,14 @@
-# Risk
-A Risk game similar to CollegeFootballRisk, written in Rust
+<div align="center">
+  <h1><strong>Risk</strong></h1>
+  <p>
+    <strong>A Risk game similar to CollegeFootballRisk, written in Rust </strong>
+  </p>
+  <p>
+    <a href="https://github.com/mautamu/risk/actions?query=workflow%3ACI"><img src="https://github.com/leftwm/leftwm/workflows/CI/badge.svg" alt="build status" /></a>
+  </p>
+</div>
+
+![Ringmaster Flamegraph](/documentation/screenshot.png)
 
 - [API](/documentation/API.md)
 - [Deviations from College Football Risk's API](/documentation/DEVIATIONS.md)

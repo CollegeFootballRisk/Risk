@@ -1,4 +1,5 @@
 # Getting Started
+**NOTE: This version is for version 0.2.x**
 
 ## Table of contents
 
@@ -31,13 +32,21 @@ Other programmes you will need access to:
 * Libreoffice Calc OR Microsoft Office Excel OR Google Docs (OR some programming language) - Optional, to populate map adjacency
 
 ## Installation of Rust
-To install this programme, install Rust nightly for your system. This can be accomplished with rustup:
+To install this programme, install Rust nightly for your system. This can be accomplished with rustup or (in Unix-like operating systems) install.sh:
 
 **NOTE: YOU NEED TO SELECT "NIGHTLY" RUST WHEN PROMPTED BETWEEN NIGHTLY/STABLE/BETA**
 
 ### Unix-like Systems
+You can use the install.sh file at the root of this directory. Clone this repo, as per [Rust Risk Setup](#rust-risk-setup) and then execute
+
+ ```bash
+ ./install.sh -b
+ ```
+ 
+ Alternatively, install Rust with Rustup:
+
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly
 ```
 
 ### Windows, Others
@@ -59,15 +68,8 @@ git clone https://github.com/mautamu/Risk.git
 
 ### Windows, Others
 Using CMD or git,
-```
+```bash
 git clone https://github.com/mautamu/Risk.git
-```
-
-Once you have downloaded Rust-Risk, you will then need to download the submodules:
-```
-git submodule init
-
-git submodule update
 ```
 
 ## Reddit Setup
@@ -78,7 +80,7 @@ You will now need to create an application in Reddit. If you have a domain name 
 3. Set the name to "{Name}-Risk" (append -local if you're using localhost)
 4. Add a short description, e.g. "The University of Alabama Rust-Risk Installation"
 5. Add an about url that points exactly to the /info endpoint on your domain (`https://aggierisk.com/info` for example). If using local, use `http://localhost:8000/info`. 
-6. **IMPORTANT:** Reddit is very picky about the redirect_url. Your port number and domain must match your FQDN (domain name) EXACTLY. `http://localhost:8000/auth/reddit` is NOT `httpz://localhost:8000/auth/reddit` is not `http://localhost/info`, etc. For production use, it will look similar to: `https://aggierisk.com/auth/reddit`. For local use, it will probably be `http://localhost:8000/auth/reddit`.
+6. **IMPORTANT:** Reddit is very picky about the redirect_url. Your port number and domain must match your FQDN (domain name) EXACTLY. `http://localhost:8000/auth/reddit` is NOT `https://localhost:8000/auth/reddit` is not `http://localhost/info`, etc. For production use, it will look similar to: `https://aggierisk.com/auth/reddit`. For local use, it will probably be `http://localhost:8000/auth/reddit`.
 7. Click "Create App." Make note of your application id (hereafter, APP_ID), which is displayed right under the blue application name next to the logo (currently a question mark). Also make note of your secret, (hereafter, SECRET), and your redirect url (hereafter, REDIRECT_URL).
 8. (Optional) If you have already created a logo, upload it now.
 
@@ -94,7 +96,7 @@ First, we'll create a new database and user named `risk` (if you're not familiar
 create database risk;
 create user risk with password '%password%';
 ```
-3. Now we will run `psql risk -f up.sql`. You will need to know to where you downloaded Rust-Risk, and navigate to it (on Command Prompt, `cd C:\Users\{{your user}}\Projects\Risk\db`, on POSIX Shell, `cd $HOME/Projects/Risk/db/`). Then `psql risk -f up.sql` (it may require you login, in which case append `-U risk -p %password%` again substituting your password for %password%).
+3. Now we will run `psql risk -f up.sql`. You will need to know to where you downloaded Rust-Risk, and navigate to it (on Command Prompt, `cd C:\Users\{{your user}}\Projects\Risk\db`, on POSIX Shell, `cd $HOME/Projects/Risk/db/`). Then `psql risk -f upp.sql` (it may require you login, in which case append `-U risk -p %password%` again substituting your password for %password%).
 4. The step above should complete without errors. If it argues about Citext or something else, feel free to contact me or look into it on your search engine of choice.
 
 ### Territories and Map Setup
@@ -180,38 +182,22 @@ insert into stats (sequence, season, day, team, rank, territorycount, playercoun
 ```
 
 ### Environmental Variables
-Now, go to /Risk and edit .env
-For localhost, .env should look like (edit base to the current directory's location, edit the DATABASE_URL to be `postgresql://<username>:<password>@<hostname>:<port>/<database>`):
+Enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
 ```toml
-uri = localhost
-base = /srv/rust/Risk/
-version = 0.1.11
-DATABASE_URL=postgresql://risk:{{password}}@localhost/risk
-reddit_oauth = false
-reddit_client_id = {{this is APP_ID made in reddit setup above}}
-reddit_client_secret = {{this is SECRET made in reddit setup above}}
-reddit_user_agent = {{this is up to you, best to use Alabama Rust-Risk v0.1.11, for example}}
-SECRET= {{base64 string, see rocket.rs/}}
-season=2
-day=1
-```
-
-You are almost there! Next, enter rocket_oauth2/ folder and edit src/hyper_sync_rustls_adapter.rs, where:
-```rust
-ser.append_pair("redirect_uri", "https://aggierisk.com/auth/reddit");
-```
-write it to YOUR REDIRECT_URI as set in reddit setup above:
-```rust
-ser.append_pair("redirect_uri", "https://localhost:8000/auth/reddit");
-```
-
-Now go back to Risk/ and enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and change ports if necessary):
-```toml
+[global.databases.postgres_global]
+url = "postgresql://{{username}}:{{password}}@{{hostname}}:{{port}}/{{database}}"
 [global.oauth.reddit]
 provider = "Reddit"
 client_id = "{{APP_ID}}"
 client_secret = "{{SECRET}}"
 redirect_uri = "{{same redirect_URI as above, leave the apostrophes not the brackets}}"
+
+[global.oauth.discord]
+provider = "Discord"
+client_id = "{{APP_ID}}"
+client_secret = "{{SECRET}}"
+redirect_uri = "{{same redirect_URI as above, leave the apostrophes not the brackets}}"
+
 [staging]
 address = "127.0.0.1"
 port = 8080
