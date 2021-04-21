@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 use crate::schema::{
     new_turns, past_turns, stats, teams, territory_ownership, territory_stats, turninfo,
 };
@@ -210,7 +214,8 @@ impl Stats {
         diesel::insert_into(stats::table).values(amended_stats).execute(conn)
     }
 
-    #[must_use] pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
+    #[must_use]
+    pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
         Stats {
             sequence: seq,
             season,

@@ -1,8 +1,14 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{TeamInfo, TeamPlayerMoves};
 use rocket_contrib::json::Json;
 
+/// # List of Teams
+/// Lists all teams, including those from past seasons.
 #[openapi]
 #[get("/teams")]
 pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
@@ -14,6 +20,8 @@ pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
     }
 }
 
+/// # Team Moves
+/// List of all moves made by all players on a team on a provided day.
 #[openapi]
 #[get("/team/players?<season>&<day>&<team>")]
 pub async fn teamplayersbymoves(

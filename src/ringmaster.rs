@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 #![feature(drain_filter)]
 #[macro_use]
 extern crate diesel;
@@ -24,7 +28,8 @@ use structs::{
     PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
 };
 
-#[must_use] pub fn establish_connection() -> PgConnection {
+#[must_use]
+pub fn establish_connection() -> PgConnection {
     dotenv::from_filename(".env").ok();
     let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     PgConnection::establish(&database_url)

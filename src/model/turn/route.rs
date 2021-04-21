@@ -1,8 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Roll, TurnInfo};
 use rocket_contrib::json::Json;
-
+/// # List of Turns
+/// Returns information about all past and present. Eventually will allow filtering by season.
 #[openapi]
 #[get("/turns")]
 pub async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
@@ -14,6 +19,8 @@ pub async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
     }
 }
 
+/// # List of Turns
+/// Returns information about all past, present, and upcoming turns.
 #[openapi]
 #[get("/turns/all")]
 pub async fn all_turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
@@ -25,6 +32,9 @@ pub async fn all_turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
     }
 }
 
+/// # Audit Log
+/// List of random numbers used to determine victors on a given day. Returns 502 error if no day
+/// specified.
 #[openapi]
 #[get("/roll/log?<season>&<day>")]
 pub async fn rolllog(season: i32, day: i32, conn: DbConn) -> Result<Json<Roll>, Status> {

@@ -1,8 +1,13 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{CurrentStrength, Heat, Latest, Odds, StatHistory, StatLeaderboard};
 use rocket_contrib::json::Json;
 
+/// # Team Statistics
+/// Gives current team strength (from prior day's move).
 #[openapi]
 #[get("/stats/team?<team>")]
 pub async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
@@ -13,6 +18,8 @@ pub async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentS
     }
 }
 
+/// # Leaderboard
+/// Provides team ranks on a given season/day, or on the prior day if season/day not provided.
 #[openapi]
 #[get("/stats/leaderboard?<season>&<day>")]
 pub async fn leaderboard(
@@ -46,6 +53,9 @@ pub async fn leaderboard(
     }
 }
 
+/// # Heat Map
+/// Information necessary to generate a heatmap of moves on a given day. Defaults to prior day if
+/// no season/day are specified.
 #[openapi]
 #[get("/heat?<season>&<day>")]
 pub async fn heat(
@@ -70,6 +80,8 @@ pub async fn heat(
     }
 }
 
+/// # Team History
+/// Gives historical team statistics for a given team.
 #[openapi]
 #[get("/stats/team/history?<team>")]
 pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
@@ -81,6 +93,8 @@ pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHist
     }
 }
 
+/// # Team Odds
+/// Gives odds for a team on a given day
 #[openapi]
 #[get("/team/odds?<season>&<day>&<team>")]
 pub async fn odds(

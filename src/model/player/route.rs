@@ -1,10 +1,14 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
 use rocket::http::CookieJar;
 use rocket::State;
 use rocket_contrib::json::Json;
-
+/// # Team Roster
+/// Get all of the players on a team (returns all players on all teams if no team is provided).
 #[openapi]
 #[get("/players?<team>")]
 pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
@@ -35,8 +39,10 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
         }
     }
 }
-
-#[openapi]
+/// # Me
+/// Retrieves all information about currently logged-in user. Should not be accessed by any
+/// scraping programs.
+#[openapi(skip)]
 #[get("/me")]
 pub async fn me(
     cookies: &CookieJar<'_>,
@@ -75,6 +81,8 @@ pub async fn me(
     }
 }
 
+/// # Player Batching
+/// Batch retrieval of players
 #[openapi]
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(
@@ -86,7 +94,10 @@ pub async fn player_multifetch(
             std::result::Result::Ok(Json(
                 conn.run(move |c| {
                     PlayerWithTurns::load(
-                        player.split(',').map(std::string::ToString::to_string).collect::<Vec<String>>(),
+                        player
+                            .split(',')
+                            .map(std::string::ToString::to_string)
+                            .collect::<Vec<String>>(),
                         true,
                         &c,
                     )
@@ -98,6 +109,8 @@ pub async fn player_multifetch(
     }
 }
 
+/// # Player Information
+/// Retrieve information about individual player
 #[openapi]
 #[get("/player?<player>")]
 pub async fn player(

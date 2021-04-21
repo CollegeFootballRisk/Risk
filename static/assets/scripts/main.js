@@ -1,4 +1,7 @@
 // @license magnet:?xt=urn:btih:3877d6d54b3accd4bc32f8a48bf32ebc0901502a&dn=mpl-2.0.txt Mozilla-Public-2.0
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 // if .ml, redirect to .com
 if (window.location.hostname === "aggierisk.ml") {
     window.location = 'https://aggierisk.com/';
@@ -2025,7 +2028,7 @@ router
     .add('/player/(.*)', (pid) => {
         handleNewPage(pid, contentTag, page_player, pid);
     })
-    .add ('/docs/', () => {window.location = '/docs/';})
+    .add('/docs/', () => { window.location = '/docs/'; })
     .add('/', () => {
         // general controller
         handleNewPage('Home', contentTag, page_index);

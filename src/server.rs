@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 #![feature(proc_macro_hygiene, decl_macro)]
 #![allow(non_snake_case)]
 #[macro_use]
@@ -22,7 +26,7 @@ use crate::db::DbConn;
 use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
 use rocket_contrib::serve::StaticFiles;
 use rocket_oauth2::{OAuth2, OAuthConfig, StaticProvider};
-use rocket_okapi::swagger_ui::{SwaggerUIConfig, make_swagger_ui};
+use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use std::fs;
 use std::path::Path;
 use xdg::BaseDirectories;

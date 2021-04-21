@@ -1,8 +1,14 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Latest, TerritoryHistory, TerritoryTurn, TerritoryWithNeighbors};
 use rocket_contrib::json::Json;
 
+/// # Territory Ownership
+/// Gives territory ownership information
 #[openapi]
 #[get("/territories?<day>&<season>")]
 pub async fn territories(
@@ -31,6 +37,8 @@ pub async fn territories(
     }
 }
 
+/// # Territory Owners
+/// Gives a list of all owners of a territory in a given season.
 #[openapi]
 #[get("/territory/history?<territory>&<season>")]
 pub async fn territoryhistory(
@@ -46,6 +54,8 @@ pub async fn territoryhistory(
     }
 }
 
+/// # Territory Moves
+/// Gives a list of all moves given on a particular day.
 #[openapi]
 #[get("/territory/turn?<territory>&<season>&<day>")]
 pub async fn territory_turn(

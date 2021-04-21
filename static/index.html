@@ -1,3 +1,6 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */ -->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,15 +8,15 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="A fun game of Risk written in Rust to determine the best things in Texas.">
-<meta name="keywords" content="texas, open source, rust, risk, aggie, tamu, texas a&m, university, collegefootballrisk, aggierisk">
-<meta name="robots" content="index, follow">
-<meta name="copyright" content="2021">
-<meta name="language" content="EN">
-<meta name="author" content="Mautamu">
-<meta name="creationdate" content="2021-01-01">
-<meta name="distribution" content="global">
-<meta name="rating" content="general">
+    <meta name="description" content="A fun game of Risk written in Rust to determine the best things in Texas.">
+    <meta name="keywords" content="texas, open source, rust, risk, aggie, tamu, texas a&m, university, collegefootballrisk, aggierisk">
+    <meta name="robots" content="index, follow">
+    <meta name="copyright" content="2021">
+    <meta name="language" content="EN">
+    <meta name="author" content="Mautamu">
+    <meta name="creationdate" content="2021-01-01">
+    <meta name="distribution" content="global">
+    <meta name="rating" content="general">
     <link rel="icon" type="image/svg+xml" href="/images/favicon.svg">
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
@@ -52,18 +55,22 @@
             ☰
         </h2>
         <nav id="nav">
-            <ul><li><a href="/">Home</a></li>
-            <li><a href="/leaderboard">Leaderboard</a></li>
-            <li><a href="/odds/">Odds</a></li>
-            <li><a href="/info">Info</a></li>
-            <li><a rel="noreferrer" href="/docs/">API</a></li>
-            <li><a href="/bug">Bugs</a></li></ul>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/leaderboard">Leaderboard</a></li>
+                <li><a href="/odds/">Odds</a></li>
+                <li><a href="/info">Info</a></li>
+                <li><a rel="noreferrer" href="/docs/">API</a></li>
+                <li><a href="/bug">Bugs</a></li>
+            </ul>
         </nav>
     </header>
     <ul class="ugrid redditlogin" id="reddit-login-top" style="background: var(--theme-bg-05); display:none;">
-        <li><a href="/login/reddit">
-            <div style="margin-top:50%;"><img alt="reddit login" src="images/reddit-logo.png"><br><br>LOGIN</div>
-        </a></li>
+        <li>
+            <a href="/login/reddit">
+                <div style="margin-top:50%;"><img alt="reddit login" src="images/reddit-logo.png"><br><br>LOGIN</div>
+            </a>
+        </li>
     </ul>
     <div id="content-wrapper">
     </div>
@@ -78,7 +85,7 @@
         </p>
         <p>
             All other <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/cosmos-galaxy-wallpaper-night-silhouette-sky-stars-tree#img_info">parts</a>
-            <a rel="noreferrer" href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this website</a> are <a rel="noreferrer" href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
+            <a rel="noreferrer" href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this website</a>            are <a rel="noreferrer" href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
                 v2.</a>
         </p>
         <p>It's more fun playing with others. Join us on <a rel="noreferrer" href="https://tx.ag/AggieDiscord">Discord</a> or <a rel="noreferrer" href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
@@ -111,8 +118,8 @@
             <iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>
             <h3> What is Rust Risk? </h3>
             <p id="#what">
-                Aggie Risk is similar to <u><a rel="noreferrer" href="https://collegefootballrisk.com/">College Football Risk</a></u>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the
-                largest number of territories of any team at the end of the season.
+                Aggie Risk is similar to <u><a rel="noreferrer" href="https://collegefootballrisk.com/">College Football Risk</a></u>. It is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for
+                a team to have the largest number of territories of any team at the end of the season.
             </p>
             <h3> How does the game work? </h3>
             <p id="#gameplay">
@@ -211,7 +218,9 @@
             </ul>
             <hr>
             <div id="rollInfo"></div>
-            <ul id="pollInfo" style="margin-bottom:100px;"><li><text style="color:red;"><a onclick="doPoll();"><!--You can take <u>the poll</u> to extend game play now.--></a></text></li></ul>
+            <ul id="pollInfo" style="margin-bottom:100px;">
+                <li><text style="color:red;"><a onclick="doPoll();"><!--You can take <u>the poll</u> to extend game play now.--></a></text></li>
+            </ul>
             <hr>
             <h2><text style="color:red;" id="last-day-notice"></text></h2>
         </section>
