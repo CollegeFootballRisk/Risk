@@ -1,4 +1,4 @@
-use crate::model::*;
+use crate::model::{PlayerInTurns, TeamInTurns};
 use crate::schema::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
 use diesel::prelude::*;
 use diesel_citext::types::CiString;

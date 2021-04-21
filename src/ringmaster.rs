@@ -24,7 +24,7 @@ use structs::{
     PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
 };
 
-pub fn establish_connection() -> PgConnection {
+#[must_use] pub fn establish_connection() -> PgConnection {
     dotenv::from_filename(".env").ok();
     let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
     PgConnection::establish(&database_url)
@@ -39,13 +39,13 @@ fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
 }
 
 fn determinevictor(lottery: f64, map: HashMap<i32, (i32, f64, i32, i32, i32, i32, i32)>) -> i32 {
-    let mut victorsum = 0f64;
+    let mut victorsum = 0_f64;
     //println!("Map: {:?}", map);
     let mut victor = 0;
     for (key, val) in &map {
         //println!("Key {:?} Val {:?}",key,val);
         victorsum += val.1;
-        if lottery - victorsum < 0f64 {
+        if lottery - victorsum < 0_f64 {
             victor = *key;
             break;
         }
@@ -88,7 +88,7 @@ fn process_territories(
                     day: territory.day + 1,
                     season: territory.season,
                     previous_owner_id: territory.owner_id,
-                    random_number: 0f64,
+                    random_number: 0_f64,
                     mvp: Some(0),
                 });
                 // add team territory count to stats
@@ -131,7 +131,7 @@ fn process_territories(
                     day: territory.day + 1,
                     season: territory.season,
                     previous_owner_id: territory.owner_id,
-                    random_number: 0f64,
+                    random_number: 0_f64,
                     mvp: Some(mvp.user_id),
                 });
                 stats
@@ -212,7 +212,7 @@ fn process_territories(
                     })
                     .territorycount += 0;
                 for team in teams {
-                    map.insert(team, (0, 0f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
+                    map.insert(team, (0, 0_f64, 0, 0, 0, 0, 0)); // stars, power, ones, twos, threes, fours, fives
                 }
 
                 for player in &territory_players {
@@ -248,7 +248,7 @@ fn process_territories(
 
                 let totalpower: f64 = map.values().map(|x| (x.1)).sum();
                 //dbg!(totalpower);
-                let lottery = ChaCha12Rng::from_entropy().gen_range(0f64..totalpower);
+                let lottery = ChaCha12Rng::from_entropy().gen_range(0_f64..totalpower);
 
                 let victor = determinevictor(lottery, map.clone());
 
@@ -284,7 +284,7 @@ fn process_territories(
                 let total_power =
                     territory_players.iter().map(|mover| mover.power as f64).sum::<f64>();
                 handleteamstats(&mut stats, territory_players);
-                for (key, val) in map.iter() {
+                for (key, val) in &map {
                     territory_stats.push(TerritoryStats {
                         team: *key,
                         season: territory.season,

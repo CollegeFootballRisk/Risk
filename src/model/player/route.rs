@@ -86,7 +86,7 @@ pub async fn player_multifetch(
             std::result::Result::Ok(Json(
                 conn.run(move |c| {
                     PlayerWithTurns::load(
-                        player.split(',').map(|s| s.to_string()).collect::<Vec<String>>(),
+                        player.split(',').map(std::string::ToString::to_string).collect::<Vec<String>>(),
                         true,
                         &c,
                     )
