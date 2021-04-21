@@ -1,8 +1,9 @@
+use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Latest, TerritoryHistory, TerritoryTurn, TerritoryWithNeighbors};
-use rocket::http::Status;
 use rocket_contrib::json::Json;
 
+#[openapi]
 #[get("/territories?<day>&<season>")]
 pub async fn territories(
     season: Option<i32>,
@@ -23,13 +24,14 @@ pub async fn territories(
             if territories.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(territories))
             } else {
-                std::result::Result::Err(Status::BadRequest)
+                std::result::Result::Err(Status(rocket::http::Status::BadRequest))
             }
         }
-        _ => std::result::Result::Err(Status::BadRequest),
+        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
     }
 }
 
+#[openapi]
 #[get("/territory/history?<territory>&<season>")]
 pub async fn territoryhistory(
     territory: String,
@@ -40,10 +42,11 @@ pub async fn territoryhistory(
     if territories.len() as i32 >= 1 {
         std::result::Result::Ok(Json(territories))
     } else {
-        std::result::Result::Err(Status::BadRequest)
+        std::result::Result::Err(Status(rocket::http::Status::BadRequest))
     }
 }
 
+#[openapi]
 #[get("/territory/turn?<territory>&<season>&<day>")]
 pub async fn territory_turn(
     territory: String,
@@ -54,6 +57,6 @@ pub async fn territory_turn(
     let turn = conn.run(move |c| TerritoryTurn::load(season, day, territory, c)).await;
     match turn {
         Ok(turn) => std::result::Result::Ok(Json(turn)),
-        _ => std::result::Result::Err(Status::BadRequest),
+        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
     }
 }

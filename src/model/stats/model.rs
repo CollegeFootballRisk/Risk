@@ -2,7 +2,9 @@ use crate::schema::{heat_full, odds, statistics};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;
-#[derive(Serialize, Deserialize, Clone, Debug)]
+use schemars::JsonSchema;
+
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct Stats {
     pub totalTurns: i32,
     pub gameTurns: i32,
@@ -11,7 +13,7 @@ pub struct Stats {
     pub awards: i32,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct StatLeaderboard {
     pub rank: i32, //determined by number of territories desc
     pub name: CiString,
@@ -23,7 +25,7 @@ pub struct StatLeaderboard {
     pub efficiency: f64, //starpower/territoryCount
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, JsonSchema, Queryable)]
 pub struct CurrentStrength {
     pub team: String,
     pub players: i32,
@@ -32,7 +34,7 @@ pub struct CurrentStrength {
     pub territories: i32,
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, JsonSchema, Queryable)]
 pub struct StatHistory {
     pub sequence: i32,
     pub season: i32,
@@ -44,7 +46,7 @@ pub struct StatHistory {
     pub starbreakdown: StarBreakdown,
 }
 
-#[derive(Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Deserialize, JsonSchema, Queryable)]
 pub struct StarBreakdown {
     pub ones: i32,
     pub twos: i32,
@@ -53,7 +55,7 @@ pub struct StarBreakdown {
     pub fives: i32,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct Heat {
     pub territory: CiString,
     pub winner: CiString,
@@ -61,7 +63,7 @@ pub struct Heat {
     pub power: f64,
 }
 
-#[derive(Serialize, Deserialize, Queryable, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Queryable, Debug)]
 pub struct StarBreakdown64 {
     pub ones: i32,
     pub twos: i32,
@@ -70,7 +72,7 @@ pub struct StarBreakdown64 {
     pub fives: i32,
 }
 
-#[derive(Queryable, Serialize, Deserialize, Debug)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub struct Odds {
     pub territory: CiString,
     pub owner: CiString,

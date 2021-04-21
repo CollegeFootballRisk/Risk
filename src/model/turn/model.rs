@@ -1,6 +1,7 @@
 use crate::schema::{rollinfo, turninfo};
 use diesel::prelude::*;
 use diesel::result::Error;
+use schemars::JsonSchema;
 use serde_json::Value;
 
 #[derive(Serialize)]
@@ -13,14 +14,14 @@ pub struct Turn {
     pub team: String,
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct LastTurn {
     pub season: Option<i32>,
     pub day: Option<i32>,
     pub stars: Option<i32>,
 }
 
-#[derive(Queryable, Serialize, Deserialize, Clone, Debug)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct PastTurn {
     pub season: i32,
     pub day: i32,
@@ -30,7 +31,7 @@ pub struct PastTurn {
     pub team: String,      //should be string
 }
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub struct TurnInfo {
     pub id: i32,
     pub season: Option<i32>,
@@ -38,16 +39,16 @@ pub struct TurnInfo {
     pub complete: Option<bool>,
     pub active: Option<bool>,
     pub finale: Option<bool>,
-    pub rollTime: Option<chrono::NaiveDateTime>,
+    pub rollTime: Option<crate::catchers::NaiveDateTime>,
 }
 
-#[derive(Queryable, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Latest {
     pub season: i32,
     pub day: i32,
 }
 
-#[derive(Serialize, Queryable, Deserialize)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub struct Roll {
     pub startTime: String,
     pub endTime: String,

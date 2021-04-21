@@ -2025,6 +2025,7 @@ router
     .add('/player/(.*)', (pid) => {
         handleNewPage(pid, contentTag, page_player, pid);
     })
+    .add ('/docs/', () => {window.location = '/docs/';})
     .add('/', () => {
         // general controller
         handleNewPage('Home', contentTag, page_index);
