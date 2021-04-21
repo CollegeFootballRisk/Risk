@@ -1,7 +1,7 @@
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn};
-use crate::schema::*;
+use crate::schema::{moves, past_turns, team_player_moves, teams, territories, users};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;

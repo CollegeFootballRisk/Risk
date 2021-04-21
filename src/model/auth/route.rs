@@ -488,19 +488,19 @@ pub fn handle_territory_info(
                                             Ok((
                                                 team_id,
                                                 1.5 * regional_multiplier as f64
-                                                    * aon_multiplier as f64,
+                                                    * f64::from(aon_multiplier),
                                             ))
                                         } else {
                                             Ok((
                                                 team_id,
                                                 1.0 * regional_multiplier as f64
-                                                    * aon_multiplier as f64,
+                                                    * f64::from(aon_multiplier),
                                             ))
                                         }
                                     } else {
                                         let mut rng = thread_rng();
                                         let n: i32 = rng.gen_range(4..6);
-                                        Ok((team_id, (n / 4) as f64))
+                                        Ok((team_id, f64::from(n / 4)))
                                     }
                                 }
                                 None => Err("You own all the surrounding territories".to_string()),

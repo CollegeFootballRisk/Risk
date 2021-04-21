@@ -179,14 +179,14 @@ impl Stats {
         let mut rankings: i32 = 1;
         let mut territories: i32 = 0;
         let mut amended_stats: Vec<Stats> = Vec::new();
-        for i in insertable_stats.iter() {
+        for i in &insertable_stats {
             if i.territorycount < territories {
                 rankings += 1;
             }
             territories = i.territorycount;
             let teamefficiency: f64 = match territories {
                 0 => 0.0,
-                _ => i.starpower / i.territorycount as f64,
+                _ => i.starpower / f64::from(i.territorycount),
             };
             amended_stats.push(Stats {
                 sequence,
@@ -210,7 +210,7 @@ impl Stats {
         diesel::insert_into(stats::table).values(amended_stats).execute(conn)
     }
 
-    pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
+    #[must_use] pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
         Stats {
             sequence: seq,
             season,
@@ -259,7 +259,7 @@ impl TerritoryOwners {
 
 impl TerritoryOwnersInsert {
     pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
-        use crate::schema::territory_ownership::dsl::*;
+        use crate::schema::territory_ownership::dsl::territory_ownership;
         insert_into(territory_ownership).values(owners).execute(conn)
     }
 }

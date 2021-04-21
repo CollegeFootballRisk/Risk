@@ -61,7 +61,7 @@ pub async fn discord_callback(
                         Ok(user) => {
                             dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
-                            let timestamp: usize = 604800 + datetime.timestamp() as usize;
+                            let timestamp: usize = 604_800 + datetime.timestamp() as usize;
                             dbg!(&token);
                             let new_claims = Claims {
                                 id: user.id,

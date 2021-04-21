@@ -1,4 +1,4 @@
-use crate::schema::*;
+use crate::schema::users;
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
