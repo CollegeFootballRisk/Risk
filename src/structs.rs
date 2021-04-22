@@ -116,6 +116,54 @@ pub struct TurnInfo {
     pub rollstarttime: Option<NaiveDateTime>,
 }
 
+#[derive(Clone)]
+pub struct Victor {
+    pub stars: i32,
+    pub power: f64,
+    pub ones: i32,
+    pub twos: i32,
+    pub threes: i32,
+    pub fours: i32,
+    pub fives: i32,
+}
+
+impl Default for Victor {
+    fn default() -> Self {
+        Self {
+            stars: 0,
+            power: 0.0,
+            ones: 0,
+            twos: 0,
+            threes: 0,
+            fours: 0,
+            fives: 0,
+        }
+    }
+}
+
+impl Victor {
+    pub fn power(&mut self, power: f64) -> &mut Self {
+        self.power += power;
+        self
+    }
+
+    pub fn stars(&mut self, stars: i32) -> &mut Self {
+        self.stars += stars;
+        match stars {
+            1 => self.ones += 1,
+            2 => self.twos += 1,
+            3 => self.threes += 1,
+            4 => self.fours += 1,
+            5 => self.fives += 1,
+            _ => {
+                println!("Possible error, OOB stars");
+                self.ones += 1
+            }
+        }
+        self
+    }
+}
+
 impl PlayerMoves {
     pub fn load(season: &i32, day: &i32, conn: &PgConnection) -> Result<Vec<PlayerMoves>, Error> {
         new_turns::table
@@ -235,6 +283,39 @@ impl Stats {
             fives: 0,
         }
     }
+
+    pub fn stars(&mut self, stars: i32) {
+        match stars {
+            1 => self.ones += 1,
+            2 => self.twos += 1,
+            3 => self.threes += 1,
+            4 => self.fours += 1,
+            5 => self.fives += 1,
+            _ => {
+                println!("Possible error, OOB stars");
+                self.ones += 1
+            }
+        }
+    }
+
+    pub fn starpower(&mut self, starpower: f64) -> &mut Self {
+        self.starpower = starpower;
+        self
+    }
+
+    pub fn effectivepower(&mut self, effectivepower: f64) -> &mut Self {
+        self.effectivepower = effectivepower;
+        self
+    }
+
+    pub fn add_player_or_merc(&mut self, merc: bool) -> &mut Self {
+        if merc {
+            self.merccount += 1;
+        } else {
+            self.playercount += 1;
+        }
+        self
+    }
 }
 
 impl Team {
@@ -246,6 +327,25 @@ impl Team {
 impl TerritoryStats {
     pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(territory_stats::table).values(stats).execute(conn)
+    }
+}
+
+impl Default for TerritoryStats {
+    fn default() -> Self {
+        Self {
+            team: 0,
+            season: 0,
+            day: 0,
+            ones: 0,
+            twos: 0,
+            threes: 0,
+            fours: 0,
+            fives: 0,
+            teampower: 0.0,
+            chance: 1.00,
+            territory: 0,
+            territory_power: 0.00,
+        }
     }
 }
 
@@ -327,5 +427,9 @@ impl TurnInfo {
             .filter(turninfo::active.eq(true))
             .order((turninfo::season.desc(), turninfo::day.desc()))
             .first::<TurnInfo>(conn)
+    }
+
+    pub fn start_time_now(&mut self) {
+        self.rollstarttime = Some(Utc::now().naive_utc());
     }
 }

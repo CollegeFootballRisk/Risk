@@ -13,8 +13,8 @@ pub struct SysInfo {
     pub captcha: bool,
 }
 
-impl SysInfo {
-    pub fn default() -> SysInfo {
+impl Default for SysInfo {
+    fn default() -> SysInfo {
         SysInfo {
             name: String::from("AggieRisk Local"),
             base_url: String::from("http://localhost:8000"),
