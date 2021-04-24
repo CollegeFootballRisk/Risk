@@ -1441,11 +1441,11 @@ function drawTeamPage(teamsObject, teamTurnsObject, team) {
 
 function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
     teamPlayersObject = JSON.parse(teamPlayersObject.response);
-    let display_headings = ["player", "turnsPlayed", "mvps"];
+    let display_headings = ["player", "turnsPlayed"];
 
     var obj = {
         // Quickly get the headings
-        headings: ["Player", "Turns Played", "MVPs", "Last Turn"],
+        headings: ["Player", "Turns Played", "Stars", "Last Turn"],
 
         // data array
         data: []
@@ -1464,6 +1464,7 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
                 }
             }
         }
+	obj.data[i].push(teamPlayersObject[i]['lastTurn']['stars']);
         obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
     }
 
