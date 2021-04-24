@@ -5,6 +5,7 @@
 use crate::schema::{
     new_turns, past_turns, stats, teams, territory_ownership, territory_stats, turninfo,
 };
+use crate::Utc;
 use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -429,7 +430,8 @@ impl TurnInfo {
             .first::<TurnInfo>(conn)
     }
 
-    pub fn start_time_now(&mut self) {
+    pub fn start_time_now(&mut self) -> &mut Self {
         self.rollstarttime = Some(Utc::now().naive_utc());
+        self
     }
 }

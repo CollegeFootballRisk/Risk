@@ -360,7 +360,8 @@ fn runtime() -> Result<(), diesel::result::Error> {
     let conn: PgConnection = establish_connection();
     // Get the active turn
     // start_time_now then sets the start time to the current time.
-    let mut turninfoblock = TurnInfo::get_latest(&conn)?.start_time_now();
+    let mut turninfoblock = TurnInfo::get_latest(&conn)?;
+    turninfoblock.start_time_now();
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
     let players =

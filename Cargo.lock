@@ -387,9 +387,9 @@ dependencies = [
 
 [[package]]
 name = "darling"
-version = "0.10.2"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0d706e75d87e35569db781a9b5e2416cff1236a47ed380831f959382ccd5f858"
+checksum = "5f2c43f534ea4b0b049015d00269734195e6d3f0f6635cb692251aca6f9f8b3c"
 dependencies = [
  "darling_core",
  "darling_macro",
@@ -397,9 +397,9 @@ dependencies = [
 
 [[package]]
 name = "darling_core"
-version = "0.10.2"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0c960ae2da4de88a91b2d920c2a7233b400bc33cb28453a2987822d8392519b"
+checksum = "8e91455b86830a1c21799d94524df0845183fa55bafd9aa137b01c7d1065fa36"
 dependencies = [
  "fnv",
  "ident_case",
@@ -411,9 +411,9 @@ dependencies = [
 
 [[package]]
 name = "darling_macro"
-version = "0.10.2"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d9b5a2f4ac4969822c62224815d069952656cadc7084fdca9751e6d959189b72"
+checksum = "29b5acf0dea37a7f66f7b25d2c5e93fd46f8f6968b1a5d7a3e02e97768afc95a"
 dependencies = [
  "darling_core",
  "quote 1.0.9",
@@ -888,9 +888,9 @@ checksum = "05842d0d43232b23ccb7060ecb0f0626922c21f30012e97b767b30afd4a5d4b9"
 
 [[package]]
 name = "hyper"
-version = "0.14.6"
+version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f006b8784cfb01fe7aa9c46f5f5cd4cf5c85a8c612a0653ec97642979062665"
+checksum = "1e5f105c494081baa3bf9e200b279e27ec1623895cd504c7dbef8d0b080fcf54"
 dependencies = [
  "bytes",
  "futures-channel",
@@ -1313,7 +1313,7 @@ dependencies = [
 [[package]]
 name = "okapi"
 version = "0.5.0-alpha-1"
-source = "git+https://github.com/mautamu/okapi/?branch=async2#12c381c910a89aa290086c86e2ad731aecffc1e8"
+source = "git+https://github.com/mautamu/okapi/?branch=async2#b91c2fed4857cc713219e0d12627523a8313df81"
 dependencies = [
  "schemars",
  "serde",
@@ -1694,9 +1694,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.5"
+version = "1.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
+checksum = "2a26af418b574bd56588335b3a3659a65725d4e636eb1016c2f9e3b38c7cc759"
 dependencies = [
  "regex-syntax",
 ]
@@ -1895,7 +1895,7 @@ dependencies = [
 [[package]]
 name = "rocket_okapi"
 version = "0.6.0-alpha-1"
-source = "git+https://github.com/mautamu/okapi/?branch=async2#12c381c910a89aa290086c86e2ad731aecffc1e8"
+source = "git+https://github.com/mautamu/okapi/?branch=async2#b91c2fed4857cc713219e0d12627523a8313df81"
 dependencies = [
  "okapi",
  "rocket",
@@ -1909,7 +1909,7 @@ dependencies = [
 [[package]]
 name = "rocket_okapi_codegen"
 version = "0.6.0-alpha-1"
-source = "git+https://github.com/mautamu/okapi/?branch=async2#12c381c910a89aa290086c86e2ad731aecffc1e8"
+source = "git+https://github.com/mautamu/okapi/?branch=async2#b91c2fed4857cc713219e0d12627523a8313df81"
 dependencies = [
  "darling",
  "proc-macro2 1.0.26",
@@ -2305,9 +2305,9 @@ checksum = "213701ba3370744dcd1a12960caa4843b3d68b4d1c0a5d575e0d65b2ee9d16c0"
 
 [[package]]
 name = "strsim"
-version = "0.9.3"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6446ced80d6c486436db5c078dde11a9f73d42b57fb273121e160b84f63d894c"
+checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 
 [[package]]
 name = "subtle"
