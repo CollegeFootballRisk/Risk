@@ -10,10 +10,16 @@ use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel::sql_types::Bool;
 use diesel::{insert_into, update};
 use diesel_citext::types::CiString;
 use std::collections::HashMap;
 
+#[derive(QueryableByName)]
+pub struct Bar {
+    #[sql_type = "Bool"]
+    pub do_user_update: bool,
+}
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
 #[table_name = "new_turns"]
 pub struct PlayerMoves {

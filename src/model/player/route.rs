@@ -4,6 +4,7 @@
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
+use crate::sys::SysInfo;
 use rocket::http::CookieJar;
 use rocket::State;
 use rocket_contrib::json::Json;
@@ -47,11 +48,14 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
 pub async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
-            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+            match Claims::interpret(
+                &config.settings.cookie_key.as_bytes(),
+                cookie.value().to_string(),
+            ) {
                 Ok(c) => {
                     let username = c.0.user.clone();
                     let users = conn

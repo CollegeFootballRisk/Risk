@@ -12,12 +12,12 @@ time = "0.2.25"
 diesel = { version = "1.4.5", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
 diesel-citext = {git = "https://github.com/mautamu/diesel-citext"}
 #diesel-citext = {git = "https://github.com/afonso360/diesel-citext"}
-dotenv = "0.15.0"
+
 hyper = { version = "0.14.2", features = ["full"] }
 image = {version = "0.23.12", optional=true}
 nsvg = {version = "0.5.1", optional=true}
 jsonwebtoken = "7.2.0"
-rand = "0.8"
+rand = {version = "0.8", features = ["std"]}
 rand_chacha="0.3"
 r2d2 = "0.8.9"
 reqwest = { version = "0.11.0", default-features = false, features = ["json", "rustls-tls"] }

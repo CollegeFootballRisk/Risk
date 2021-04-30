@@ -14,10 +14,8 @@ pub mod territory;
 pub mod turn;
 pub mod user;
 pub use auth::*;
-pub use discord::*;
 pub use player::*;
 pub use ratings::*;
-pub use reddit::*;
 pub use stats::*;
 pub use sys::*;
 pub use team::*;
@@ -28,3 +26,7 @@ pub use user::*;
 pub mod captchasvc;
 #[cfg(feature = "risk_captcha")]
 pub use captchasvc::*;
+#[cfg(feature = "risk_discord")]
+pub use discord::*;
+#[cfg(feature = "risk_reddit")]
+pub use reddit::*;

@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+use crate::db::DbConn;
 use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
     PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
@@ -8,13 +9,13 @@ use crate::model::{
 use crate::schema::{
     cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users,
 };
+use crate::sys::SysInfo;
 use diesel::prelude::*;
 use diesel::result::Error;
 use rocket::http::{CookieJar, Status};
 use rocket::State;
 use std::net::SocketAddr;
 extern crate rand;
-use crate::db::DbConn;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket_contrib::json::Json;
@@ -24,11 +25,14 @@ pub async fn join_team(
     team: i32,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
 ) -> Result<Json<String>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
-            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+            match Claims::interpret(
+                &config.settings.cookie_key.as_bytes(),
+                cookie.value().to_string(),
+            ) {
                 Ok(c) => {
                     //see if user already has team, and if user has current_team
                     let username = c.0.user.clone();
@@ -150,14 +154,17 @@ pub async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
 ) -> Result<Json<String>, Status> {
     match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
                 Some(cookie) => {
-                    match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                    match Claims::interpret(
+                        &config.settings.cookie_key.as_bytes(),
+                        cookie.value().to_string(),
+                    ) {
                         Ok(c) => {
                             let _cinfo = ClientInfo {
                                 claims: c.0.clone(),
@@ -190,14 +197,17 @@ pub async fn make_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
 ) -> Result<Json<String>, Status> {
     match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
             //get cookie, verify it -> Claims (id, user, refresh_token)
             match cookies.get_private("jwt") {
                 Some(cookie) => {
-                    match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+                    match Claims::interpret(
+                        &config.settings.cookie_key.as_bytes(),
+                        cookie.value().to_string(),
+                    ) {
                         Ok(mut c) => {
                             let _cinfo = ClientInfo {
                                 claims: c.0.clone(),
@@ -333,14 +343,17 @@ pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 pub async fn submit_poll(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
     poll: i32,
     response: bool,
 ) -> Result<Json<bool>, Status> {
     // get user id
     match cookies.get_private("jwt") {
         Some(cookie) => {
-            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+            match Claims::interpret(
+                &config.settings.cookie_key.as_bytes(),
+                cookie.value().to_string(),
+            ) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
                     match conn
@@ -377,13 +390,16 @@ pub async fn submit_poll(
 pub async fn view_response(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
     poll: i32,
 ) -> Result<Json<Vec<PollResponse>>, Status> {
     // get user id
     match cookies.get_private("jwt") {
         Some(cookie) => {
-            match Claims::interpret(key.as_bytes(), cookie.value().to_string()) {
+            match Claims::interpret(
+                &config.settings.cookie_key.as_bytes(),
+                cookie.value().to_string(),
+            ) {
                 Ok(c) => {
                     // id, name Json(c.0.user)
                     match conn

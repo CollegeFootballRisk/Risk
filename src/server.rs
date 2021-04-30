@@ -23,51 +23,17 @@ mod schema;
 #[cfg(feature = "risk_security")]
 mod security;
 use crate::db::DbConn;
-use crate::model::{auth, discord, player, reddit, stats, sys, team, territory, turn, Latest};
+use crate::model::{auth, player, stats, sys, team, territory, turn};
 use rocket_contrib::serve::StaticFiles;
-use rocket_oauth2::{OAuth2, OAuthConfig, StaticProvider};
+use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
-use std::fs;
-use std::path::Path;
-use xdg::BaseDirectories;
-
-//use rocket::config::{Config, Environment};
 
 #[rocket::launch]
 fn rocket() -> _ {
-    match getConfig() {
-        Ok(_config) => {}
-        Err(error) => {
-            dbg!(error);
-        }
-    }
-    let provider = StaticProvider::Reddit;
-    let client_id = "...".to_string();
-    let client_secret = "...".to_string();
-    let redirect_uri = Some("http://localhost:8000/auth/github".to_string());
-    let _oauth_config = OAuthConfig::new(provider, client_id, client_secret, redirect_uri);
+    let mut global_info_private = sys::SysInfo::default();
 
-    let global_info_private = sys::SysInfo {
-        name: String::from("AggieRisk"),
-        base_url: String::from("https://aggierisk.com/"),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        discord: cfg!(feature = "risk_discord"),
-        reddit: cfg!(feature = "risk_reddit"),
-        groupme: cfg!(feature = "risk_groupme"),
-        image: cfg!(feature = "risk_image"),
-        captcha: cfg!(feature = "risk_captcha"),
-    };
-    dbg!(global_info_private);
-    dotenv::from_filename(".env").ok();
-    let key = dotenv::var("SECRET").unwrap();
-    let latest = Latest {
-        season: dotenv::var("season").unwrap().parse::<i32>().unwrap(),
-        day: dotenv::var("day").unwrap().parse::<i32>().unwrap(),
-    };
-
-    // Allowed to silence warning when we only _sometimes_ modify the routes.
-    #[allow(unused_mut)]
-    let mut root_paths = routes![
+    // The paths on the / endpoint. Defined up here for cleanliness
+    let root_paths = routes![
         hardcode::js_api_leaderboard,
         hardcode::js_api_territory,
         hardcode::js_api_territories,
@@ -78,7 +44,7 @@ fn rocket() -> _ {
         hardcode::robots
     ];
 
-    #[allow(unused_mut)]
+    // The paths on the /api endpoint. Defined up here for cleanliness
     let api_paths = routes_with_openapi![
         player::route::player,
         player::route::me,
@@ -99,11 +65,8 @@ fn rocket() -> _ {
         stats::route::odds,
     ];
 
-    #[allow(unused_mut)]
-    let mut auth_paths = routes![
-        reddit::route::reddit_callback,
-        reddit::route::reddit_logout,
-        //discord::route::discord_callback,
+    // The paths on the /auth endpoint. Defined up here for cleanliness
+    let auth_paths = routes![
         auth::route::make_move,
         auth::route::my_move,
         auth::route::join_team,
@@ -112,37 +75,16 @@ fn rocket() -> _ {
         auth::route::get_polls,
     ];
 
-    #[allow(unused_mut)]
-    let mut login_paths = routes![];
-
-    #[cfg(feature = "risk_reddit")]
-    login_paths.append(&mut routes![reddit::route::reddit_login]);
-
-    #[cfg(feature = "risk_discord")]
-    login_paths.append(&mut routes![discord::route::discord_login]);
-
-    #[cfg(feature = "risk_captcha")]
-    use crate::model::captchasvc;
-    #[cfg(feature = "risk_captcha")]
-    auth_paths.append(&mut routes![captchasvc::route::captchaServe]);
-    #[cfg(feature = "risk_security")]
-    root_paths.append(&mut crate::security::route::routes());
-
     /*
         We attach all the fairings, even if not required, those fairings must therefore be compiled
         However, we won't actually append the non-specified routes so they are in effect disabled.
     */
-    rocket::build()
-        .manage(key)
-        .manage(latest)
+    let mut saturn_v = rocket::build()
         .attach(DbConn::fairing())
-        .attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"))
-        .attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"))
         .register("/", catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
         .mount("/", StaticFiles::from("static").rank(2))
         .mount("/", root_paths)
-        .mount("/login", login_paths)
         .mount("/auth", auth_paths)
         .mount(
             "/docs/",
@@ -150,10 +92,51 @@ fn rocket() -> _ {
                 url: "../api/openapi.json".to_owned(),
                 ..Default::default()
             }),
-        )
+        );
+
+    global_info_private.settings =
+        saturn_v.figment().extract_inner("risk").expect("Cookie key not set; aborting!");
+    saturn_v = saturn_v.manage(global_info_private);
+
+    // Attach Discord routes
+    #[cfg(feature = "risk_discord")]
+    {
+        use crate::model::discord;
+        saturn_v = saturn_v.attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"));
+        saturn_v = saturn_v.mount("/login", routes![discord::route::login]);
+        saturn_v = saturn_v.mount("/auth", routes![discord::route::callback]);
+    }
+
+    // Attach Reddit routes
+    #[cfg(feature = "risk_reddit")]
+    {
+        use crate::model::reddit;
+        saturn_v = saturn_v.attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"));
+        saturn_v = saturn_v.mount("/login", routes![reddit::route::login]);
+        saturn_v = saturn_v.mount("/auth", routes![reddit::route::callback, reddit::route::logout]);
+    }
+
+    // Attach Captcha routes
+    #[cfg(feature = "risk_captcha")]
+    {
+        use crate::model::captchasvc;
+        saturn_v = saturn_v.mount("/auth", routes![captchasvc::route::captchaServe]);
+    }
+
+    // Attach Security routes
+    #[cfg(feature = "risk_security")]
+    {
+        saturn_v = saturn_v.mount("/", crate::security::route::routes());
+    }
+
+    saturn_v
 }
 
-use serde_derive::Deserialize;
+/* use serde_derive::Deserialize;
+use std::fs;
+use std::path::Path;
+use xdg::BaseDirectories;
+//use rocket::config::{Config, Environment};
 
 #[derive(Deserialize, Debug)]
 struct Config {
@@ -201,3 +184,4 @@ fn getConfig() -> Result<(), std::io::Error> {
         Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
     }
 }
+*/

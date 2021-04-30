@@ -186,6 +186,7 @@ Enter the server/ directory. Edit Rocket.toml (replacing the {{}} as above, and 
 ```toml
 [global.databases.postgres_global]
 url = "postgresql://{{username}}:{{password}}@{{hostname}}:{{port}}/{{database}}"
+
 [global.oauth.reddit]
 provider = "Reddit"
 client_id = "{{APP_ID}}"
@@ -198,25 +199,18 @@ client_id = "{{APP_ID}}"
 client_secret = "{{SECRET}}"
 redirect_uri = "{{same redirect_URI as above, leave the apostrophes not the brackets}}"
 
-[staging]
-address = "127.0.0.1"
-port = 8080
-keep_alive = 5
-log = "critical"
-limits = { forms = 32768 }
-[production]
+[global.risk]
+name = "{{The name of service you want}}"
+base_url = "{{The base url, e.g. localhost:8000 or aggierisk.com}}"
+cookie_key = "{{base64 string, DO NOT USE THE SAME AS secret_key}}"
+
+[default]
 address="127.0.0.1"
 port=8080
+log_level="normal"
 keep_alive=5
-log = "critical"
 limits = { forms = 32768 }
-secret_key = "{{base64 string, see rocket.rs/}}"
-[development]
-address = "127.0.0.1"
-port = 8080
-keep_alive = 5
-log = "critical"
-limits = { forms = 32768 }
+secret_key = "{{base64 string, see rocket.rs/, DO NOT USE THE SAME AS cookie_key}}"
 ```
 
 That should be all the configuration, it only gets easier from here!

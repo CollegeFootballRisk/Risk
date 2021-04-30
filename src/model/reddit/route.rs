@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use crate::{db::DbConn, model::User};
+use crate::{db::DbConn, model::User, sys::SysInfo};
 use chrono::Utc;
 use diesel_citext::types::CiString;
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
@@ -13,12 +13,12 @@ use rocket_oauth2::{OAuth2, TokenResponse};
 use time::Duration;
 
 #[get("/reddit")]
-pub fn reddit_login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
+pub fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
     oauth2.get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")]).unwrap()
 }
 
 #[get("/logout")]
-pub async fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
+pub async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     cookies.remove_private(Cookie::named("jwt"));
     cookies.remove_private(Cookie::named("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
@@ -26,11 +26,11 @@ pub async fn reddit_logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
 }
 
 #[get("/reddit")]
-pub async fn reddit_callback(
+pub async fn callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    key: State<'_, String>,
+    config: State<'_, SysInfo>,
 ) -> Result<Redirect, Status> {
     let userinfo: Result<RedditUserInfo, _> = match reqwest::Client::builder().build() {
         Ok(rclient) => {
@@ -62,7 +62,6 @@ pub async fn reddit_callback(
                     let name = user_info.name.clone();
                     match conn.run(move |c| User::load(name, "reddit".to_string(), c)).await {
                         Ok(user) => {
-                            dotenv::from_filename("../.env").ok();
                             let datetime = Utc::now();
                             let timestamp: usize = 604_800 + datetime.timestamp() as usize;
                             //dbg!(&token);
@@ -76,17 +75,17 @@ pub async fn reddit_callback(
                             cookies.add_private(
                                 Cookie::build("username", user_info.name)
                                     .same_site(SameSite::Lax)
-                                    .domain(dotenv::var("uri").unwrap_or_default())
+                                    .domain(config.settings.base_url.clone())
                                     .path("/")
                                     .max_age(Duration::hours(168))
                                     .finish(),
                             );
-                            match Claims::put(&key.as_bytes(), new_claims) {
+                            match Claims::put(&config.settings.cookie_key.as_bytes(), new_claims) {
                                 Ok(s) => {
                                     cookies.add_private(
                                         Cookie::build("jwt", s)
                                             .same_site(SameSite::Lax)
-                                            .domain(dotenv::var("uri").unwrap_or_default())
+                                            .domain(config.settings.base_url.clone())
                                             .path("/")
                                             .max_age(Duration::hours(168))
                                             .finish(),

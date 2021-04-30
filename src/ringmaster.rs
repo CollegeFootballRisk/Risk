@@ -7,7 +7,6 @@
 extern crate diesel;
 #[macro_use]
 extern crate serde_derive;
-extern crate dotenv;
 extern crate rand;
 extern crate rand_chacha;
 pub mod schema;
@@ -20,23 +19,24 @@ use diesel::sql_query;
 use rand::prelude::*;
 use rand_chacha::ChaCha12Rng;
 use std::collections::HashMap;
-use std::fs::OpenOptions;
-use std::io::Read;
-use std::io::Write;
 
 use structs::{
-    PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo, Victor,
+    Bar, PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
+    Victor,
 };
 
 #[must_use]
 pub fn establish_connection() -> PgConnection {
-    dotenv::from_filename(".env").ok();
-    let database_url = dotenv::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    // Rocket figment gives us the information we need, then we discard it
+    let database_url: String = rocket::build()
+        .figment()
+        .extract_inner("databases.postgres_global.url")
+        .expect("Database not set in configuration.");
     PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
 }
 
-fn getteams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
+fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
     let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
     teams.sort_unstable();
     teams.dedup();
@@ -58,7 +58,7 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
     victor
 }
 
-fn getmvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
+fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
     let rng = match territory_players.len() {
         1 => 0,
         _ => rand::thread_rng().gen_range(1..territory_players.len()),
@@ -82,7 +82,7 @@ fn process_territories(
             .drain_filter(|player| player.territory == territory.territory_id)
             .collect::<Vec<_>>();
         dbg!(&territory_players.len());
-        let teams = getteams(territory_players.clone());
+        let teams = get_teams(territory_players.clone());
         match teams.len() {
             0 => {
                 dbg!("Zero Team");
@@ -120,7 +120,7 @@ fn process_territories(
             }
             1 => {
                 dbg!("One Team");
-                let mvp = getmvp(territory_players.clone());
+                let mvp = get_mvp(territory_players.clone());
                 mvps.push(mvp.clone());
                 new_owners.push(TerritoryOwnersInsert {
                     territory_id: territory.territory_id,
@@ -233,7 +233,7 @@ fn process_territories(
                     .clone()
                     .drain_filter(|player| player.team == victor)
                     .collect::<Vec<_>>();
-                let mvp = getmvp(territory_victors);
+                let mvp = get_mvp(territory_victors);
                 new_owners.push(TerritoryOwnersInsert {
                     territory_id: territory.territory_id,
                     territory_name: None,
@@ -337,6 +337,18 @@ fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
     }
 }
 
+fn user_update(
+    turninfoblock: &TurnInfo,
+    conn: &PgConnection,
+) -> Result<Vec<Bar>, diesel::result::Error> {
+    let query = format!(
+        "SELECT do_user_update({},{})",
+        &turninfoblock.day.unwrap().to_string(),
+        &turninfoblock.season.unwrap().to_string()
+    );
+    sql_query(query).load(conn)
+}
+
 fn main() {
     use std::time::Instant;
     let now = Instant::now();
@@ -387,18 +399,10 @@ fn runtime() -> Result<(), diesel::result::Error> {
     let mergemoves =
         PlayerMoves::mergemoves(*min_value.unwrap_or(&0), *max_value.unwrap_or(&0), &conn)?;
     dbg!(mergemoves);
-    use diesel::sql_types::Bool;
-    #[derive(QueryableByName)]
-    struct Bar {
-        #[sql_type = "Bool"]
-        do_user_update: bool,
-    }
-    let query = format!(
-        "SELECT do_user_update({},{})",
-        &turninfoblock.day.unwrap().to_string(),
-        &turninfoblock.season.unwrap().to_string()
-    );
-    let userupdate: Result<Vec<Bar>, diesel::result::Error> = sql_query(query).load(&conn);
+
+    // This calls an SQL function that updates each user's statistics
+    // Not ideal, TODO: we ought to implement this in Rust.
+    let userupdate = user_update(&turninfoblock, &conn);
     match userupdate {
         Ok(ok) => println!("Users updated successfully {}", ok[0].do_user_update.to_string()),
         Err(e) => println!("Failed to update users: {:?}", e),
@@ -426,23 +430,6 @@ fn runtime() -> Result<(), diesel::result::Error> {
         }
         Err(e) => println!("Failed to make new turn {:?}", e),
     }
-    let f_in = OpenOptions::new().read(true).write(true).create(true).open(".env");
-    let f_out = OpenOptions::new().create(true).write(true).open(".env");
-    let mut buffer = String::new();
-    let mut f_in = f_in.unwrap();
-    match f_in.read_to_string(&mut buffer) {
-        Ok(_ok) => {
-            dbg!("Read String OKAY");
-        }
-        Err(e) => {
-            dbg!("Error", e);
-        }
-    }
-    dotenv::from_filename(".env").ok();
-    let day = dotenv::var("day").unwrap();
-    let new_day = &day.parse::<i32>().unwrap() + 1;
-    buffer = buffer.replace(&format!("day={}", day), &format!("day={}", new_day.to_string())[..]);
-    f_out.unwrap().write_all(buffer.as_bytes()).expect("error");
 
     #[cfg(feature = "risk_image")]
     make_image(owners, &conn);
