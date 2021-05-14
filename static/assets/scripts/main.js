@@ -21,8 +21,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg',
-    viewbox: '0 0 700 700'
+    map: '/images/map5.svg',
+    viewbox: '0 0 850 700'
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -64,6 +64,28 @@ function returnHover() {
         temptags[tt].style.fill = temptags[tt].style.fill.replace('-secondary', '-primary');
     }
 }
+
+// Header Links
+
+const hamburger = document.querySelector(".hamburger");
+const navMenu = document.querySelector(".nav-menu");
+const navLink = document.querySelectorAll(".nav-link");
+
+hamburger.addEventListener("click", mobileMenu);
+navLink.forEach(n => n.addEventListener("click", closeMenu));
+
+function mobileMenu() {
+	    hamburger.classList.toggle("active");
+	    navMenu.classList.toggle("active");
+}
+
+function closeMenu() {
+	    hamburger.classList.remove("active");
+	    navMenu.classList.remove("active");
+}
+
+
+
 // link handling
 document.addEventListener('click', function(event) {
     switch (event.target.tagName) {
@@ -92,11 +114,11 @@ document.addEventListener('click', function(event) {
     }
 }, false);
 
-_('burger').addEventListener('click', function(event) {
+/*_('burger').addEventListener('click', function(event) {
     appInfo.burger = !appInfo.burger;
     appInfo.burgerTrigger = true;
     _('nav').style.display = (appInfo.burger) ? 'flex' : 'none';
-});
+});*/
 
 function goToTerritory(territory) {
     window.history.pushState("Rust Risk", "Rust Risk", '/territory/'.concat(territory));
