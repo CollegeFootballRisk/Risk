@@ -7,8 +7,6 @@
 #[macro_use]
 extern crate rocket;
 #[macro_use]
-extern crate rocket_contrib;
-#[macro_use]
 extern crate serde_derive;
 #[macro_use]
 extern crate diesel;
@@ -24,7 +22,7 @@ mod schema;
 mod security;
 use crate::db::DbConn;
 use crate::model::{auth, player, stats, sys, team, territory, turn};
-use rocket_contrib::serve::StaticFiles;
+use rocket::fs::{FileServer,relative};
 use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
@@ -83,7 +81,7 @@ fn rocket() -> _ {
         .attach(DbConn::fairing())
         .register("/", catchers![catchers::not_found, catchers::internal_error])
         .mount("/api", api_paths)
-        .mount("/", StaticFiles::from("static").rank(2))
+        .mount("/", FileServer::from(relative!("static")).rank(2))
         .mount("/", root_paths)
         .mount("/auth", auth_paths)
         .mount(

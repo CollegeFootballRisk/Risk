@@ -5,11 +5,11 @@
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{Latest, TerritoryHistory, TerritoryTurn, TerritoryWithNeighbors};
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 /// # Territory Ownership
 /// Gives territory ownership information
-#[openapi]
+#[openapi(tag="Territories")]
 #[get("/territories?<day>&<season>")]
 pub async fn territories(
     season: Option<i32>,
@@ -39,7 +39,7 @@ pub async fn territories(
 
 /// # Territory Owners
 /// Gives a list of all owners of a territory in a given season.
-#[openapi]
+#[openapi(tag="Territories")]
 #[get("/territory/history?<territory>&<season>")]
 pub async fn territoryhistory(
     territory: String,
@@ -56,7 +56,7 @@ pub async fn territoryhistory(
 
 /// # Territory Moves
 /// Gives a list of all moves given on a particular day.
-#[openapi]
+#[openapi(tag="Territories")]
 #[get("/territory/turn?<territory>&<season>&<day>")]
 pub async fn territory_turn(
     territory: String,

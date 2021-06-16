@@ -2,6 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use rocket_contrib::databases::diesel;
+use rocket_sync_db_pools::{database, diesel};
 #[database("postgres_global")]
 pub struct DbConn(diesel::PgConnection);

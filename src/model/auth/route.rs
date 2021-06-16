@@ -18,14 +18,14 @@ use std::net::SocketAddr;
 extern crate rand;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 
 #[get("/join?<team>", rank = 1)]
 pub async fn join_team(
     team: i32,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Json<String>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
@@ -154,7 +154,7 @@ pub async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Json<String>, Status> {
     match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
@@ -197,7 +197,7 @@ pub async fn make_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Json<String>, Status> {
     match conn.run(move |c| Latest::latest(c)).await {
         Ok(latest) => {
@@ -343,7 +343,7 @@ pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 pub async fn submit_poll(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
     poll: i32,
     response: bool,
 ) -> Result<Json<bool>, Status> {
@@ -390,7 +390,7 @@ pub async fn submit_poll(
 pub async fn view_response(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
     poll: i32,
 ) -> Result<Json<Vec<PollResponse>>, Status> {
     // get user id

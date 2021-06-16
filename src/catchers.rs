@@ -4,7 +4,7 @@
 
 use diesel::{pg::Pg, Queryable};
 use okapi::openapi3::Responses;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use rocket_okapi::gen::OpenApiGenerator;
 use rocket_okapi::response::OpenApiResponderInner;
 use rocket_okapi::util::add_schema_response;

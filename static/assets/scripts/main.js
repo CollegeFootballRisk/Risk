@@ -22,7 +22,10 @@ var appInfo = {
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
     map: '/images/map5.svg',
-    viewbox: '0 0 850 700'
+    viewbox: '0 0 850 700',
+    season: 0,
+    day: 0,
+    mode: 0,
 }
 
 appInfo.dDay.setUTCHours(4);
@@ -66,6 +69,7 @@ function returnHover() {
 }
 
 // Header Links
+// Inspired by https://dev.to/devggaurav/let-s-build-a-responsive-navbar-and-hamburger-menu-using-html-css-and-javascript-4gci
 
 const hamburger = document.querySelector(".hamburger");
 const navMenu = document.querySelector(".nav-menu");
@@ -75,13 +79,13 @@ hamburger.addEventListener("click", mobileMenu);
 navLink.forEach(n => n.addEventListener("click", closeMenu));
 
 function mobileMenu() {
-	    hamburger.classList.toggle("active");
-	    navMenu.classList.toggle("active");
+    hamburger.classList.toggle("active");
+    navMenu.classList.toggle("active");
 }
 
 function closeMenu() {
-	    hamburger.classList.remove("active");
-	    navMenu.classList.remove("active");
+    hamburger.classList.remove("active");
+    navMenu.classList.remove("active");
 }
 
 
@@ -616,6 +620,74 @@ function makeMove(id) {
         });
 }
 
+function drawActionBoardSheet(resolve, reject) {
+    let territories = window.territories;
+    if (window.turnsObject[window.turnsObject.length - 1].finale) {
+        _('last-day-notice').innerHTML = 'Today is the final roll! Make it count!';
+    }
+    if (!window.turnsObject[window.turnsObject.length - 1].active) {
+        _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
+        appInfo.attackable_territory_names = [];
+        appInfo.defendable_territory_names = [];
+        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+    } else {
+        try {
+            dbg("Drawing Actions.");
+            let userteam = appInfo.userObject.active_team.name;
+            dbg(userteam);
+            appInfo.attackable_territories = {};
+            appInfo.attackable_territory_names = [];
+            appInfo.defendable_territories = {};
+            appInfo.defendable_territory_names = [];
+            dbg(territories);
+            for (i in territories) {
+                if (territories[i].owner == userteam) {
+                    neighbors = 0;
+                    for (j in territories[i].neighbors) {
+                        if (territories[i].neighbors[j].owner != userteam) {
+                            appInfo.attackable_territories[territories[i].neighbors[j].id] = territories[i].neighbors[j];
+                            appInfo.attackable_territory_names.push(territories[i].neighbors[j].name);
+                            neighbors += 1;
+                        }
+                    }
+                    if (neighbors != 0) {
+                        appInfo.defendable_territories[territories[i].id] = territories[i];
+                        appInfo.defendable_territory_names.push(territories[i].name);
+                    }
+                }
+            }
+            _('action-container').style.display = "flex";
+            let action_item = "<label for=\"{{id}}\">{{name}}:</label> <input type=\"number\" id=\"ac_{{id}}\" name=\"ac_{{id}}\" class=\"pointcount\" value=\"0\" min=\"0\" max=\"100\"> <br/>"
+            for (k in appInfo.attackable_territories) {
+                _('attack-list').innerHTML += action_item.replace(/{{name}}/g, appInfo.attackable_territories[k].name).replace(/{{id}}/g, appInfo.attackable_territories[k].id);
+            }
+            for (l in appInfo.defendable_territories) {
+                _('defend-list').innerHTML += action_item.replace(/{{name}}/g, appInfo.defendable_territories[l].name).replace(/{{id}}/g, appInfo.defendable_territories[l].id);
+            }
+            _('sender').style.display = "block";
+            _('max_points_available').value = "0";
+
+            dbg("Territory actions drawn");
+            resolve("Okay");
+        } catch (error) {
+            dbg('could not do territory analysis');
+            dbg(error);
+            reject("Error");
+        }
+    }
+}
+
+function sumInNums() {
+    let to_sum = Array.from(document.getElementsByClassName('pointcount'));
+    let sum = 0;
+    for (i = 0; i < to_sum.length; i++) {
+        if (!isNaN(to_sum[i].value)) {
+            sum += Number(to_sum[i].value);
+        }
+    }
+    return sum;
+}
+
 function drawActionBoard(resolve, reject) {
     let territories = window.territories;
     if (window.turnsObject[window.turnsObject.length - 1].finale) {
@@ -655,10 +727,10 @@ function drawActionBoard(resolve, reject) {
             _('action-container').style.display = "flex";
             let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
             for (k in appInfo.attackable_territories) {
-                _('attack-list').innerHTML += action_item.replace(/{{name}}/, appInfo.attackable_territories[k].name).replace(/{{id}}/, appInfo.attackable_territories[k].id);
+                _('attack-list').innerHTML += action_item.replace(/{{name}}/g, appInfo.attackable_territories[k].name).replace(/{{id}}/g, appInfo.attackable_territories[k].id);
             }
             for (l in appInfo.defendable_territories) {
-                _('defend-list').innerHTML += action_item.replace(/{{name}}/, appInfo.defendable_territories[l].name).replace(/{{id}}/, appInfo.defendable_territories[l].id);
+                _('defend-list').innerHTML += action_item.replace(/{{name}}/g, appInfo.defendable_territories[l].name).replace(/{{id}}/g, appInfo.defendable_territories[l].id);
             }
             dbg("Territory actions drawn");
             resolve("Okay");
@@ -1141,7 +1213,11 @@ function page_index(contentTag) {
         })
         .then(() => {
             return new Promise((resolve, reject) => {
-                drawActionBoard(resolve, reject);
+                if (appInfo.mode == 0) {
+                    drawActionBoardSheet(resolve, reject);
+                } else {
+                    drawActionBoard(resolve, reject);
+                }
             })
         })
         .then(() => {
@@ -1486,7 +1562,7 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
                 }
             }
         }
-	obj.data[i].push(teamPlayersObject[i]['lastTurn']['stars']);
+        obj.data[i].push(teamPlayersObject[i]['lastTurn']['stars']);
         obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
     }
 

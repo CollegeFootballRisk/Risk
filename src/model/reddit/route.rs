@@ -30,7 +30,7 @@ pub async fn callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Redirect, Status> {
     let userinfo: Result<RedditUserInfo, _> = match reqwest::Client::builder().build() {
         Ok(rclient) => {

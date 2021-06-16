@@ -7,10 +7,10 @@ use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, Te
 use crate::sys::SysInfo;
 use rocket::http::CookieJar;
 use rocket::State;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
-#[openapi]
+#[openapi(tag="Players")]
 #[get("/players?<team>")]
 pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
@@ -48,7 +48,7 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
 pub async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
     match cookies.get_private("jwt") {
         Some(cookie) => {
@@ -87,7 +87,7 @@ pub async fn me(
 
 /// # Player Batching
 /// Batch retrieval of players
-#[openapi]
+#[openapi(tag="Players")]
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(
     players: Option<String>,
@@ -115,7 +115,7 @@ pub async fn player_multifetch(
 
 /// # Player Information
 /// Retrieve information about individual player
-#[openapi]
+#[openapi(tag="Players")]
 #[get("/player?<player>")]
 pub async fn player(
     player: String,
