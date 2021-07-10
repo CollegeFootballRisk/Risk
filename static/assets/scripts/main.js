@@ -25,7 +25,7 @@ var appInfo = {
     viewbox: '0 0 700 700',
     season: 0,
     day: 0,
-    mode: 0,
+    mode: 1,
 }
 
 // Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset

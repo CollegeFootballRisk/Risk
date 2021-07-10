@@ -20,7 +20,7 @@
 
 ## Ringmaster
 
-*Ringmaster* is the programme routine which determines territory ownership, MVPs, and statistics for each turn. It runs on a chron job each night. 
+*Ringmaster* is the programme routine which determines territory ownership, MVPs, and statistics for each turn. It runs on a cron job each night. 
 
 ![Ringmaster Flamegraph](/documentation/flamegraph.svg)
 Produced with [FlameGraph](https://github.com/flamegraph-rs/flamegraph).
