@@ -11,7 +11,7 @@ if (window.location.hostname === "aggierisk.ml") {
 var appInfo = {
     outstandingRequests: [],
     errorNotifications: [],
-    rollTime: new Date("December 12, 2020 04:00:00"),
+    rollTime: new Date("July 22, 2021 05:00:00"),
     loadTime: new Date(),
     burger: false,
     burgerTrigger: false,
@@ -21,16 +21,34 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map5.svg',
-    viewbox: '0 0 850 700',
+    map: '/images/map2.svg',
+    viewbox: '0 0 700 700',
     season: 0,
     day: 0,
     mode: 0,
 }
 
-appInfo.dDay.setUTCHours(4);
+// Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset
+Date.prototype.stdTimezoneOffset = function () {
+    var jan = new Date(this.getFullYear(), 0, 1);
+    var jul = new Date(this.getFullYear(), 6, 1);
+    return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
+}
 
-appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+Date.prototype.isDstObserved = function () {
+    return this.getTimezoneOffset() < this.stdTimezoneOffset();
+}
+
+var today = new Date();
+hourOffset = 4;
+if (today.isDstObserved()) { 
+   hourOffset = 3;
+}
+// end of SO code.
+
+appInfo.dDay.setUTCHours(hourOffset);
+
+appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
 
 if (appInfo.rollTime < new Date()) {
     appInfo.rollTime = new Date();

@@ -261,7 +261,7 @@ flex-direction: row;
     .nav-menu {
         position: fixed;
         left: -100%;
-        top: 2.5rem;
+        top: 3.5rem;
         flex-direction: column;
         background-color: var(--theme-bg-gen);
 	color: var(--theme-fg);
