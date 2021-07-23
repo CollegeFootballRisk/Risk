@@ -52,7 +52,7 @@ appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
 
 if (appInfo.rollTime < new Date()) {
     appInfo.rollTime = new Date();
-    appInfo.rollTime.setUTCHours(4, 0, 0, 0);
+    appInfo.rollTime.setUTCHours(3, 0, 0, 0);
     if (appInfo.rollTime < new Date()) {
         appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
     }
