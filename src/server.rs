@@ -22,7 +22,7 @@ mod schema;
 mod security;
 use crate::db::DbConn;
 use crate::model::{auth, player, stats, sys, team, territory, turn};
-use rocket::fs::{FileServer,relative};
+use rocket::fs::{relative, FileServer};
 use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
@@ -46,6 +46,7 @@ fn rocket() -> _ {
     let api_paths = routes_with_openapi![
         player::route::player,
         player::route::me,
+        player::route::mercs,
         player::route::players,
         player::route::player_multifetch,
         turn::route::turns,

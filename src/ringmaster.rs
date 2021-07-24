@@ -121,40 +121,40 @@ fn process_territories(
             1 => {
                 // Due to All-or-nothing, we don't get to just assume that this team gets it
                 if territory_players.iter().map(|mover| mover.power).sum::<f64>() == 0.0 {
-                   // Then this is the same case as if there is no teams, next
-                dbg!("Team has no power");
-                new_owners.push(TerritoryOwnersInsert {
-                    territory_id: territory.territory_id,
-                    territory_name: None,
-                    owner_id: territory.owner_id,
-                    day: territory.day + 1,
-                    season: territory.season,
-                    previous_owner_id: territory.owner_id,
-                    random_number: 0_f64,
-                    mvp: Some(0),
-                });
-                // add team territory count to stats
-                stats
-                    .entry(territory.owner_id)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
-                            territory.owner_id,
-                        )
-                    })
-                    .territorycount += 1;
+                    // Then this is the same case as if there is no teams, next
+                    dbg!("Team has no power");
+                    new_owners.push(TerritoryOwnersInsert {
+                        territory_id: territory.territory_id,
+                        territory_name: None,
+                        owner_id: territory.owner_id,
+                        day: territory.day + 1,
+                        season: territory.season,
+                        previous_owner_id: territory.owner_id,
+                        random_number: 0_f64,
+                        mvp: Some(0),
+                    });
+                    // add team territory count to stats
+                    stats
+                        .entry(territory.owner_id)
+                        .or_insert_with(|| {
+                            Stats::new(
+                                territory.season * 1000 + territory.season + 1,
+                                territory.season,
+                                territory.day,
+                                territory.owner_id,
+                            )
+                        })
+                        .territorycount += 1;
 
-                territory_stats.push(TerritoryStats {
-                    team: territory.owner_id,
-                    season: territory.season,
-                    day: territory.day,
-                    territory: territory.territory_id,
-                    ..TerritoryStats::default()
-                });
-                continue;
-                } 
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        ..TerritoryStats::default()
+                    });
+                    continue;
+                }
                 dbg!("One Team");
                 let mvp = get_mvp(territory_players.clone());
                 mvps.push(mvp.clone());
@@ -234,40 +234,40 @@ fn process_territories(
             _ => {
                 dbg!(&teams);
                 // Due to All-or-nothing, we don't get to just assume that this team gets it
-                if territory_players.iter().map(|mover| mover.power).sum::<f64>() == 0.0 { 
-                   // Then this is the same case as if there is no teams, next
-                dbg!("Team has no power");
-                new_owners.push(TerritoryOwnersInsert {
-                    territory_id: territory.territory_id,
-                    territory_name: None,
-                    owner_id: territory.owner_id,
-                    day: territory.day + 1,
-                    season: territory.season,
-                    previous_owner_id: territory.owner_id,
-                    random_number: 0_f64,
-                    mvp: Some(0),
-                });
-                // add team territory count to stats
-                stats
-                    .entry(territory.owner_id)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
-                            territory.owner_id,
-                        )
-                    })
-                    .territorycount += 1;
+                if territory_players.iter().map(|mover| mover.power).sum::<f64>() == 0.0 {
+                    // Then this is the same case as if there is no teams, next
+                    dbg!("Team has no power");
+                    new_owners.push(TerritoryOwnersInsert {
+                        territory_id: territory.territory_id,
+                        territory_name: None,
+                        owner_id: territory.owner_id,
+                        day: territory.day + 1,
+                        season: territory.season,
+                        previous_owner_id: territory.owner_id,
+                        random_number: 0_f64,
+                        mvp: Some(0),
+                    });
+                    // add team territory count to stats
+                    stats
+                        .entry(territory.owner_id)
+                        .or_insert_with(|| {
+                            Stats::new(
+                                territory.season * 1000 + territory.season + 1,
+                                territory.season,
+                                territory.day,
+                                territory.owner_id,
+                            )
+                        })
+                        .territorycount += 1;
 
-                territory_stats.push(TerritoryStats {
-                    team: territory.owner_id,
-                    season: territory.season,
-                    day: territory.day,
-                    territory: territory.territory_id,
-                    ..TerritoryStats::default()
-                });
-                continue;
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        ..TerritoryStats::default()
+                    });
+                    continue;
                 }
 
                 let mut map = HashMap::new();

@@ -28,6 +28,15 @@ pub struct TeamPlayer {
     pub mvps: Option<i32>,
     pub lastTurn: LastTurn,
 }
+
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+pub struct TeamMerc {
+    pub team: CiString,
+    pub player: CiString,
+    pub turnsPlayed: Option<i32>,
+    pub mvps: Option<i32>,
+}
+
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
 pub struct User {
     pub id: i32,
@@ -241,6 +250,21 @@ impl TeamPlayer {
             ))
             .load::<TeamPlayer>(conn)
             .expect("Error loading players")
+    }
+}
+
+impl TeamMerc {
+    pub fn load_mercs(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamMerc> {
+        let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
+        allow_tables_to_appear_in_same_query!(users, moves);
+        use diesel::dsl::not;
+        users::table
+            .inner_join(teams::table.on(teams::id.eq(users::playing_for)))
+            .filter(teams::tname.eq_any(ciTname))
+            .filter(not(users::playing_for.eq(users::current_team)))
+            .select((teams::tname, users::uname, users::turns, users::mvps))
+            .load::<TeamMerc>(conn)
+            .expect("Error loading mercs")
     }
 }
 

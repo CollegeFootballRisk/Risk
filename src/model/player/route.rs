@@ -3,14 +3,16 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
-use crate::model::{Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamPlayer};
+use crate::model::{
+    Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
+};
 use crate::sys::SysInfo;
 use rocket::http::CookieJar;
-use rocket::State;
 use rocket::serde::json::Json;
+use rocket::State;
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
-#[openapi(tag="Players")]
+#[openapi(tag = "Players")]
 #[get("/players?<team>")]
 pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
@@ -40,6 +42,28 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
         }
     }
 }
+
+/// # Team Mercenary Roster
+/// Get all of the mercenary players on a team (returns all players on all teams if no team is provided).
+#[openapi(tag = "Players")]
+#[get("/mercs?<team>")]
+pub async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
+    let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
+        urlencoding::decode(&team);
+    match parsed_team_name {
+        Ok(team) => {
+            println!("{}", team);
+            let users = conn.run(|c| TeamMerc::load_mercs(vec![team], c)).await;
+            if users.len() as i32 >= 1 {
+                std::result::Result::Ok(Json(users))
+            } else {
+                std::result::Result::Err(Status(rocket::http::Status::NotFound))
+            }
+        }
+        _ => std::result::Result::Err(Status(rocket::http::Status::Conflict)),
+    }
+}
+
 /// # Me
 /// Retrieves all information about currently logged-in user. Should not be accessed by any
 /// scraping programs.
@@ -87,7 +111,7 @@ pub async fn me(
 
 /// # Player Batching
 /// Batch retrieval of players
-#[openapi(tag="Players")]
+#[openapi(tag = "Players")]
 #[get("/players/batch?<players>")]
 pub async fn player_multifetch(
     players: Option<String>,
@@ -115,7 +139,7 @@ pub async fn player_multifetch(
 
 /// # Player Information
 /// Retrieve information about individual player
-#[openapi(tag="Players")]
+#[openapi(tag = "Players")]
 #[get("/player?<player>")]
 pub async fn player(
     player: String,
