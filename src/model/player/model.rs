@@ -35,6 +35,7 @@ pub struct TeamMerc {
     pub player: CiString,
     pub turnsPlayed: Option<i32>,
     pub mvps: Option<i32>,
+    pub stars: Option<i32>,
 }
 
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
@@ -262,7 +263,7 @@ impl TeamMerc {
             .inner_join(teams::table.on(teams::id.eq(users::playing_for)))
             .filter(teams::tname.eq_any(ciTname))
             .filter(not(users::playing_for.eq(users::current_team)))
-            .select((teams::tname, users::uname, users::turns, users::mvps))
+            .select((teams::tname, users::uname, users::turns, users::mvps, users::overall))
             .load::<TeamMerc>(conn)
             .expect("Error loading mercs")
     }

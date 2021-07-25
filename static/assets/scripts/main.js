@@ -29,20 +29,20 @@ var appInfo = {
 }
 
 // Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset
-Date.prototype.stdTimezoneOffset = function () {
+Date.prototype.stdTimezoneOffset = function() {
     var jan = new Date(this.getFullYear(), 0, 1);
     var jul = new Date(this.getFullYear(), 6, 1);
     return Math.max(jan.getTimezoneOffset(), jul.getTimezoneOffset());
 }
 
-Date.prototype.isDstObserved = function () {
+Date.prototype.isDstObserved = function() {
     return this.getTimezoneOffset() < this.stdTimezoneOffset();
 }
 
 var today = new Date();
 hourOffset = 4;
-if (today.isDstObserved()) { 
-   hourOffset = 3;
+if (today.isDstObserved()) {
+    hourOffset = 3;
 }
 // end of SO code.
 
@@ -52,7 +52,7 @@ appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
 
 if (appInfo.rollTime < new Date()) {
     appInfo.rollTime = new Date();
-    appInfo.rollTime.setUTCHours(3, 0, 0, 0);
+    appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
     if (appInfo.rollTime < new Date()) {
         appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1)
     }
@@ -307,7 +307,7 @@ function drawPlayerCard(userObject, teamObject) {
         .replace(/{{streak}}/g, userObject.stats.streak)
         .replace(/{{cfb_stars}}/g, userObject.stats.awards)
         .replace(/{{team}}/g, teamObject.team || "")
-        .replace(/{{team_2}}/g, (userObject.active_team.name != userObject.team.name) ? "Playing as " + userObject.active_team.name || "" : ".")
+        .replace(/{{team_2}}/g, (userObject.active_team.name != userObject.team.name) ? "Playing as " + userObject.active_team.name || "" : "")
         .replace(/{{team_players_yesterday}}/g, teamObject.players || "0")
         .replace(/{{team_mercs_yesterday}}/g, teamObject.mercs || "0")
         .replace(/{{team_star_power_yesterday}}/g, teamObject.stars || "0")
@@ -1555,13 +1555,21 @@ function drawTeamPage(teamsObject, teamTurnsObject, team) {
     _('teamPlayerHint').innerHTML = "<center><a href = \"/team/{{team}}/players\"> See all of {{team_c}}'s players </a></center>".replace(/{{team}}/gi, team).replace(/{{team_c}}/gi, capname);
 }
 
-function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
+function drawTeamPlayersPage(teamsObject, teamPlayersObject, team, turnInclude) {
     teamPlayersObject = JSON.parse(teamPlayersObject.response);
     let display_headings = ["player", "turnsPlayed"];
 
+    switch (turnInclude) {
+        case true:
+            headingDef = ["Player", "Turns Played", "Stars", "Last Turn"];
+            break;
+        case false:
+            headingDef = ["Player", "Turns Played", "Stars"];
+    }
+
     var obj = {
         // Quickly get the headings
-        headings: ["Player", "Turns Played", "Stars", "Last Turn"],
+        headings: headingDef,
 
         // data array
         data: []
@@ -1580,8 +1588,10 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
                 }
             }
         }
-        obj.data[i].push(teamPlayersObject[i]['lastTurn']['stars']);
-        obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
+        if (turnInclude) {
+            obj.data[i].push(teamPlayersObject[i]['lastTurn']['stars']);
+            obj.data[i].push("Season: {{s}}, Day: {{d}}".replace(/{{s}}/gi, teamPlayersObject[i]['lastTurn']['season']).replace(/{{d}}/gi, teamPlayersObject[i]['lastTurn']['day']));
+        } else { obj.data[i].push(teamPlayersObject[i]['stars']); }
     }
 
     dbg(obj);
@@ -1590,23 +1600,40 @@ function drawTeamPlayersPage(teamsObject, teamPlayersObject, team) {
         _('team-header').innerHTML = "<h1>" + teamPlayersObject[0]['team'] + "</h1>";
     } catch {
         // eh
+        dbg("Error with team name.");
     }
 
     try {
-        window.datatable.destroy();
+        if (turnInclude) { window.datatable.destroy(); } else {
+            window.datatable2.destroy();
+        }
     } catch {
         // don't do anything, nor output to table ;)
+        dbg("Error with table");
     } finally {
-        window.datatable = new DataTable("#team-turns-table", {
-            data: obj,
-            columns: obj.columns,
-            searchable: true,
-            perPageSelect: false,
-            footer: false,
-            labels: {
-                info: "",
-            }
-        });
+        if (turnInclude) {
+            window.datatable = new DataTable("#team-turns-table", {
+                data: obj,
+                columns: obj.columns,
+                searchable: true,
+                perPageSelect: false,
+                footer: false,
+                labels: {
+                    info: "",
+                }
+            });
+        } else {
+            window.datatable2 = new DataTable("#team-mercs-table", {
+                data: obj,
+                columns: obj.columns,
+                searchable: true,
+                perPageSelect: false,
+                footer: false,
+                labels: {
+                    info: "",
+                }
+            });
+        }
     }
 }
 
@@ -1620,7 +1647,12 @@ function page_team_players(contentTag, team) {
         })
         .then((values) => {
             doAjaxGetRequest('/api/players?team=' + team.replace('&', '%26'), 'TeamPlayersFetch', function(data) {
-                drawTeamPlayersPage(values, data, team);
+                drawTeamPlayersPage(values, data, team, true);
+            });
+        })
+        .then((values) => {
+            doAjaxGetRequest('/api/mercs?team=' + team.replace('&', '%26'), 'TeamMercsFetch', function(data) {
+                drawTeamPlayersPage(values, data, team, false);
             });
         })
 }
