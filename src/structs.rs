@@ -237,11 +237,15 @@ impl Stats {
         insertable_stats.reverse();
         let mut rankings: i32 = 1;
         let mut territories: i32 = 0;
+        let mut next_ranking: i32 = 2;
         let mut amended_stats: Vec<Stats> = Vec::new();
         for i in &insertable_stats {
+            // if there are more territories, then teams are not tied; increment +1
             if i.territorycount < territories {
-                rankings += 1;
+                rankings = next_ranking;
             }
+            // increment the rank counter
+            next_ranking += 1;
             territories = i.territorycount;
             let teamefficiency: f64 = match territories {
                 0 => 0.0,
