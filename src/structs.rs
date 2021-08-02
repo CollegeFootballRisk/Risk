@@ -237,7 +237,7 @@ impl Stats {
         insertable_stats.reverse();
         let mut rankings: i32 = 1;
         let mut territories: i32 = 0;
-        let mut next_ranking: i32 = 2;
+        let mut next_ranking: i32 = 1;
         let mut amended_stats: Vec<Stats> = Vec::new();
         for i in &insertable_stats {
             // if there are more territories, then teams are not tied; increment +1
