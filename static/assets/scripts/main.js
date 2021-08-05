@@ -470,7 +470,7 @@ function mapDisplayUpdate(event, change, override = false) {
                 break;
             case "leaderboard":
                 _("map-county-info").innerHTML = event.target.attributes["name"].value;
-                _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br /> Power:" + event.target.attributes["power"].value + " Players: " + event.target.attributes["players"].value;
+                _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br /> Power: " + event.target.attributes["power"].value + " Players: " + event.target.attributes["players"].value;
                 _("visit-button").disabled = false;
                 _("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
                 break;
