@@ -2,10 +2,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-// if .ml, redirect to .com
-if (window.location.hostname === "aggierisk.ml") {
-    window.location = 'https://aggierisk.com/';
-}
 
 //initialize globals
 var appInfo = {
@@ -647,7 +643,7 @@ function drawActionBoardSheet(resolve, reject) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
         appInfo.attackable_territory_names = [];
         appInfo.defendable_territory_names = [];
-        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
             dbg("Drawing Actions.");
@@ -715,7 +711,7 @@ function drawActionBoard(resolve, reject) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
         appInfo.attackable_territory_names = [];
         appInfo.defendable_territory_names = [];
-        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSej4xCIqU7o0WnZV59J7at48BVKCJW3-bcV75wn1H-guDHFtQ/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+        _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
             dbg("Drawing Actions.");
