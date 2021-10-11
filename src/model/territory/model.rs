@@ -94,8 +94,8 @@ impl TerritoryTurn {
             Ok(duo) => duo,
             _ => (CiString::from("NotFound"), CiString::from("NotFound")),
         };
-        let teams = TeamInTurns::load(&season, &day, &territory, &conn);
-        let players = PlayerInTurns::load(&season, &day, &territory, &conn);
+        let teams = TeamInTurns::load(&season, &day, &territory, conn);
+        let players = PlayerInTurns::load(&season, &day, &territory, conn);
         match teams {
             Ok(teams) => {
                 match players {

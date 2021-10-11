@@ -30,7 +30,7 @@ pub async fn join_team(
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(
-                &config.settings.cookie_key.as_bytes(),
+                config.settings.cookie_key.as_bytes(),
                 cookie.value().to_string(),
             ) {
                 Ok(c) => {
@@ -54,7 +54,7 @@ pub async fn join_team(
                                         //check team exists
                                         match conn
                                             .run(move |connection| {
-                                                TeamInfo::load(&connection)
+                                                TeamInfo::load(connection)
                                                     .iter()
                                                     .any(|e| e.id == team)
                                             })
@@ -162,7 +162,7 @@ pub async fn my_move(
             match cookies.get_private("jwt") {
                 Some(cookie) => {
                     match Claims::interpret(
-                        &config.settings.cookie_key.as_bytes(),
+                        config.settings.cookie_key.as_bytes(),
                         cookie.value().to_string(),
                     ) {
                         Ok(c) => {
@@ -205,7 +205,7 @@ pub async fn make_move(
             match cookies.get_private("jwt") {
                 Some(cookie) => {
                     match Claims::interpret(
-                        &config.settings.cookie_key.as_bytes(),
+                        config.settings.cookie_key.as_bytes(),
                         cookie.value().to_string(),
                     ) {
                         Ok(mut c) => {
@@ -351,7 +351,7 @@ pub async fn submit_poll(
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(
-                &config.settings.cookie_key.as_bytes(),
+                config.settings.cookie_key.as_bytes(),
                 cookie.value().to_string(),
             ) {
                 Ok(c) => {
@@ -397,7 +397,7 @@ pub async fn view_response(
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(
-                &config.settings.cookie_key.as_bytes(),
+                config.settings.cookie_key.as_bytes(),
                 cookie.value().to_string(),
             ) {
                 Ok(c) => {
@@ -491,7 +491,7 @@ pub fn handle_territory_info(
                                 Some(_npos) => {
                                     if team_id.0 != 0 {
                                         let mut regional_multiplier =
-                                            2 * handleregionalownership(&latest, team_id.0, &conn)
+                                            2 * handleregionalownership(&latest, team_id.0, conn)
                                                 .unwrap_or(0);
                                         if regional_multiplier == 0 {
                                             regional_multiplier = 1;

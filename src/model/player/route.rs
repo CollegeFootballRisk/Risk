@@ -77,7 +77,7 @@ pub async fn me(
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(
-                &config.settings.cookie_key.as_bytes(),
+                config.settings.cookie_key.as_bytes(),
                 cookie.value().to_string(),
             ) {
                 Ok(c) => {
@@ -127,7 +127,7 @@ pub async fn player_multifetch(
                             .map(std::string::ToString::to_string)
                             .collect::<Vec<String>>(),
                         true,
-                        &c,
+                        c,
                     )
                 })
                 .await,

@@ -88,7 +88,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
         team_assigned: bool,
         conn: &PgConnection,
     ) -> Option<PlayerWithTurnsAndAdditionalTeam> {
-        let me = PlayerWithTurns::load(name.clone(), true, &conn);
+        let me = PlayerWithTurns::load(name.clone(), true, conn);
         match me.len() {
             0 => None,
             1 => {
