@@ -99,7 +99,9 @@ impl TurnInfo {
 impl Latest {
     pub fn latest(conn: &PgConnection) -> Result<Latest, String> {
         use diesel::dsl::{max, min};
-        let season = turninfo::table.select(max(turninfo::season)).first::<Option<i32>>(conn);
+        let season = turninfo::table
+            .select(max(turninfo::season))
+            .first::<Option<i32>>(conn);
         match season {
             Ok(season) => {
                 let day = turninfo::table
@@ -109,33 +111,18 @@ impl Latest {
                     .filter(turninfo::active.eq(true))
                     .first::<Option<i32>>(conn);
                 match day {
-                    Ok(day) => {
-                        match (season, day) {
-                            (Some(season), Some(day)) => {
-                                Ok(Latest {
-                                    season,
-                                    day,
-                                })
-                            }
-                            (Some(season), None) => {
-                                let dayz = turninfo::table
-                                    .select(max(turninfo::day))
-                                    .filter(turninfo::season.eq(season))
-                                    .first::<Option<i32>>(conn);
-                                let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
-                                Ok(Latest {
-                                    season,
-                                    day,
-                                })
-                            }
-                            _ => {
-                                Ok(Latest {
-                                    season: 0,
-                                    day: 0,
-                                })
-                            }
+                    Ok(day) => match (season, day) {
+                        (Some(season), Some(day)) => Ok(Latest { season, day }),
+                        (Some(season), None) => {
+                            let dayz = turninfo::table
+                                .select(max(turninfo::day))
+                                .filter(turninfo::season.eq(season))
+                                .first::<Option<i32>>(conn);
+                            let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
+                            Ok(Latest { season, day })
                         }
-                    }
+                        _ => Ok(Latest { season: 0, day: 0 }),
+                    },
                     _ => Err("Database Error".to_owned()),
                 }
             }

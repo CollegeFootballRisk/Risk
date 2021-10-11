@@ -27,7 +27,9 @@ pub struct UserCaptcha {
 
 impl Captchas {
     pub fn insert(insert_captcha: Captchas, conn: &PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(captchas::table).values(&insert_captcha).execute(conn)
+        diesel::insert_into(captchas::table)
+            .values(&insert_captcha)
+            .execute(conn)
     }
 
     pub fn delete(delete_captcha: Captchas, conn: &PgConnection) -> QueryResult<usize> {

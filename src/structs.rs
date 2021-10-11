@@ -270,7 +270,9 @@ impl Stats {
                 fives: i.fives,
             });
         }
-        diesel::insert_into(stats::table).values(amended_stats).execute(conn)
+        diesel::insert_into(stats::table)
+            .values(amended_stats)
+            .execute(conn)
     }
 
     #[must_use]
@@ -331,13 +333,17 @@ impl Stats {
 
 impl Team {
     pub fn load(conn: &PgConnection) -> Result<Vec<Team>, Error> {
-        teams::table.select((teams::id, teams::color_1)).load::<Team>(conn)
+        teams::table
+            .select((teams::id, teams::color_1))
+            .load::<Team>(conn)
     }
 }
 
 impl TerritoryStats {
     pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(territory_stats::table).values(stats).execute(conn)
+        diesel::insert_into(territory_stats::table)
+            .values(stats)
+            .execute(conn)
     }
 }
 
@@ -376,7 +382,9 @@ impl TerritoryOwners {
 impl TerritoryOwnersInsert {
     pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::territory_ownership;
-        insert_into(territory_ownership).values(owners).execute(conn)
+        insert_into(territory_ownership)
+            .values(owners)
+            .execute(conn)
     }
 }
 

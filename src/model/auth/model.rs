@@ -53,7 +53,11 @@ pub struct PollResponse {
 
 impl Claims {
     pub fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
-        encode(&Header::default(), &user_claims, &EncodingKey::from_secret(key))
+        encode(
+            &Header::default(),
+            &user_claims,
+            &EncodingKey::from_secret(key),
+        )
     }
 
     pub fn interpret(key: &[u8], token: String) -> Result<(Claims, Header), String> {
@@ -117,7 +121,10 @@ impl PollResponse {
                 continuation_responses::user_id.eq(response.user_id),
                 continuation_responses::response.eq(response.response),
             ))
-            .on_conflict((continuation_responses::poll_id, continuation_responses::user_id))
+            .on_conflict((
+                continuation_responses::poll_id,
+                continuation_responses::user_id,
+            ))
             .do_update()
             .set(continuation_responses::response.eq(response.response))
             .execute(conn)

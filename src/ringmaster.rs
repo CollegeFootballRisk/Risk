@@ -37,7 +37,10 @@ pub fn establish_connection() -> PgConnection {
 }
 
 fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
-    let mut teams = territory_players.iter().map(|x| x.team).collect::<Vec<i32>>();
+    let mut teams = territory_players
+        .iter()
+        .map(|x| x.team)
+        .collect::<Vec<i32>>();
     teams.sort_unstable();
     teams.dedup();
     teams
@@ -69,7 +72,12 @@ fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
-) -> (Vec<TerritoryOwnersInsert>, Vec<PlayerMoves>, HashMap<i32, Stats>, Vec<TerritoryStats>) {
+) -> (
+    Vec<TerritoryOwnersInsert>,
+    Vec<PlayerMoves>,
+    HashMap<i32, Stats>,
+    Vec<TerritoryStats>,
+) {
     dbg!("process_territories");
     dbg!(territories.len());
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
@@ -120,7 +128,12 @@ fn process_territories(
             }
             1 => {
                 // Due to All-or-nothing, we don't get to just assume that this team gets it
-                if territory_players.iter().map(|mover| mover.power).sum::<f64>() == 0.0 {
+                if territory_players
+                    .iter()
+                    .map(|mover| mover.power)
+                    .sum::<f64>()
+                    == 0.0
+                {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
                     new_owners.push(TerritoryOwnersInsert {
@@ -208,16 +221,26 @@ fn process_territories(
                     team: teams[0],
                     season: territory.season,
                     day: territory.day,
-                    ones: territory_players.iter().filter(|player| player.stars == 1).count()
-                        as i32,
-                    twos: territory_players.iter().filter(|player| player.stars == 2).count()
-                        as i32,
-                    threes: territory_players.iter().filter(|player| player.stars == 3).count()
-                        as i32,
-                    fours: territory_players.iter().filter(|player| player.stars == 4).count()
-                        as i32,
-                    fives: territory_players.iter().filter(|player| player.stars == 5).count()
-                        as i32,
+                    ones: territory_players
+                        .iter()
+                        .filter(|player| player.stars == 1)
+                        .count() as i32,
+                    twos: territory_players
+                        .iter()
+                        .filter(|player| player.stars == 2)
+                        .count() as i32,
+                    threes: territory_players
+                        .iter()
+                        .filter(|player| player.stars == 3)
+                        .count() as i32,
+                    fours: territory_players
+                        .iter()
+                        .filter(|player| player.stars == 4)
+                        .count() as i32,
+                    fives: territory_players
+                        .iter()
+                        .filter(|player| player.stars == 5)
+                        .count() as i32,
                     teampower: territory_players
                         .iter()
                         .map(|mover| mover.power as f64)
@@ -234,7 +257,12 @@ fn process_territories(
             _ => {
                 dbg!(&teams);
                 // Due to All-or-nothing, we don't get to just assume that this team gets it
-                if territory_players.iter().map(|mover| mover.power).sum::<f64>() == 0.0 {
+                if territory_players
+                    .iter()
+                    .map(|mover| mover.power)
+                    .sum::<f64>()
+                    == 0.0
+                {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
                     new_owners.push(TerritoryOwnersInsert {
@@ -291,7 +319,10 @@ fn process_territories(
                     if player.alt_score >= 175 {
                         continue;
                     } else {
-                        map.get_mut(&player.team).unwrap().power(player.power).stars(player.stars);
+                        map.get_mut(&player.team)
+                            .unwrap()
+                            .power(player.power)
+                            .stars(player.stars);
                     }
                 }
 
@@ -330,8 +361,10 @@ fn process_territories(
                     })
                     .territorycount += 1;
 
-                let total_power =
-                    territory_players.iter().map(|mover| mover.power as f64).sum::<f64>();
+                let total_power = territory_players
+                    .iter()
+                    .map(|mover| mover.power as f64)
+                    .sum::<f64>();
                 handle_team_stats(&mut stats, territory_players);
                 for (key, val) in &map {
                     territory_stats.push(TerritoryStats {
@@ -449,11 +482,17 @@ fn runtime() -> Result<(), diesel::result::Error> {
     turninfoblock.start_time_now();
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
-    let players =
-        PlayerMoves::load(&turninfoblock.season.unwrap(), &turninfoblock.day.unwrap(), &conn)?;
+    let players = PlayerMoves::load(
+        &turninfoblock.season.unwrap(),
+        &turninfoblock.day.unwrap(),
+        &conn,
+    )?;
     // And a list of all territories, and their current owners:
-    let territories =
-        TerritoryOwners::load(&turninfoblock.season.unwrap(), &turninfoblock.day.unwrap(), &conn)?;
+    let territories = TerritoryOwners::load(
+        &turninfoblock.season.unwrap(),
+        &turninfoblock.day.unwrap(),
+        &conn,
+    )?;
     // If there are no moves to load, we'll exit as something's not right.
     // TODO: Return Err, not Ok
     if players.is_empty() {
@@ -477,7 +516,10 @@ fn runtime() -> Result<(), diesel::result::Error> {
     // Not ideal, TODO: we ought to implement this in Rust.
     let userupdate = user_update(&turninfoblock, &conn);
     match userupdate {
-        Ok(ok) => println!("Users updated successfully {}", ok[0].do_user_update.to_string()),
+        Ok(ok) => println!(
+            "Users updated successfully {}",
+            ok[0].do_user_update.to_string()
+        ),
         Err(e) => println!("Failed to update users: {:?}", e),
     }
     turninfoblock.rollendtime = Some(Utc::now().naive_utc());

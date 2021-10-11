@@ -118,11 +118,9 @@ pub async fn join_team(
                                                             )
                                                         }
                                                     }
-                                                    Err(_e) => {
-                                                        std::result::Result::Err(
-                                                            Status::NotAcceptable,
-                                                        )
-                                                    }
+                                                    Err(_e) => std::result::Result::Err(
+                                                        Status::NotAcceptable,
+                                                    ),
                                                 }
                                             }
                                             false => {
@@ -295,11 +293,9 @@ pub async fn make_move(
                                                 })
                                                 .await
                                             {
-                                                Ok(_oka) => {
-                                                    std::result::Result::Ok(Json(String::from(
-                                                        "Okay",
-                                                    )))
-                                                }
+                                                Ok(_oka) => std::result::Result::Ok(Json(
+                                                    String::from("Okay"),
+                                                )),
                                                 Err(_e) => std::result::Result::Err(Status::Found),
                                             }
                                         }
@@ -329,12 +325,13 @@ pub async fn make_move(
 //#[cfg(feature = "risk_security")]
 pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     match conn.run(move |connection| Latest::latest(connection)).await {
-        Ok(latest) => {
-            match conn.run(move |c| Poll::get(latest.season, latest.day, c)).await {
-                Ok(polls) => std::result::Result::Ok(Json(polls)),
-                Err(_E) => std::result::Result::Err(Status::InternalServerError),
-            }
-        }
+        Ok(latest) => match conn
+            .run(move |c| Poll::get(latest.season, latest.day, c))
+            .await
+        {
+            Ok(polls) => std::result::Result::Ok(Json(polls)),
+            Err(_E) => std::result::Result::Err(Status::InternalServerError),
+        },
         Err(_E) => std::result::Result::Err(Status::InternalServerError),
     }
 }
@@ -370,12 +367,10 @@ pub async fn submit_poll(
                         })
                         .await
                     {
-                        Ok(inner) => {
-                            match inner {
-                                1 => std::result::Result::Ok(Json(true)),
-                                _ => std::result::Result::Err(Status::InternalServerError),
-                            }
-                        }
+                        Ok(inner) => match inner {
+                            1 => std::result::Result::Ok(Json(true)),
+                            _ => std::result::Result::Err(Status::InternalServerError),
+                        },
                         Err(_E) => std::result::Result::Err(Status::InternalServerError),
                     }
                 }
@@ -481,56 +476,62 @@ pub fn handle_territory_info(
             i32,
         )>(conn)
     {
-        Ok(team_id) => {
-            match get_adjacent_territory_owners(target, &latest, conn) {
-                Ok(adjacent_territory_owners) => {
-                    match adjacent_territory_owners.iter().position(|&x| x.0 == team_id.0) {
-                        Some(_tuple_of_territory) => {
-                            let pos = adjacent_territory_owners.iter().position(|&x| x.1 == target);
-                            match adjacent_territory_owners.iter().position(|&x| x.0 != team_id.0) {
-                                Some(_npos) => {
-                                    if team_id.0 != 0 {
-                                        let mut regional_multiplier =
-                                            2 * handleregionalownership(&latest, team_id.0, conn)
-                                                .unwrap_or(0);
-                                        if regional_multiplier == 0 {
-                                            regional_multiplier = 1;
-                                        }
-                                        let mut aon_multiplier: i32 = 1;
-                                        if aon == Some(true)
-                                            && get_territory_number(team_id.0, &latest, conn) == 1
-                                        {
-                                            let mut rng = thread_rng();
-                                            aon_multiplier = 5 * rng.gen_range(0..2);
-                                        }
-                                        if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
-                                            Ok((
-                                                team_id,
-                                                1.5 * regional_multiplier as f64
-                                                    * f64::from(aon_multiplier),
-                                            ))
-                                        } else {
-                                            Ok((
-                                                team_id,
-                                                1.0 * regional_multiplier as f64
-                                                    * f64::from(aon_multiplier),
-                                            ))
-                                        }
-                                    } else {
-                                        let mut rng = thread_rng();
-                                        let n: i32 = rng.gen_range(4..6);
-                                        Ok((team_id, f64::from(n / 4)))
+        Ok(team_id) => match get_adjacent_territory_owners(target, &latest, conn) {
+            Ok(adjacent_territory_owners) => {
+                match adjacent_territory_owners
+                    .iter()
+                    .position(|&x| x.0 == team_id.0)
+                {
+                    Some(_tuple_of_territory) => {
+                        let pos = adjacent_territory_owners
+                            .iter()
+                            .position(|&x| x.1 == target);
+                        match adjacent_territory_owners
+                            .iter()
+                            .position(|&x| x.0 != team_id.0)
+                        {
+                            Some(_npos) => {
+                                if team_id.0 != 0 {
+                                    let mut regional_multiplier =
+                                        2 * handleregionalownership(&latest, team_id.0, conn)
+                                            .unwrap_or(0);
+                                    if regional_multiplier == 0 {
+                                        regional_multiplier = 1;
                                     }
+                                    let mut aon_multiplier: i32 = 1;
+                                    if aon == Some(true)
+                                        && get_territory_number(team_id.0, &latest, conn) == 1
+                                    {
+                                        let mut rng = thread_rng();
+                                        aon_multiplier = 5 * rng.gen_range(0..2);
+                                    }
+                                    if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
+                                        Ok((
+                                            team_id,
+                                            1.5 * regional_multiplier as f64
+                                                * f64::from(aon_multiplier),
+                                        ))
+                                    } else {
+                                        Ok((
+                                            team_id,
+                                            1.0 * regional_multiplier as f64
+                                                * f64::from(aon_multiplier),
+                                        ))
+                                    }
+                                } else {
+                                    let mut rng = thread_rng();
+                                    let n: i32 = rng.gen_range(4..6);
+                                    Ok((team_id, f64::from(n / 4)))
                                 }
-                                None => Err("You own all the surrounding territories".to_string()),
                             }
+                            None => Err("You own all the surrounding territories".to_string()),
                         }
-                        None => Err("You don't own that territory or an adjacent one".to_string()),
                     }
+                    None => Err("You don't own that territory or an adjacent one".to_string()),
                 }
-                Err(_er) => Err("You don't own that territory or an adjacent one".to_string()),
             }
-        }
+            Err(_er) => Err("You don't own that territory or an adjacent one".to_string()),
+        },
         Err(_e) => Err("You don't own that territory or an adjacent one".to_string()),
     }
 }
@@ -548,7 +549,10 @@ pub fn get_adjacent_territory_owners(
             territory_ownership::table
                 .on(territory_ownership::territory_id.eq(territory_adjacency::adjacent_id)),
         )
-        .select((territory_ownership::owner_id, territory_ownership::territory_id))
+        .select((
+            territory_ownership::owner_id,
+            territory_ownership::territory_id,
+        ))
         .load::<(i32, i32)>(conn)
 }
 
@@ -627,17 +631,13 @@ pub fn insert_turn(
 
 pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
-        true => {
-            diesel::update(users::table)
-                .filter(users::id.eq(user))
-                .set((users::current_team.eq(team), users::playing_for.eq(team)))
-                .execute(conn)
-        }
-        false => {
-            diesel::update(users::table)
-                .filter(users::id.eq(user))
-                .set(users::playing_for.eq(team))
-                .execute(conn)
-        }
+        true => diesel::update(users::table)
+            .filter(users::id.eq(user))
+            .set((users::current_team.eq(team), users::playing_for.eq(team)))
+            .execute(conn),
+        false => diesel::update(users::table)
+            .filter(users::id.eq(user))
+            .set(users::playing_for.eq(team))
+            .execute(conn),
     }
 }

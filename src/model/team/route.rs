@@ -30,7 +30,9 @@ pub async fn teamplayersbymoves(
     team: Option<String>,
     conn: DbConn,
 ) -> Result<Json<Vec<TeamPlayerMoves>>, Status> {
-    let moves = conn.run(move |c| TeamPlayerMoves::load(season, day, team, c)).await;
+    let moves = conn
+        .run(move |c| TeamPlayerMoves::load(season, day, team, c))
+        .await;
     if moves.len() as i32 >= 1 {
         std::result::Result::Ok(Json(moves))
     } else {

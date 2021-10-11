@@ -81,7 +81,10 @@ fn rocket() -> _ {
     */
     let mut saturn_v = rocket::build()
         .attach(DbConn::fairing())
-        .register("/", catchers![catchers::not_found, catchers::internal_error])
+        .register(
+            "/",
+            catchers![catchers::not_found, catchers::internal_error],
+        )
         .mount("/api", api_paths)
         .mount("/", FileServer::from(relative!("static")).rank(2))
         .mount("/", root_paths)
@@ -94,8 +97,10 @@ fn rocket() -> _ {
             }),
         );
 
-    global_info_private.settings =
-        saturn_v.figment().extract_inner("risk").expect("Cookie key not set; aborting!");
+    global_info_private.settings = saturn_v
+        .figment()
+        .extract_inner("risk")
+        .expect("Cookie key not set; aborting!");
     saturn_v = saturn_v.manage(global_info_private);
 
     // Attach Discord routes
@@ -113,7 +118,10 @@ fn rocket() -> _ {
         use crate::model::reddit;
         saturn_v = saturn_v.attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"));
         saturn_v = saturn_v.mount("/login", routes![reddit::route::login]);
-        saturn_v = saturn_v.mount("/auth", routes![reddit::route::callback, reddit::route::logout]);
+        saturn_v = saturn_v.mount(
+            "/auth",
+            routes![reddit::route::callback, reddit::route::logout],
+        );
     }
 
     // Attach Captcha routes

@@ -110,38 +110,30 @@ impl PlayerWithTurnsAndAdditionalTeam {
                     ))
                     .first::<Team>(conn);
                 match results {
-                    Ok(results) => {
-                        Some(PlayerWithTurnsAndAdditionalTeam {
-                            name: me[0].name.clone(),
-                            team: me[0].team.clone(),
-                            active_team: Some(TeamWithColors {
-                                name: results.name,
-                                colors: Colors {
-                                    primary: results
-                                        .color_1
-                                        .unwrap_or_else(|| String::from("#000")),
-                                    secondary: results
-                                        .color_2
-                                        .unwrap_or_else(|| String::from("#000")),
-                                },
-                            }),
-                            platform: me[0].platform.clone(),
-                            ratings: me[0].ratings.clone(),
-                            stats: me[0].stats.clone(),
-                            turns: me[0].turns.clone(),
-                        })
-                    }
-                    Err(_e) => {
-                        Some(PlayerWithTurnsAndAdditionalTeam {
-                            name: me[0].name.clone(),
-                            team: None,
-                            active_team: None,
-                            platform: me[0].platform.clone(),
-                            ratings: me[0].ratings.clone(),
-                            stats: me[0].stats.clone(),
-                            turns: me[0].turns.clone(),
-                        })
-                    }
+                    Ok(results) => Some(PlayerWithTurnsAndAdditionalTeam {
+                        name: me[0].name.clone(),
+                        team: me[0].team.clone(),
+                        active_team: Some(TeamWithColors {
+                            name: results.name,
+                            colors: Colors {
+                                primary: results.color_1.unwrap_or_else(|| String::from("#000")),
+                                secondary: results.color_2.unwrap_or_else(|| String::from("#000")),
+                            },
+                        }),
+                        platform: me[0].platform.clone(),
+                        ratings: me[0].ratings.clone(),
+                        stats: me[0].stats.clone(),
+                        turns: me[0].turns.clone(),
+                    }),
+                    Err(_e) => Some(PlayerWithTurnsAndAdditionalTeam {
+                        name: me[0].name.clone(),
+                        team: None,
+                        active_team: None,
+                        platform: me[0].platform.clone(),
+                        ratings: me[0].ratings.clone(),
+                        stats: me[0].stats.clone(),
+                        turns: me[0].turns.clone(),
+                    }),
                 }
             }
             _ => None,
@@ -176,7 +168,11 @@ impl PlayerWithTurns {
                     users::streak,
                     users::awards,
                 ),
-                (teams::tname.nullable(), teams::color_1.nullable(), teams::color_2.nullable()),
+                (
+                    teams::tname.nullable(),
+                    teams::color_1.nullable(),
+                    teams::color_2.nullable(),
+                ),
             ))
             .load::<(User, Team)>(conn)
             .expect("Error loading users");
@@ -263,7 +259,13 @@ impl TeamMerc {
             .inner_join(teams::table.on(teams::id.eq(users::playing_for)))
             .filter(teams::tname.eq_any(ciTname))
             .filter(not(users::playing_for.eq(users::current_team)))
-            .select((teams::tname, users::uname, users::turns, users::mvps, users::overall))
+            .select((
+                teams::tname,
+                users::uname,
+                users::turns,
+                users::mvps,
+                users::overall,
+            ))
             .load::<TeamMerc>(conn)
             .expect("Error loading mercs")
     }

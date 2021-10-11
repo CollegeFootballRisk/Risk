@@ -118,21 +118,19 @@ pub async fn player_multifetch(
     conn: DbConn,
 ) -> Result<Json<Vec<PlayerWithTurns>>, Status> {
     match players {
-        Some(player) => {
-            std::result::Result::Ok(Json(
-                conn.run(move |c| {
-                    PlayerWithTurns::load(
-                        player
-                            .split(',')
-                            .map(std::string::ToString::to_string)
-                            .collect::<Vec<String>>(),
-                        true,
-                        c,
-                    )
-                })
-                .await,
-            ))
-        }
+        Some(player) => std::result::Result::Ok(Json(
+            conn.run(move |c| {
+                PlayerWithTurns::load(
+                    player
+                        .split(',')
+                        .map(std::string::ToString::to_string)
+                        .collect::<Vec<String>>(),
+                    true,
+                    c,
+                )
+            })
+            .await,
+        )),
         None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
     }
 }
@@ -145,7 +143,9 @@ pub async fn player(
     player: String,
     conn: DbConn,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
-    let users = conn.run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c)).await;
+    let users = conn
+        .run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c))
+        .await;
     //if users.len() as i32 == 1 {
     match users {
         Some(user) => std::result::Result::Ok(Json(user)),

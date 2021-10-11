@@ -114,24 +114,22 @@ impl TeamPlayerMoves {
                     .load::<TeamPlayerMoves>(conn)
                     .expect("Error loading moves")
             }
-            None => {
-                team_player_moves::table
-                    .select((
-                        team_player_moves::id,
-                        team_player_moves::season,
-                        team_player_moves::day,
-                        team_player_moves::team,
-                        team_player_moves::player,
-                        team_player_moves::stars,
-                        team_player_moves::mvp,
-                        team_player_moves::territory,
-                        team_player_moves::regularteam,
-                    ))
-                    .filter(team_player_moves::season.eq(season_seek))
-                    .filter(team_player_moves::day.eq(day_seek))
-                    .load::<TeamPlayerMoves>(conn)
-                    .expect("Error loading moves")
-            }
+            None => team_player_moves::table
+                .select((
+                    team_player_moves::id,
+                    team_player_moves::season,
+                    team_player_moves::day,
+                    team_player_moves::team,
+                    team_player_moves::player,
+                    team_player_moves::stars,
+                    team_player_moves::mvp,
+                    team_player_moves::territory,
+                    team_player_moves::regularteam,
+                ))
+                .filter(team_player_moves::season.eq(season_seek))
+                .filter(team_player_moves::day.eq(day_seek))
+                .load::<TeamPlayerMoves>(conn)
+                .expect("Error loading moves"),
         }
     }
 }
@@ -151,7 +149,13 @@ impl TeamInTurns {
                 odds::players,
                 odds::teampower,
                 odds::chance,
-                (odds::ones, odds::twos, odds::threes, odds::fours, odds::fives),
+                (
+                    odds::ones,
+                    odds::twos,
+                    odds::threes,
+                    odds::fours,
+                    odds::fives,
+                ),
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))

@@ -60,7 +60,10 @@ pub async fn callback(
             match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
                     let name = user_info.name();
-                    match conn.run(move |c| User::load(name, "discord".to_string(), c)).await {
+                    match conn
+                        .run(move |c| User::load(name, "discord".to_string(), c))
+                        .await
+                    {
                         Ok(user) => {
                             let datetime = Utc::now();
                             let timestamp: usize = 604_800 + datetime.timestamp() as usize;

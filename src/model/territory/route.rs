@@ -46,7 +46,9 @@ pub async fn territoryhistory(
     season: i32,
     conn: DbConn,
 ) -> Result<Json<Vec<TerritoryHistory>>, Status> {
-    let territories = conn.run(move |c| TerritoryHistory::load(territory, season, c)).await;
+    let territories = conn
+        .run(move |c| TerritoryHistory::load(territory, season, c))
+        .await;
     if territories.len() as i32 >= 1 {
         std::result::Result::Ok(Json(territories))
     } else {
@@ -64,7 +66,9 @@ pub async fn territory_turn(
     day: i32,
     conn: DbConn,
 ) -> Result<Json<TerritoryTurn>, Status> {
-    let turn = conn.run(move |c| TerritoryTurn::load(season, day, territory, c)).await;
+    let turn = conn
+        .run(move |c| TerritoryTurn::load(season, day, territory, c))
+        .await;
     match turn {
         Ok(turn) => std::result::Result::Ok(Json(turn)),
         _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),

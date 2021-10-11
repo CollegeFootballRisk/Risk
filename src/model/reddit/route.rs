@@ -14,7 +14,9 @@ use time::Duration;
 
 #[get("/reddit")]
 pub fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
-    oauth2.get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")]).unwrap()
+    oauth2
+        .get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")])
+        .unwrap()
 }
 
 #[get("/logout")]
@@ -60,7 +62,10 @@ pub async fn callback(
             match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {
                     let name = user_info.name.clone();
-                    match conn.run(move |c| User::load(name, "reddit".to_string(), c)).await {
+                    match conn
+                        .run(move |c| User::load(name, "reddit".to_string(), c))
+                        .await
+                    {
                         Ok(user) => {
                             let datetime = Utc::now();
                             let timestamp: usize = 604_800 + datetime.timestamp() as usize;

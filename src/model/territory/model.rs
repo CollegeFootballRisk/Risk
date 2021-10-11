@@ -97,19 +97,15 @@ impl TerritoryTurn {
         let teams = TeamInTurns::load(&season, &day, &territory, conn);
         let players = PlayerInTurns::load(&season, &day, &territory, conn);
         match teams {
-            Ok(teams) => {
-                match players {
-                    Ok(players) => {
-                        Ok(TerritoryTurn {
-                            occupier: owner.into(),
-                            winner: previous.into(),
-                            teams,
-                            players,
-                        })
-                    }
-                    _ => Err("Error".to_string()),
-                }
-            }
+            Ok(teams) => match players {
+                Ok(players) => Ok(TerritoryTurn {
+                    occupier: owner.into(),
+                    winner: previous.into(),
+                    teams,
+                    players,
+                }),
+                _ => Err("Error".to_string()),
+            },
             _ => Err("Error".to_string()),
         }
     }
