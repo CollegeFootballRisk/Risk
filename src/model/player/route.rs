@@ -14,7 +14,10 @@ use rocket::State;
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
 #[openapi(tag = "Players")]
 #[get("/players?<team>")]
-pub(crate) async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
+pub(crate) async fn players(
+    team: Option<String>,
+    conn: DbConn,
+) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
         Some(team) => {
             let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =

@@ -10,9 +10,9 @@ pub struct Captchas {
     pub content: String,
 }
 #[derive(Serialize, Deserialize)]
-pub struct UserCaptcha {
-    pub title: String,
-    pub content: String,
+pub(crate) struct UserCaptcha {
+    pub(crate) title: String,
+    pub(crate) content: String,
 }
 
 //pub enum CaptchaError {

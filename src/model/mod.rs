@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 pub(crate) mod auth;
-pub mod discord;
+pub(crate) mod discord;
 pub(crate) mod player;
 pub(crate) mod ratings;
 pub(crate) mod reddit;
@@ -23,10 +23,10 @@ pub(crate) use territory::*;
 pub(crate) use turn::*;
 pub(crate) use user::*;
 #[cfg(feature = "risk_captcha")]
-pub mod captchasvc;
+pub(crate) mod captchasvc;
 #[cfg(feature = "risk_captcha")]
-pub use captchasvc::*;
+pub(crate) use captchasvc::*;
 #[cfg(feature = "risk_discord")]
-pub use discord::*;
+pub(crate) use discord::*;
 #[cfg(feature = "risk_reddit")]
 pub(crate) use reddit::*;

@@ -2,6 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #![cfg(feature = "risk_discord")]
-pub mod model;
-pub mod route;
-pub use model::*;
+pub(crate) mod model;
+pub(crate) mod route;
+pub(crate) use model::*;

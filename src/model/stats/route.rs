@@ -10,7 +10,10 @@ use rocket::serde::json::Json;
 /// Gives current team strength (from prior day's move).
 #[openapi(tag = "Stats")]
 #[get("/stats/team?<team>")]
-pub(crate) async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
+pub(crate) async fn currentstrength(
+    team: String,
+    conn: DbConn,
+) -> Result<Json<CurrentStrength>, Status> {
     let strength = conn.run(|c| CurrentStrength::load(team, c)).await;
     match strength {
         Ok(strength) => std::result::Result::Ok(Json(strength)),
@@ -90,7 +93,10 @@ pub(crate) async fn heat(
 /// Gives historical team statistics for a given team.
 #[openapi(tag = "Stats")]
 #[get("/stats/team/history?<team>")]
-pub(crate) async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
+pub(crate) async fn stathistory(
+    team: String,
+    conn: DbConn,
+) -> Result<Json<Vec<StatHistory>>, Status> {
     let history = conn.run(|c| StatHistory::load(team, c)).await;
     if history.len() as i32 >= 1 {
         std::result::Result::Ok(Json(history))

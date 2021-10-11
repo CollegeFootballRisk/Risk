@@ -12,7 +12,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 
 #[get("/captcha")]
-pub async fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
+pub(crate) async fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
     let (_solution, png) = create_captcha(Difficulty::Easy).unwrap();
     let insert_captcha = Captchas {
         title: calculate_hash(&_solution).to_string()[0..7].to_string(),
@@ -38,7 +38,7 @@ pub async fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
     //        .apply_filter(Dots::new(15))
     //        .as_png();
 }
-pub fn create_captcha(d: Difficulty) -> Option<(String, Vec<u8>)> {
+pub(crate) fn create_captcha(d: Difficulty) -> Option<(String, Vec<u8>)> {
     gen(d).as_tuple()
 }
 

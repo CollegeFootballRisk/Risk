@@ -629,7 +629,12 @@ pub(crate) fn insert_turn(
         .execute(conn)
 }
 
-pub(crate) fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+pub(crate) fn update_user(
+    new: bool,
+    user: i32,
+    team: i32,
+    conn: &PgConnection,
+) -> QueryResult<usize> {
     match new {
         true => diesel::update(users::table)
             .filter(users::id.eq(user))

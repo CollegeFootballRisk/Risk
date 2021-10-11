@@ -162,7 +162,11 @@ impl CurrentStrength {
 }
 
 impl StatLeaderboard {
-    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Result<Vec<StatLeaderboard>, Error> {
+    pub(crate) fn load(
+        season: i32,
+        day: i32,
+        conn: &PgConnection,
+    ) -> Result<Vec<StatLeaderboard>, Error> {
         statistics::table
             .select((
                 statistics::rank,
