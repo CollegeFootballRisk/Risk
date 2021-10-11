@@ -8,51 +8,51 @@ use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation}
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Claims {
-    pub id: i32,
-    pub user: String,
-    pub token: Option<String>,
-    pub refresh_token: Option<String>,
-    pub exp: usize,
+pub(crate) struct Claims {
+    pub(crate) id: i32,
+    pub(crate) user: String,
+    pub(crate) token: Option<String>,
+    pub(crate) refresh_token: Option<String>,
+    pub(crate) exp: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ClientInfo {
-    pub claims: Claims,
-    pub ip: String,
+pub(crate) struct ClientInfo {
+    pub(crate) claims: Claims,
+    pub(crate) ip: String,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Move {
-    pub attack: Option<i32>,
-    pub defend: Option<i32>,
+pub(crate) struct Move {
+    pub(crate) attack: Option<i32>,
+    pub(crate) defend: Option<i32>,
     /* = "risk_security")]  pub information: DebuggingInformation, */
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct MoveInfo {
-    pub territory: Option<String>,
+pub(crate) struct MoveInfo {
+    pub(crate) territory: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
-pub struct Poll {
-    pub id: i32,
-    pub season: i32,
-    pub day: i32,
-    pub question: String,
-    pub incrment: i32,
+pub(crate) struct Poll {
+    pub(crate) id: i32,
+    pub(crate) season: i32,
+    pub(crate) day: i32,
+    pub(crate) question: String,
+    pub(crate) incrment: i32,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
-pub struct PollResponse {
-    pub id: i32,
-    pub poll: i32,
-    pub user_id: i32,
-    pub response: bool,
+pub(crate) struct PollResponse {
+    pub(crate) id: i32,
+    pub(crate) poll: i32,
+    pub(crate) user_id: i32,
+    pub(crate) response: bool,
 }
 
 impl Claims {
-    pub fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
+    pub(crate) fn put(key: &[u8], user_claims: Claims) -> Result<String, Error> {
         encode(
             &Header::default(),
             &user_claims,
@@ -60,7 +60,7 @@ impl Claims {
         )
     }
 
-    pub fn interpret(key: &[u8], token: String) -> Result<(Claims, Header), String> {
+    pub(crate) fn interpret(key: &[u8], token: String) -> Result<(Claims, Header), String> {
         let validation = Validation {
             ..Validation::default()
         };
@@ -72,7 +72,7 @@ impl Claims {
 }
 
 impl MoveInfo {
-    pub fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
+    pub(crate) fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
         let r = new_turns::table
             .filter(new_turns::user_id.eq(user_id))
             .filter(new_turns::season.eq(season))
@@ -90,7 +90,7 @@ impl MoveInfo {
 }
 
 impl Poll {
-    pub fn get(
+    pub(crate) fn get(
         season: i32,
         day: i32,
         conn: &PgConnection,
@@ -103,7 +103,7 @@ impl Poll {
 }
 
 impl PollResponse {
-    pub fn get(
+    pub(crate) fn get(
         poll_id: i32,
         user_id: i32,
         conn: &PgConnection,
@@ -114,7 +114,7 @@ impl PollResponse {
             .load::<PollResponse>(conn)
     }
 
-    pub fn upsert(response: PollResponse, conn: &PgConnection) -> QueryResult<usize> {
+    pub(crate) fn upsert(response: PollResponse, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(continuation_responses::table)
             .values((
                 continuation_responses::poll_id.eq(response.poll),

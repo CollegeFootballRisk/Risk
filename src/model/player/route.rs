@@ -14,7 +14,7 @@ use rocket::State;
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
 #[openapi(tag = "Players")]
 #[get("/players?<team>")]
-pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
+pub(crate) async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<TeamPlayer>>, Status> {
     match team {
         Some(team) => {
             let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
@@ -47,7 +47,7 @@ pub async fn players(team: Option<String>, conn: DbConn) -> Result<Json<Vec<Team
 /// Get all of the mercenary players on a team (returns all players on all teams if no team is provided).
 #[openapi(tag = "Players")]
 #[get("/mercs?<team>")]
-pub async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
+pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
     let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
         urlencoding::decode(&team);
     match parsed_team_name {
@@ -69,7 +69,7 @@ pub async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, St
 /// scraping programs.
 #[openapi(skip)]
 #[get("/me")]
-pub async fn me(
+pub(crate) async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
@@ -113,7 +113,7 @@ pub async fn me(
 /// Batch retrieval of players
 #[openapi(tag = "Players")]
 #[get("/players/batch?<players>")]
-pub async fn player_multifetch(
+pub(crate) async fn player_multifetch(
     players: Option<String>,
     conn: DbConn,
 ) -> Result<Json<Vec<PlayerWithTurns>>, Status> {
@@ -139,7 +139,7 @@ pub async fn player_multifetch(
 /// Retrieve information about individual player
 #[openapi(tag = "Players")]
 #[get("/player?<player>")]
-pub async fn player(
+pub(crate) async fn player(
     player: String,
     conn: DbConn,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {

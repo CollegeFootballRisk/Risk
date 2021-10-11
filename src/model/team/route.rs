@@ -11,7 +11,7 @@ use rocket::serde::json::Json;
 /// Lists all teams, including those from past seasons.
 #[openapi(tag = "Teams")]
 #[get("/teams")]
-pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
+pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
     let teams = conn.run(move |c| TeamInfo::load(c)).await;
     if teams.len() as i32 >= 1 {
         std::result::Result::Ok(Json(teams))
@@ -24,7 +24,7 @@ pub async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
 /// List of all moves made by all players on a team on a provided day.
 #[openapi(tag = "Teams")]
 #[get("/team/players?<season>&<day>&<team>")]
-pub async fn teamplayersbymoves(
+pub(crate) async fn teamplayersbymoves(
     season: i32,
     day: i32,
     team: Option<String>,

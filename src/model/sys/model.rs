@@ -4,20 +4,20 @@
 use rand::distributions::Alphanumeric;
 use rand::Rng;
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct SysInfo {
-    pub version: String,
-    pub discord: bool,
-    pub reddit: bool,
-    pub groupme: bool,
-    pub image: bool,
-    pub captcha: bool,
-    pub settings: SysSettings,
+pub(crate) struct SysInfo {
+    pub(crate) version: String,
+    pub(crate) discord: bool,
+    pub(crate) reddit: bool,
+    pub(crate) groupme: bool,
+    pub(crate) image: bool,
+    pub(crate) captcha: bool,
+    pub(crate) settings: SysSettings,
 }
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct SysSettings {
-    pub name: String,
-    pub base_url: String,
-    pub cookie_key: String,
+pub(crate) struct SysSettings {
+    pub(crate) name: String,
+    pub(crate) base_url: String,
+    pub(crate) cookie_key: String,
 }
 
 impl Default for SysInfo {

@@ -11,7 +11,7 @@ use rocket::serde::json::Json;
 /// Gives territory ownership information
 #[openapi(tag = "Territories")]
 #[get("/territories?<day>&<season>")]
-pub async fn territories(
+pub(crate) async fn territories(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
@@ -41,7 +41,7 @@ pub async fn territories(
 /// Gives a list of all owners of a territory in a given season.
 #[openapi(tag = "Territories")]
 #[get("/territory/history?<territory>&<season>")]
-pub async fn territoryhistory(
+pub(crate) async fn territoryhistory(
     territory: String,
     season: i32,
     conn: DbConn,
@@ -60,7 +60,7 @@ pub async fn territoryhistory(
 /// Gives a list of all moves given on a particular day.
 #[openapi(tag = "Territories")]
 #[get("/territory/turn?<territory>&<season>&<day>")]
-pub async fn territory_turn(
+pub(crate) async fn territory_turn(
     territory: String,
     season: i32,
     day: i32,

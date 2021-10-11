@@ -13,14 +13,14 @@ use rocket_oauth2::{OAuth2, TokenResponse};
 use time::Duration;
 
 #[get("/reddit")]
-pub fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
+pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
     oauth2
         .get_redirect_extras(cookies, &["identity"], &[("duration", "permanent")])
         .unwrap()
 }
 
 #[get("/logout")]
-pub async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
+pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
     cookies.remove_private(Cookie::named("jwt"));
     cookies.remove_private(Cookie::named("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
@@ -28,7 +28,7 @@ pub async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
 }
 
 #[get("/reddit")]
-pub async fn callback(
+pub(crate) async fn callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,

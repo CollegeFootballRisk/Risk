@@ -21,7 +21,7 @@ use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
 
 #[get("/join?<team>", rank = 1)]
-pub async fn join_team(
+pub(crate) async fn join_team(
     team: i32,
     cookies: &CookieJar<'_>,
     conn: DbConn,
@@ -148,7 +148,7 @@ pub async fn join_team(
 
 #[get("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub async fn my_move(
+pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     remote_addr: SocketAddr,
@@ -189,7 +189,7 @@ pub async fn my_move(
 }
 
 #[get("/move?<target>&<aon>", rank = 1)]
-pub async fn make_move(
+pub(crate) async fn make_move(
     target: i32,
     aon: Option<bool>,
     cookies: &CookieJar<'_>,
@@ -323,7 +323,7 @@ pub async fn make_move(
 
 #[get("/polls", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
+pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
     match conn.run(move |connection| Latest::latest(connection)).await {
         Ok(latest) => match conn
             .run(move |c| Poll::get(latest.season, latest.day, c))
@@ -337,7 +337,7 @@ pub async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
 }
 
 #[get("/poll/respond?<poll>&<response>", rank = 1)]
-pub async fn submit_poll(
+pub(crate) async fn submit_poll(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
@@ -382,7 +382,7 @@ pub async fn submit_poll(
 }
 
 #[get("/poll/response?<poll>", rank = 1)]
-pub async fn view_response(
+pub(crate) async fn view_response(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
@@ -412,7 +412,7 @@ pub async fn view_response(
     }
 }
 
-pub fn handleregionalownership(
+pub(crate) fn handleregionalownership(
     latest: &Latest,
     team: i32,
     conn: &PgConnection,
@@ -427,7 +427,7 @@ pub fn handleregionalownership(
         .first(conn)
 }
 
-pub fn handle_territory_info(
+pub(crate) fn handle_territory_info(
     c: &Claims,
     target: i32,
     latest: Latest,
@@ -536,7 +536,7 @@ pub fn handle_territory_info(
     }
 }
 
-pub fn get_adjacent_territory_owners(
+pub(crate) fn get_adjacent_territory_owners(
     target: i32,
     latest: &Latest,
     conn: &PgConnection,
@@ -556,7 +556,7 @@ pub fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
+pub(crate) fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
         .filter(territory_ownership::season.eq(latest.season))
@@ -567,7 +567,7 @@ pub fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> 
         .unwrap_or(0) as i32
 }
 
-pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
+pub(crate) fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     match cfbr_stats::table
         .filter(cfbr_stats::player.eq(CiString::from(name)))
         .select(cfbr_stats::stars)
@@ -583,7 +583,7 @@ pub fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     }
 }
 
-pub fn insert_turn(
+pub(crate) fn insert_turn(
     user: &(
         i32,
         i32,
@@ -629,7 +629,7 @@ pub fn insert_turn(
         .execute(conn)
 }
 
-pub fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
+pub(crate) fn update_user(new: bool, user: i32, team: i32, conn: &PgConnection) -> QueryResult<usize> {
     match new {
         true => diesel::update(users::table)
             .filter(users::id.eq(user))

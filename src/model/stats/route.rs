@@ -10,7 +10,7 @@ use rocket::serde::json::Json;
 /// Gives current team strength (from prior day's move).
 #[openapi(tag = "Stats")]
 #[get("/stats/team?<team>")]
-pub async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
+pub(crate) async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>, Status> {
     let strength = conn.run(|c| CurrentStrength::load(team, c)).await;
     match strength {
         Ok(strength) => std::result::Result::Ok(Json(strength)),
@@ -22,7 +22,7 @@ pub async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentS
 /// Provides team ranks on a given season/day, or on the prior day if season/day not provided.
 #[openapi(tag = "Stats")]
 #[get("/stats/leaderboard?<season>&<day>")]
-pub async fn leaderboard(
+pub(crate) async fn leaderboard(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
@@ -60,7 +60,7 @@ pub async fn leaderboard(
 /// no season/day are specified.
 #[openapi(tag = "Stats")]
 #[get("/heat?<season>&<day>")]
-pub async fn heat(
+pub(crate) async fn heat(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
@@ -90,7 +90,7 @@ pub async fn heat(
 /// Gives historical team statistics for a given team.
 #[openapi(tag = "Stats")]
 #[get("/stats/team/history?<team>")]
-pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
+pub(crate) async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>, Status> {
     let history = conn.run(|c| StatHistory::load(team, c)).await;
     if history.len() as i32 >= 1 {
         std::result::Result::Ok(Json(history))
@@ -103,7 +103,7 @@ pub async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHist
 /// Gives odds for a team on a given day
 #[openapi(tag = "Teams")]
 #[get("/team/odds?<season>&<day>&<team>")]
-pub async fn odds(
+pub(crate) async fn odds(
     season: i32,
     day: i32,
     team: String,

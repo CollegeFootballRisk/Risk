@@ -9,60 +9,60 @@ use schemars::JsonSchema;
 use serde_json::Value;
 
 #[derive(Serialize)]
-pub struct Turn {
-    pub season: i32,
-    pub day: i32,
-    pub stars: i32,
-    pub mvp: bool,
-    pub territory: String,
-    pub team: String,
+pub(crate) struct Turn {
+    pub(crate) season: i32,
+    pub(crate) day: i32,
+    pub(crate) stars: i32,
+    pub(crate) mvp: bool,
+    pub(crate) territory: String,
+    pub(crate) team: String,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct LastTurn {
-    pub season: Option<i32>,
-    pub day: Option<i32>,
-    pub stars: Option<i32>,
+pub(crate) struct LastTurn {
+    pub(crate) season: Option<i32>,
+    pub(crate) day: Option<i32>,
+    pub(crate) stars: Option<i32>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct PastTurn {
-    pub season: i32,
-    pub day: i32,
-    pub stars: i32,
-    pub mvp: bool,
-    pub territory: String, //should be string
-    pub team: String,      //should be string
+pub(crate) struct PastTurn {
+    pub(crate) season: i32,
+    pub(crate) day: i32,
+    pub(crate) stars: i32,
+    pub(crate) mvp: bool,
+    pub(crate) territory: String, //should be string
+    pub(crate) team: String,      //should be string
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct TurnInfo {
-    pub id: i32,
-    pub season: Option<i32>,
-    pub day: Option<i32>,
-    pub complete: Option<bool>,
-    pub active: Option<bool>,
-    pub finale: Option<bool>,
-    pub rollTime: Option<crate::catchers::NaiveDateTime>,
+pub(crate) struct TurnInfo {
+    pub(crate) id: i32,
+    pub(crate) season: Option<i32>,
+    pub(crate) day: Option<i32>,
+    pub(crate) complete: Option<bool>,
+    pub(crate) active: Option<bool>,
+    pub(crate) finale: Option<bool>,
+    pub(crate) rollTime: Option<crate::catchers::NaiveDateTime>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
-pub struct Latest {
-    pub season: i32,
-    pub day: i32,
+pub(crate) struct Latest {
+    pub(crate) season: i32,
+    pub(crate) day: i32,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub struct Roll {
-    pub startTime: String,
-    pub endTime: String,
-    pub chaosRerolls: i32,
-    pub chaosWeight: i32,
-    pub territoryRolls: Value,
+pub(crate) struct Roll {
+    pub(crate) startTime: String,
+    pub(crate) endTime: String,
+    pub(crate) chaosRerolls: i32,
+    pub(crate) chaosWeight: i32,
+    pub(crate) territoryRolls: Value,
 }
 
 impl TurnInfo {
-    pub fn load(conn: &PgConnection) -> Vec<TurnInfo> {
+    pub(crate) fn load(conn: &PgConnection) -> Vec<TurnInfo> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -79,7 +79,7 @@ impl TurnInfo {
             .expect("Error loading TurnInfo")
     }
 
-    pub fn loadall(conn: &PgConnection) -> Vec<TurnInfo> {
+    pub(crate) fn loadall(conn: &PgConnection) -> Vec<TurnInfo> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -97,7 +97,7 @@ impl TurnInfo {
 }
 
 impl Latest {
-    pub fn latest(conn: &PgConnection) -> Result<Latest, String> {
+    pub(crate) fn latest(conn: &PgConnection) -> Result<Latest, String> {
         use diesel::dsl::{max, min};
         let season = turninfo::table
             .select(max(turninfo::season))
@@ -132,7 +132,7 @@ impl Latest {
 }
 
 impl Roll {
-    pub fn load(season: i32, day: i32, conn: &PgConnection) -> Result<Roll, Error> {
+    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Result<Roll, Error> {
         rollinfo::table
             .select((
                 rollinfo::rollstarttime,

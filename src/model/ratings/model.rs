@@ -4,17 +4,17 @@
 use crate::model::stats::Stats;
 use schemars::JsonSchema;
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct Ratings {
-    pub overall: i32,
-    pub totalTurns: i32,
-    pub gameTurns: i32,
-    pub mvps: i32,
-    pub streak: i32,
-    pub awards: i32,
+pub(crate) struct Ratings {
+    pub(crate) overall: i32,
+    pub(crate) totalTurns: i32,
+    pub(crate) gameTurns: i32,
+    pub(crate) mvps: i32,
+    pub(crate) streak: i32,
+    pub(crate) awards: i32,
 }
 
 impl Ratings {
-    pub fn load(stat: &Stats) -> Ratings {
+    pub(crate) fn load(stat: &Stats) -> Ratings {
         let overall: i32;
         let totalTurns = Self::fromarr(stat.totalTurns, [0, 10, 25, 50, 100]);
         let gameTurns = Self::fromarr(stat.gameTurns, [0, 5, 10, 25, 40]);

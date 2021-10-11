@@ -11,31 +11,31 @@ use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
 #[derive(Serialize)]
-pub struct Player {
-    pub id: i32,
-    pub name: CiString,
-    pub team: Team,
-    pub ratings: Ratings,
-    pub stats: Stats,
-    pub turns: Vec<Turn>,
+pub(crate) struct Player {
+    pub(crate) id: i32,
+    pub(crate) name: CiString,
+    pub(crate) team: Team,
+    pub(crate) ratings: Ratings,
+    pub(crate) stats: Stats,
+    pub(crate) turns: Vec<Turn>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct TeamPlayer {
-    pub team: Option<CiString>,
-    pub player: Option<CiString>,
-    pub turnsPlayed: Option<i32>,
-    pub mvps: Option<i32>,
-    pub lastTurn: LastTurn,
+pub(crate) struct TeamPlayer {
+    pub(crate) team: Option<CiString>,
+    pub(crate) player: Option<CiString>,
+    pub(crate) turnsPlayed: Option<i32>,
+    pub(crate) mvps: Option<i32>,
+    pub(crate) lastTurn: LastTurn,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct TeamMerc {
-    pub team: CiString,
-    pub player: CiString,
-    pub turnsPlayed: Option<i32>,
-    pub mvps: Option<i32>,
-    pub stars: Option<i32>,
+pub(crate) struct TeamMerc {
+    pub(crate) team: CiString,
+    pub(crate) player: CiString,
+    pub(crate) turnsPlayed: Option<i32>,
+    pub(crate) mvps: Option<i32>,
+    pub(crate) stars: Option<i32>,
 }
 
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
@@ -51,39 +51,39 @@ pub struct User {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct PlayerWithTurns {
-    pub name: CiString,
-    pub team: Option<TeamWithColors>,
-    pub platform: CiString,
-    pub ratings: Ratings,
-    pub stats: Stats,
-    pub turns: Vec<PastTurn>,
+pub(crate) struct PlayerWithTurns {
+    pub(crate) name: CiString,
+    pub(crate) team: Option<TeamWithColors>,
+    pub(crate) platform: CiString,
+    pub(crate) ratings: Ratings,
+    pub(crate) stats: Stats,
+    pub(crate) turns: Vec<PastTurn>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct PlayerInTurns {
-    pub team: Option<CiString>,
-    pub player: Option<CiString>,
-    pub stars: Option<i32>,
-    pub weight: i32,
-    pub multiplier: f64,
-    pub mvp: Option<bool>,
-    pub power: f64,
+pub(crate) struct PlayerInTurns {
+    pub(crate) team: Option<CiString>,
+    pub(crate) player: Option<CiString>,
+    pub(crate) stars: Option<i32>,
+    pub(crate) weight: i32,
+    pub(crate) multiplier: f64,
+    pub(crate) mvp: Option<bool>,
+    pub(crate) power: f64,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct PlayerWithTurnsAndAdditionalTeam {
-    pub name: CiString,
-    pub team: Option<TeamWithColors>,
-    pub active_team: Option<TeamWithColors>,
-    pub platform: CiString,
-    pub ratings: Ratings,
-    pub stats: Stats,
-    pub turns: Vec<PastTurn>,
+pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
+    pub(crate) name: CiString,
+    pub(crate) team: Option<TeamWithColors>,
+    pub(crate) active_team: Option<TeamWithColors>,
+    pub(crate) platform: CiString,
+    pub(crate) ratings: Ratings,
+    pub(crate) stats: Stats,
+    pub(crate) turns: Vec<PastTurn>,
 }
 
 impl PlayerWithTurnsAndAdditionalTeam {
-    pub fn load(
+    pub(crate) fn load(
         name: Vec<String>,
         team_assigned: bool,
         conn: &PgConnection,
@@ -142,7 +142,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
 }
 
 impl PlayerWithTurns {
-    pub fn load(
+    pub(crate) fn load(
         name: Vec<String>,
         team_assigned: bool,
         conn: &PgConnection,
@@ -221,7 +221,7 @@ impl PlayerWithTurns {
 }
 
 impl TeamPlayer {
-    pub fn load(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamPlayer> {
+    pub(crate) fn load(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamPlayer> {
         let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         moves::table
             .filter(moves::tname.eq_any(ciTname))
@@ -236,7 +236,7 @@ impl TeamPlayer {
             .expect("Error loading players")
     }
 
-    pub fn loadall(conn: &PgConnection) -> Vec<TeamPlayer> {
+    pub(crate) fn loadall(conn: &PgConnection) -> Vec<TeamPlayer> {
         moves::table
             .select((
                 moves::tname,
@@ -251,7 +251,7 @@ impl TeamPlayer {
 }
 
 impl TeamMerc {
-    pub fn load_mercs(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamMerc> {
+    pub(crate) fn load_mercs(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamMerc> {
         let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         allow_tables_to_appear_in_same_query!(users, moves);
         use diesel::dsl::not;
@@ -272,7 +272,7 @@ impl TeamMerc {
 }
 
 impl PlayerInTurns {
-    pub fn load(
+    pub(crate) fn load(
         season: &i32,
         day: &i32,
         territory: &str,

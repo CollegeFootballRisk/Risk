@@ -3,5 +3,5 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 mod model;
-pub mod route;
-pub use model::*;
+pub(crate) mod route;
+pub(crate) use model::*;

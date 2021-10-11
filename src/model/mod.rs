@@ -2,26 +2,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-pub mod auth;
+pub(crate) mod auth;
 pub mod discord;
-pub mod player;
-pub mod ratings;
-pub mod reddit;
-pub mod stats;
-pub mod sys;
-pub mod team;
-pub mod territory;
-pub mod turn;
-pub mod user;
-pub use auth::*;
-pub use player::*;
-pub use ratings::*;
-pub use stats::*;
-pub use sys::*;
-pub use team::*;
-pub use territory::*;
-pub use turn::*;
-pub use user::*;
+pub(crate) mod player;
+pub(crate) mod ratings;
+pub(crate) mod reddit;
+pub(crate) mod stats;
+pub(crate) mod sys;
+pub(crate) mod team;
+pub(crate) mod territory;
+pub(crate) mod turn;
+pub(crate) mod user;
+pub(crate) use auth::*;
+pub(crate) use player::*;
+pub(crate) use ratings::*;
+pub(crate) use stats::*;
+
+pub(crate) use team::*;
+pub(crate) use territory::*;
+pub(crate) use turn::*;
+pub(crate) use user::*;
 #[cfg(feature = "risk_captcha")]
 pub mod captchasvc;
 #[cfg(feature = "risk_captcha")]
@@ -29,4 +29,4 @@ pub use captchasvc::*;
 #[cfg(feature = "risk_discord")]
 pub use discord::*;
 #[cfg(feature = "risk_reddit")]
-pub use reddit::*;
+pub(crate) use reddit::*;

@@ -16,22 +16,22 @@ use schemars::schema::{InstanceType, SchemaObject, StringValidation};
 use schemars::JsonSchema;
 
 #[derive(Serialize, Deserialize)]
-pub struct Httperror {
-    pub status: i32,
+pub(crate) struct Httperror {
+    pub(crate) status: i32,
 }
 
 #[catch(404)]
-pub fn not_found() -> Json<Httperror> {
+pub(crate) fn not_found() -> Json<Httperror> {
     Json(Httperror { status: 404 })
 }
 
 #[catch(500)]
-pub fn internal_error() -> Json<Httperror> {
+pub(crate) fn internal_error() -> Json<Httperror> {
     Json(Httperror { status: 500 })
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct NaiveDateTime(chrono::NaiveDateTime);
+pub(crate) struct NaiveDateTime(chrono::NaiveDateTime);
 
 impl Queryable<diesel::sql_types::Timestamp, Pg> for NaiveDateTime {
     type Row = chrono::NaiveDateTime;
@@ -74,7 +74,7 @@ impl JsonSchema for NaiveDateTime {
 }
 
 #[derive(Debug)]
-pub struct Status(pub rocket::http::Status);
+pub(crate) struct Status(pub(crate) rocket::http::Status);
 
 impl OpenApiResponderInner for Status {
     fn responses(_gen: &mut OpenApiGenerator) -> Result<Responses> {

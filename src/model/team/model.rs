@@ -10,57 +10,57 @@ use schemars::JsonSchema;
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
 #[table_name = "teams"]
-pub struct Team {
-    pub name: Option<String>,
-    pub color_1: Option<String>,
-    pub color_2: Option<String>,
+pub(crate) struct Team {
+    pub(crate) name: Option<String>,
+    pub(crate) color_1: Option<String>,
+    pub(crate) color_2: Option<String>,
 }
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct TeamWithColors {
-    pub name: Option<String>,
-    pub colors: Colors,
+pub(crate) struct TeamWithColors {
+    pub(crate) name: Option<String>,
+    pub(crate) colors: Colors,
 }
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub struct Colors {
-    pub primary: String,
-    pub secondary: String,
+pub(crate) struct Colors {
+    pub(crate) primary: String,
+    pub(crate) secondary: String,
 }
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct TeamInfo {
-    pub id: i32,
-    pub name: String,
-    pub logo: Option<String>,
-    pub colors: Colors,
-    pub seasons: Vec<i32>,
+pub(crate) struct TeamInfo {
+    pub(crate) id: i32,
+    pub(crate) name: String,
+    pub(crate) logo: Option<String>,
+    pub(crate) colors: Colors,
+    pub(crate) seasons: Vec<i32>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
-pub struct TeamInTurns {
-    pub team: CiString,
-    pub color: String,
-    pub secondaryColor: String,
-    pub players: i32,
-    pub power: f64,
-    pub chance: f64,
-    pub breakdown: StarBreakdown64,
+pub(crate) struct TeamInTurns {
+    pub(crate) team: CiString,
+    pub(crate) color: String,
+    pub(crate) secondaryColor: String,
+    pub(crate) players: i32,
+    pub(crate) power: f64,
+    pub(crate) chance: f64,
+    pub(crate) breakdown: StarBreakdown64,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
 #[table_name = "team_player_moves"]
-pub struct TeamPlayerMoves {
-    pub id: i32,
-    pub season: Option<i32>,
-    pub day: Option<i32>,
-    pub team: Option<String>,
-    pub player: Option<String>,
-    pub stars: Option<i32>,
-    pub mvp: Option<bool>,
-    pub territory: Option<String>,
-    pub regularTeam: Option<String>,
+pub(crate) struct TeamPlayerMoves {
+    pub(crate) id: i32,
+    pub(crate) season: Option<i32>,
+    pub(crate) day: Option<i32>,
+    pub(crate) team: Option<String>,
+    pub(crate) player: Option<String>,
+    pub(crate) stars: Option<i32>,
+    pub(crate) mvp: Option<bool>,
+    pub(crate) territory: Option<String>,
+    pub(crate) regularTeam: Option<String>,
 }
 
 impl TeamInfo {
-    pub fn load(conn: &PgConnection) -> Vec<TeamInfo> {
+    pub(crate) fn load(conn: &PgConnection) -> Vec<TeamInfo> {
         teams::table
             .select((
                 teams::id,
@@ -75,7 +75,7 @@ impl TeamInfo {
 }
 
 impl TeamWithColors {
-    pub fn blank() -> TeamWithColors {
+    pub(crate) fn blank() -> TeamWithColors {
         TeamWithColors {
             name: None,
             colors: Colors {
@@ -87,7 +87,7 @@ impl TeamWithColors {
 }
 
 impl TeamPlayerMoves {
-    pub fn load(
+    pub(crate) fn load(
         season_seek: i32,
         day_seek: i32,
         team: Option<String>,
@@ -135,7 +135,7 @@ impl TeamPlayerMoves {
 }
 
 impl TeamInTurns {
-    pub fn load(
+    pub(crate) fn load(
         season: &i32,
         day: &i32,
         territory: &str,

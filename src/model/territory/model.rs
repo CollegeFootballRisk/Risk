@@ -10,38 +10,38 @@ use serde_json::Value;
 use std::result::Result;
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub struct Territory {
+pub(crate) struct Territory {
     id: i32,
     name: String,
     owner: String,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub struct TerritoryWithNeighbors {
-    pub id: i32,
-    pub name: String,
-    pub owner: String,
-    pub neighbors: Value,
+pub(crate) struct TerritoryWithNeighbors {
+    pub(crate) id: i32,
+    pub(crate) name: String,
+    pub(crate) owner: String,
+    pub(crate) neighbors: Value,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub struct TerritoryHistory {
-    pub season: i32,
-    pub day: i32,
-    pub territory: String,
-    pub owner: String,
+pub(crate) struct TerritoryHistory {
+    pub(crate) season: i32,
+    pub(crate) day: i32,
+    pub(crate) territory: String,
+    pub(crate) owner: String,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub struct TerritoryTurn {
-    pub occupier: String,
-    pub winner: String,
-    pub teams: Vec<TeamInTurns>,
-    pub players: Vec<PlayerInTurns>,
+pub(crate) struct TerritoryTurn {
+    pub(crate) occupier: String,
+    pub(crate) winner: String,
+    pub(crate) teams: Vec<TeamInTurns>,
+    pub(crate) players: Vec<PlayerInTurns>,
 }
 
 impl TerritoryWithNeighbors {
-    pub fn load(season: i32, day: i32, conn: &PgConnection) -> Vec<TerritoryWithNeighbors> {
+    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Vec<TerritoryWithNeighbors> {
         territory_ownership_with_neighbors::table
             .filter(territory_ownership_with_neighbors::season.eq(season))
             .filter(territory_ownership_with_neighbors::day.eq(day))
@@ -57,7 +57,7 @@ impl TerritoryWithNeighbors {
 }
 
 impl TerritoryHistory {
-    pub fn load(name: String, season: i32, conn: &PgConnection) -> Vec<TerritoryHistory> {
+    pub(crate) fn load(name: String, season: i32, conn: &PgConnection) -> Vec<TerritoryHistory> {
         territory_ownership_without_neighbors::table
             .filter(territory_ownership_without_neighbors::name.eq(CiString::from(name)))
             .filter(territory_ownership_without_neighbors::season.eq(season))
@@ -73,7 +73,7 @@ impl TerritoryHistory {
 }
 
 impl TerritoryTurn {
-    pub fn load(
+    pub(crate) fn load(
         season: i32,
         day: i32,
         territory: String,
