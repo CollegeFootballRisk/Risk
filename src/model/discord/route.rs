@@ -30,7 +30,7 @@ pub async fn callback(
     token: TokenResponse<DiscordUserInfo>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    config: State<'_, SysInfo>,
+    config: &State<SysInfo>,
 ) -> Result<Redirect, Status> {
     let userinfo: Result<DiscordUserInfo, _> = match reqwest::Client::builder().build() {
         Ok(rclient) => {
@@ -80,7 +80,7 @@ pub async fn callback(
                                     .max_age(Duration::hours(168))
                                     .finish(),
                             );
-                            match Claims::put(&config.settings.cookie_key.as_bytes(), new_claims) {
+                            match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
                                 Ok(s) => {
                                     cookies.add_private(
                                         Cookie::build("jwt", s)

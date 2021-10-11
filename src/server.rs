@@ -19,6 +19,7 @@ mod hardcode;
 mod model;
 mod schema;
 #[cfg(feature = "risk_security")]
+#[rustfmt::skip]
 mod security;
 use crate::db::DbConn;
 use crate::model::{auth, player, stats, sys, team, territory, turn};

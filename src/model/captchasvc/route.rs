@@ -7,7 +7,7 @@ use base64::encode;
 use captcha::{gen, Difficulty};
 use diesel::prelude::*;
 use rocket::http::Status;
-use rocket_contrib::json::Json;
+use rocket::serde::json::Json;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 

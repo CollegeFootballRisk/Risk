@@ -377,7 +377,7 @@ fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
     extern crate nsvg;
     // first we got get the SVG image
     use std::fs;
-    let teams = Team::load(&conn);
+    let teams = Team::load(conn);
     let mut vec = fs::read_to_string("resources/map.svg").unwrap();
     let base: String = "{{?}}".to_owned();
     let mut team_map = HashMap::new();
@@ -389,7 +389,7 @@ fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
             for item in territories {
                 vec = vec.replace(
                     &base.replace("?", &item.territory_id.to_string()),
-                    &team_map.get(&item.owner_id).unwrap(),
+                    team_map.get(&item.owner_id).unwrap(),
                 );
             }
             let svg = nsvg::parse_str(&vec, nsvg::Units::Pixel, 96.0).unwrap();

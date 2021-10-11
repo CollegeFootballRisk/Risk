@@ -34,18 +34,18 @@ jobs:
     - name: Cache Dependencies
       uses: Swatinem/rust-cache@ce325b60658c1b38465c06cc965b79baf32c1e72
     - name: Build
-      run: cargo test --no-run --all-targets --all-features
+      run: cargo test --no-run --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
     - name: Run tests
-      run: cargo test --all-targets --all-features
+      run: cargo test --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
     - name: Install Clippy
       run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
     - name: Clippy
-      run: cargo +nightly clippy --all-targets --all-features
+      run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
 
   fmt:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - name: Fmt
-      run: cargo fmt -- --check
+      run: cargo +nightly fmt -- --check
 
