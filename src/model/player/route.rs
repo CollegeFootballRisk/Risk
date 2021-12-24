@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
+use crate::Error;
 use crate::model::{
     Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
 };
@@ -10,6 +11,8 @@ use crate::sys::SysInfo;
 use rocket::http::CookieJar;
 use rocket::serde::json::Json;
 use rocket::State;
+use urlencoding::FromUrlEncodingError;
+
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
 #[openapi(tag = "Players")]
@@ -17,10 +20,10 @@ use rocket::State;
 pub(crate) async fn players(
     team: Option<String>,
     conn: DbConn,
-) -> Result<Json<Vec<TeamPlayer>>, Status> {
+) -> Result<Json<Vec<TeamPlayer>>, Error> {
     match team {
         Some(team) => {
-            let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
+            let parsed_team_name: Result<String, FromUrlEncodingError> =
                 urlencoding::decode(&team);
             match parsed_team_name {
                 Ok(team) => {
@@ -29,10 +32,10 @@ pub(crate) async fn players(
                     if users.len() as i32 >= 1 {
                         std::result::Result::Ok(Json(users))
                     } else {
-                        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+                        Error::not_found()
                     }
                 }
-                _ => std::result::Result::Err(Status(rocket::http::Status::Conflict)),
+                _ => Error::not_found(),
             }
         }
         None => {
@@ -40,7 +43,7 @@ pub(crate) async fn players(
             if users.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(users))
             } else {
-                std::result::Result::Err(Status(rocket::http::Status::NotFound))
+                Error::not_found()
             }
         }
     }
@@ -51,7 +54,7 @@ pub(crate) async fn players(
 #[openapi(tag = "Players")]
 #[get("/mercs?<team>")]
 pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
-    let parsed_team_name: Result<String, urlencoding::FromUrlEncodingError> =
+    let parsed_team_name: Result<String, FromUrlEncodingError> =
         urlencoding::decode(&team);
     match parsed_team_name {
         Ok(team) => {
@@ -77,6 +80,7 @@ pub(crate) async fn me(
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
+    //let cookie = cookies.get_private("jwt").map_err(Error::unauthorized())?;
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(

@@ -164,7 +164,7 @@ impl Victor {
             5 => self.fives += 1,
             _ => {
                 println!("Possible error, OOB stars");
-                self.ones += 1
+                self.ones += 1;
             }
         }
         self

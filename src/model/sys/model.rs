@@ -3,6 +3,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+
+// Since we're not using a state machine here
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub(crate) struct SysInfo {
     pub(crate) version: String,

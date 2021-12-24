@@ -15,7 +15,6 @@ pub(crate) struct Ratings {
 
 impl Ratings {
     pub(crate) fn load(stat: &Stats) -> Ratings {
-        let overall: i32;
         let totalTurns = Self::fromarr(stat.totalTurns, [0, 10, 25, 50, 100]);
         let gameTurns = Self::fromarr(stat.gameTurns, [0, 5, 10, 25, 40]);
         let mvps = Self::fromarr(stat.mvps, [0, 1, 5, 10, 25]);
@@ -24,7 +23,7 @@ impl Ratings {
         let mut numbers = vec![totalTurns, gameTurns, mvps, awards, streak];
         numbers.sort_unstable();
         let mid = numbers.len() / 2;
-        overall = numbers[mid];
+        let overall: i32 = numbers[mid];
         Ratings {
             overall,
             totalTurns,

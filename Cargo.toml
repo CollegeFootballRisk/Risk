@@ -8,17 +8,17 @@ edition = "2018"
 base64 = {version = "0.13.0", optional=true}
 captcha = {version = "0.0.8", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
-time = "0.2.25"
-diesel = { version = "1.4.5", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
+time = "0.2.27"
+diesel = { version = "1.4.8", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
 diesel-citext = {git = "https://github.com/mautamu/diesel-citext"}
 #diesel-citext = {git = "https://github.com/afonso360/diesel-citext"}
-hyper = { version = "0.14.2", features = ["full"] }
-image = {version = "0.23.12", optional=true}
+hyper = { version = "0.14.16", features = ["full"] }
+image = {version = "0.23.14", optional=true}
 nsvg = {version = "0.5.1", optional=true}
 jsonwebtoken = "7.2.0"
 rand = {version = "0.8", features = ["std"]}
 rand_chacha="0.3"
-reqwest = { version = "0.11.0", default-features = false, features = ["json", "rustls-tls"] }
+reqwest = { version = "0.11.8", default-features = false, features = ["json", "rustls-tls"] }
 rocket = {version = "0.5.0-rc.1", features = ["secrets", "json"] }
 rocket_sync_db_pools = {version = "0.1.0-rc.1", features=["diesel_postgres_pool"]}
 rocket_oauth2 = {version = "0.5.0-rc.1", features = ["hyper_rustls_adapter"]}
@@ -28,8 +28,9 @@ schemars = { version = "0.8", features = ["preserve_order"] }
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
+thiserror = "1.0"
 toml="0.5.8"
-urlencoding = "1.1.1"
+urlencoding = "1.1.0"
 #xdg = "2.2.0" # will use this to move files from build to /var/www at preference
 
 [features]

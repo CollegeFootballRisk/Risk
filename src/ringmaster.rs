@@ -318,12 +318,11 @@ fn process_territories(
                     //dbg!(player.id, player.team);
                     if player.alt_score >= 175 {
                         continue;
-                    } else {
+                    }
                         map.get_mut(&player.team)
                             .unwrap()
                             .power(player.power)
                             .stars(player.stars);
-                    }
                 }
 
                 let totalpower: f64 = map.values().map(|x| (x.power)).sum();
@@ -421,7 +420,7 @@ fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
             }
             for item in territories {
                 vec = vec.replace(
-                    &base.replace("?", &item.territory_id.to_string()),
+                    &base.replace('?', &item.territory_id.to_string()),
                     team_map.get(&item.owner_id).unwrap(),
                 );
             }
@@ -518,7 +517,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     match userupdate {
         Ok(ok) => println!(
             "Users updated successfully {}",
-            ok[0].do_user_update.to_string()
+            ok[0].do_user_update
         ),
         Err(e) => println!("Failed to update users: {:?}", e),
     }

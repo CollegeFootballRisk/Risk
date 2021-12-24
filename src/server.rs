@@ -3,7 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #![feature(proc_macro_hygiene, decl_macro)]
-#![allow(non_snake_case)]
+// TODO: Remove the clippy lints.
+#![allow(non_snake_case, clippy::type_complexity, clippy::too_many_arguments, clippy::self_named_constructors)]
 #[macro_use]
 extern crate rocket;
 #[macro_use]
@@ -13,11 +14,14 @@ extern crate diesel;
 #[macro_use]
 extern crate rocket_okapi;
 
+mod error;
 mod catchers;
 mod db;
 mod hardcode;
 mod model;
 mod schema;
+
+pub use error::Error;
 #[cfg(feature = "risk_security")]
 #[rustfmt::skip]
 mod security;
