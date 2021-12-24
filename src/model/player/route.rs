@@ -3,11 +3,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
-use crate::Error;
 use crate::model::{
     Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
 };
 use crate::sys::SysInfo;
+use crate::Error;
 use rocket::http::CookieJar;
 use rocket::serde::json::Json;
 use rocket::State;
@@ -23,8 +23,7 @@ pub(crate) async fn players(
 ) -> Result<Json<Vec<TeamPlayer>>, Error> {
     match team {
         Some(team) => {
-            let parsed_team_name: Result<String, FromUrlEncodingError> =
-                urlencoding::decode(&team);
+            let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
             match parsed_team_name {
                 Ok(team) => {
                     println!("{}", team);
@@ -54,8 +53,7 @@ pub(crate) async fn players(
 #[openapi(tag = "Players")]
 #[get("/mercs?<team>")]
 pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
-    let parsed_team_name: Result<String, FromUrlEncodingError> =
-        urlencoding::decode(&team);
+    let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
     match parsed_team_name {
         Ok(team) => {
             println!("{}", team);

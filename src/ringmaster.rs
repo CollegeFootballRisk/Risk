@@ -319,10 +319,10 @@ fn process_territories(
                     if player.alt_score >= 175 {
                         continue;
                     }
-                        map.get_mut(&player.team)
-                            .unwrap()
-                            .power(player.power)
-                            .stars(player.stars);
+                    map.get_mut(&player.team)
+                        .unwrap()
+                        .power(player.power)
+                        .stars(player.stars);
                 }
 
                 let totalpower: f64 = map.values().map(|x| (x.power)).sum();
@@ -515,10 +515,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     // Not ideal, TODO: we ought to implement this in Rust.
     let userupdate = user_update(&turninfoblock, &conn);
     match userupdate {
-        Ok(ok) => println!(
-            "Users updated successfully {}",
-            ok[0].do_user_update
-        ),
+        Ok(ok) => println!("Users updated successfully {}", ok[0].do_user_update),
         Err(e) => println!("Failed to update users: {:?}", e),
     }
     turninfoblock.rollendtime = Some(Utc::now().naive_utc());

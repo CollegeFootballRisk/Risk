@@ -4,7 +4,12 @@
 
 #![feature(proc_macro_hygiene, decl_macro)]
 // TODO: Remove the clippy lints.
-#![allow(non_snake_case, clippy::type_complexity, clippy::too_many_arguments, clippy::self_named_constructors)]
+#![allow(
+    non_snake_case,
+    clippy::type_complexity,
+    clippy::too_many_arguments,
+    clippy::self_named_constructors
+)]
 #[macro_use]
 extern crate rocket;
 #[macro_use]
@@ -14,9 +19,9 @@ extern crate diesel;
 #[macro_use]
 extern crate rocket_okapi;
 
-mod error;
 mod catchers;
 mod db;
+mod error;
 mod hardcode;
 mod model;
 mod schema;
