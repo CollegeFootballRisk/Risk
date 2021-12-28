@@ -602,7 +602,7 @@ function makeMove(id) {
     appInfo.doubleOrNothing = false;
     if (appInfo.defendable_territory_names.length == 1) {
         //Prompt the player if they want to double or nothing their move
-        doubleOrNothingText = window.prompt("Type YES to quintuple-or-nothing your move's power. Otherwise type NO.");
+        doubleOrNothingText = window.prompt("Type YES to triple-or-nothing your move's power. Otherwise type NO.");
         appInfo.doubleOrNothing = (doubleOrNothingText.toLowerCase() == 'yes');
     }
     let endCycleColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-bg').concat("");

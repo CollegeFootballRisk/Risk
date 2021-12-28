@@ -4,7 +4,7 @@
     <strong>A configurable multiplayer Risk game written in Rust</strong>
   </p>
   <p>
-    <a href="https://github.com/mautamu/risk/actions?query=workflow%3ACI"><img src="https://github.com/leftwm/leftwm/workflows/CI/badge.svg" alt="build status" /></a>
+    <a href="https://github.com/mautamu/risk/actions?query=workflow%3ACI"><img src="https://github.com/mautamu/Risk/workflows/CI/badge.svg" alt="build status" /></a>
   </p>
 </div>
 

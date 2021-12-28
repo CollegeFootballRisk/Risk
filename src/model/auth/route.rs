@@ -503,7 +503,8 @@ pub(crate) fn handle_territory_info(
                                         && get_territory_number(team_id.0, &latest, conn) == 1
                                     {
                                         let mut rng = thread_rng();
-                                        aon_multiplier = 5 * rng.gen_range(0..2);
+                                        // Triple or nothing
+                                        aon_multiplier = 3 * rng.gen_range(0..2);
                                     }
                                     if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
                                         Ok((
