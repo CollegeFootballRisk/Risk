@@ -7,7 +7,7 @@
 var appInfo = {
     outstandingRequests: [],
     errorNotifications: [],
-    rollTime: new Date("July 22, 2021 05:00:00"),
+    rollTime: new Date("January 12, 2022 04:00:00"),
     loadTime: new Date(),
     burger: false,
     burgerTrigger: false,
@@ -17,8 +17,8 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map2.svg',
-    viewbox: '0 0 700 700',
+    map: '/images/map8.svg',
+    viewbox: '0 0 1900 1702',
     season: 0,
     day: 0,
     mode: 1,
@@ -266,7 +266,7 @@ function errorOver(errorIndex) {
 function defaultErrorNotif(data) {
     errorNotif(
         'Fetch Error',
-        '<h1>Howdy partner</h1>, unfortunately we encountered an error. Not sure what it\'s about. <br/><br/> If this keeps occuring, please <a href="mailto:risk@aggierisk.ml">email us.</a>', {
+        '<h1>Howdy partner</h1>, unfortunately we encountered an error. Not sure what it\'s about. <br/><br/> If this keeps occuring, please <a href="mailto:mautam@usa.com">email us.</a>', {
             text: "Okay",
             action: function() {}
         }, {
@@ -864,10 +864,10 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     window.territories = JSON.parse(territory_data.response);
                     for (territory in window.territories) {
                         dbg(window.territories[territory].name);
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('owner', territories[territory].owner);
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('mapname', "map");
-                        _('map').getElementById(window.territories[territory].name.replace(/ /, "")).setAttribute('territoryid', territories[territory].id);
+                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
+                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('owner', territories[territory].owner);
+                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('mapname', "map");
+                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('territoryid', territories[territory].id);
                     }
                     resizeMap();
                     regionsNBridgesInit()
@@ -1926,7 +1926,7 @@ function handleNewPage(title, contentTag, call, vari) {
      }*/
     contentTag.innerHTML = "";
     appInfo.lockDisplay = false;
-    document.title = "Aggie Risk | " + title;
+    document.title = "College Football Risk | " + title;
     clearInterval(window.pulse);
     call(contentTag, vari);
     if (appInfo.burgerTrigger) {
@@ -2394,7 +2394,7 @@ function sky2() {
         _('content-wrapper').style.display = "none";
         document.getElementsByTagName('footer')[0].style.display = "none";
         document.getElementsByTagName('body')[0].style.background = 'black';
-        document.getElementsByTagName('body')[0].innerHTML += "<h1 style=\"color:var(--theme-accent-1);font-family:digitalClock; font-size:35vh;text-align:center;margin-top:32.5vh;\" id=\"big-clock\">00:00:00</h1><h2 style=\"text-align: center;margin-top: 10vh;\"><a href=\"https://tx.ag/AggieDiscord\">Join the Discord</a></h2>";
+        document.getElementsByTagName('body')[0].innerHTML += "<h1 style=\"color:var(--theme-accent-1);font-family:digitalClock; font-size:35vh;text-align:center;margin-top:32.5vh;\" id=\"big-clock\">00:00:00</h1><h2 style=\"text-align: center;margin-top: 10vh;\"><a href=\"https://discord.com/invite/KG2sKHg\">Join the Discord</a></h2>";
         appInfo.rollTime = new Date("December 26, 2020 04:00:00");
         appInfo.rollTime.setUTCHours(4, 0, 0, 0);
 
