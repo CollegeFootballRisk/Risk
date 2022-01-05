@@ -445,6 +445,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             i32,
+            bool,
         ),
         f64,
     ),
@@ -463,6 +464,7 @@ pub(crate) fn handle_territory_info(
             users::streak,
             users::awards,
             users::current_team,
+            users::is_alt,
         ))
         .first::<(
             i32,
@@ -474,6 +476,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             i32,
+            bool
         )>(conn)
     {
         Ok(team_id) => match get_adjacent_territory_owners(target, &latest, conn) {
@@ -595,6 +598,7 @@ pub(crate) fn insert_turn(
         Option<i32>,
         Option<i32>,
         i32,
+        bool
     ),
     user_ratings: Ratings,
     latest: &Latest,
@@ -605,6 +609,7 @@ pub(crate) fn insert_turn(
     merc: bool,
     conn: &PgConnection,
 ) -> QueryResult<usize> {
+    let alt_score: i32 = match user.9{ true => 175, false => 0};
     diesel::insert_into(new_turns::table)
         .values((
             new_turns::user_id.eq(user.1),
@@ -617,7 +622,7 @@ pub(crate) fn insert_turn(
             new_turns::weight.eq(user_weight),
             new_turns::stars.eq(user_ratings.overall),
             new_turns::team.eq(user.0),
-            new_turns::alt_score.eq(0),
+            new_turns::alt_score.eq(alt_score),
             new_turns::merc.eq(merc),
         ))
         .on_conflict((new_turns::user_id, new_turns::season, new_turns::day))

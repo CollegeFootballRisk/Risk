@@ -48,6 +48,7 @@ table! {
         awards -> Nullable<Int4>,
         role_id -> Nullable<Int4>,
         playing_for -> Int4,
+        is_alt -> Bool,
     }
 }
 
