@@ -14,6 +14,7 @@ pub(crate) struct Territory {
     id: i32,
     name: String,
     owner: String,
+    region: i32,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
@@ -21,6 +22,7 @@ pub(crate) struct TerritoryWithNeighbors {
     pub(crate) id: i32,
     pub(crate) name: String,
     pub(crate) owner: String,
+    pub(crate) region: i32,
     pub(crate) neighbors: Value,
 }
 
@@ -49,6 +51,7 @@ impl TerritoryWithNeighbors {
                 territory_ownership_with_neighbors::territory_id,
                 territory_ownership_with_neighbors::name,
                 territory_ownership_with_neighbors::tname,
+                territory_ownership_with_neighbors::region,
                 territory_ownership_with_neighbors::neighbors,
             ))
             .load::<TerritoryWithNeighbors>(conn)

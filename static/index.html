@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="/assets/css/styles.css?v=20">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js"></script>
+    <script src="/assets/scripts/svg.js"></script>
     <!--<script async src="https://arc.io/widget.min.js#yF4KLU3R"></script>-->
 </head>
 
@@ -237,7 +238,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
     </script>
     <script id="templateRollInfo" type="text/template">
         <h3 class="title">Day {{day}}</h3>
-        <p>{{hours}}{{minutes}}{{seconds}} remain until the next roll.</p>
+        <p>{{days}}{{hours}}{{minutes}}{{seconds}} remain until the next roll.</p>
     </script>
     <script id="templateLeaderboard" type="text/template">
         <section class="leaderboard-wrap">
@@ -251,24 +252,43 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         </section>
     </script>
     <script id="templateAnnouncements" type="text/template">
-        <section class="reviews" style="padding-bottom: 0px !important;">
+        <!--<section class="reviews" style="padding-bottom: 0px !important;">
             <h3> Announcements </h3>
             <p>
                 <ul style="list-style:circle !important;">
                     <li>Despite what the clock says, the first roll will take place on 21 July 2021 at 22:00 (10:00PM) CDT.</li>
                 </ul>
             </p>
-        </section>
+        </section>-->
     </script>
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
-            <h1 id="old-map-county-info">Map</h1>
-            <h2 id="old-map-owner-info"><a href="/map">See past maps</a></h2>
             <h3 id="map-day-info" style="display:none;"></h3>
+            <div id="map-controls" style="position:relative; top: 5vh;">
+            <button value="+" style="float:left;padding:8px;background:black;color:white;border:none;border-radius:5px;margin:2px;" onclick="appInfo.panZoomMap.zoomIn();">🔍+</button>
+            <button value = "-" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="appInfo.panZoomMap.zoomOut();">🔍-</button>
+            <button style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="window.location = '/map';">History</button>
+            <button id="regions-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Regions</button>
+            <button id="bridges-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Bridges</button>
+            </div>
             <div id="map-container">
             </div>
             <text id="map-note" style="display:none;">If a territory is pulsing, you have selected it for your move. <u><a onclick="highlightTerritory('none');">Click here to stop it (to take screenshots).</a><br/></u></text>
         </section>
+        <div id="moveable-info" width="500px" height="165px">
+            <div style="font-size:14px;">
+              <b id="map-county-info">North America</b>
+              <br/>
+            </div>
+            <div color="white" id="map-owner-info">
+            </div>
+            <div class="action-container">
+              <button id="attack-button" class="disp-button" disabled="">Attack</button>
+              <button id="defend-button" class="disp-button" disabled="">Defend</button>
+              <button id="visit-button" class="disp-button" disabled="">View</button>
+              <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button>
+            </div>
+            </div>
     </script>
 
     <script id="templateHistory" type="text/template">

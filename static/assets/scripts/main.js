@@ -18,7 +18,7 @@ var appInfo = {
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
     map: '/images/map8.svg',
-    viewbox: '0 0 1900 1702',
+    viewbox: '00 000 900 902',
     season: 0,
     day: 0,
     mode: 1,
@@ -428,23 +428,28 @@ function getUserInfo(resolve, reject) {
 function mapDisplayUpdate(event, change, override = false) {
     if (!appInfo.lockDisplay || override) {
         twid = "hover-button";
-        switch (event.target.attributes["mapname"].value) {
-            case "odds":
+        var prefix = "";
+	            var leaderboard = false;
+	switch (event.target.attributes["mapname"].value) {
+	case "odds":
+		prefix = "oddmap_" + prefix; break;
+	case "heat":
+		prefix = "heatmap_" + prefix; break;
+	case "leaderboard":
+		leaderboard = true;
+	default:
+		break;
+	}
                 // code block
-                _("oddmap_map-county-info").innerHTML = event.target.attributes["name"].value;
-                _("oddmap_map-owner-info").innerHTML = event.target.hasAttribute("odds") ? "Odds:  " + parseFloat(event.target.attributes["odds"].value).toFixed(2) : "Odds: 0.00";
-                twid = "oddmap_" + twid;
-                break;
-            case "heat":
-                // code block
-                _("heatmap_map-county-info").innerHTML = event.target.attributes["name"].value;
-                _("heatmap_map-owner-info").innerHTML = event.target.hasAttribute("players") ? "Players:  " + event.target.attributes["players"].value : "Players: 0";
-                twid = "heatmap_" + twid;
-                break;
-            case "map":
+		// All
                 _("map-county-info").innerHTML = event.target.attributes["name"].value;
                 _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br />Region: " + event.target.attributes["region"].value;
-                try {
+                _("moveable-info").style.left = (event.clientX+60) + "px";
+                _("moveable-info").style.top = event.clientY + "px";
+                // heat/odds only:
+		twid = prefix + twid;
+	if(prefix == ""){
+		try {
                     if (appInfo.attackable_territory_names.includes(event.target.attributes["name"].value)) {
                         _("attack-button").disabled = false;
                         _("attack-button").onclick = function() { makeMove(event.target.attributes["territoryid"].value) };
@@ -460,21 +465,16 @@ function mapDisplayUpdate(event, change, override = false) {
                 } catch {
                     //user not logged in. Oh well..
                 }
-
+	
                 _("visit-button").disabled = false;
                 _("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
-                break;
-            case "leaderboard":
+	} if(leaderboard){    
                 _("map-county-info").innerHTML = event.target.attributes["name"].value;
                 _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br /> Power: " + event.target.attributes["power"].value + " Players: " + event.target.attributes["players"].value;
                 _("visit-button").disabled = false;
                 _("visit-button").onclick = function() { goToTerritory(event.target.attributes["name"].value) };
-                break;
-            default:
-                _("map-county-info").innerHTML = event.target.attributes["name"].value;
-                _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value;
-                break;
         }
+
         if (override) {
             let temptags = document.getElementsByTagName("path");
             for (tt = 0; tt < temptags.length; tt++) {
@@ -614,8 +614,8 @@ function makeMove(id) {
             document.documentElement.style.setProperty('--theme-bg', endCycleColor);
             document.documentElement.style.setProperty('--theme-bg-05', endCycleColor05);
             doAjaxGetRequest("/auth/my_move", 'Load Move', function(data) {
-                highlightTerritory(data.response.replace(/"/g, ''));
-                errorNotif('Move Submitted', 'Your move was on territory <b>{{Territory}}</b>.'.replace(/{{Territory}}/, data.response.replace(/"/g, '')), {
+                highlightTerritory(data.response.normalize("NFD").replace(/[\u0300-\u036f ]/g, ""));
+                errorNotif('Move Submitted', 'Your move was on territory <b>{{Territory}}</b>.'.replace(/{{Territory}}/, data.response), {
                     text: "Okay"
                 }, {
                     display: "none"
@@ -643,6 +643,7 @@ function drawActionBoardSheet(resolve, reject) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
         appInfo.attackable_territory_names = [];
         appInfo.defendable_territory_names = [];
+        dbg("AC1");
         _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
@@ -670,6 +671,7 @@ function drawActionBoardSheet(resolve, reject) {
                     }
                 }
             }
+            dbg("AC2");
             _('action-container').style.display = "flex";
             let action_item = "<label for=\"{{id}}\">{{name}}:</label> <input type=\"number\" id=\"ac_{{id}}\" name=\"ac_{{id}}\" class=\"pointcount\" value=\"0\" min=\"0\" max=\"100\"> <br/>"
             for (k in appInfo.attackable_territories) {
@@ -711,6 +713,7 @@ function drawActionBoard(resolve, reject) {
         _('last-day-notice').innerHTML = 'This season is over. Thank you for playing!';
         appInfo.attackable_territory_names = [];
         appInfo.defendable_territory_names = [];
+        dbg("AC3");
         _('action-container').outerHTML = '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
     } else {
         try {
@@ -738,6 +741,7 @@ function drawActionBoard(resolve, reject) {
                     }
                 }
             }
+            dbg("AC4");
             _('action-container').style.display = "flex";
             let action_item = "<button onclick=\"makeMove({{id}});\">{{name}}</button>"
             for (k in appInfo.attackable_territories) {
@@ -757,12 +761,16 @@ function drawActionBoard(resolve, reject) {
 }
 
 function resizeMap() {
+    //_('map').setAttribute('preserveAspectRatio', 'xMinYMin');
+    //_('map').setAttribute('viewBox', appInfo.viewbox);
+    //appInfo.panZoomMap.updateBBox();
+    appInfo.panZoomMap.resize();
     /*    let width = _('map-container').clientWidth;
         if (width < 1000) {
             _('map').setAttribute('width', width);
             _('map').setAttribute('height', width);
         }*/
-    try {
+    /*try {
         _('map').setAttribute('preserveAspectRatio', 'xMinYMin');
         _('map').setAttribute('viewBox', appInfo.viewbox);
     } catch {
@@ -775,8 +783,8 @@ function resizeMap() {
              _('heatmap_map').style.width = "100vw";
              _('oddmap_map').style.height = "100vw";
              _('oddmap_map').style.width = "100vw";*/
-        } catch { dbg("No map detected."); }
-    }
+        //} catch { dbg("No map detected."); }
+  //  }
 }
 
 function seasonDayObject(season = 0, day = 0, autoup = false, fn, turnsObject) {
@@ -814,8 +822,8 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     maxmin = getMaxMin(heat, "power");
                     for (territory in heat) {
                         //red = Math.round(160 + 200 * (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power)) | 60;
-                        _('map').getElementById(heat[territory].territory.replace(/ /g, "")).style.fill = getColorForPercentage((heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
-                        _('map').getElementById(heat[territory].territory.replace(/ /g, "")).setAttribute('owner', heat[territory].winner);
+                        _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).style.fill = getColorForPercentage((heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power));
+                        _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('owner', heat[territory].winner);
                         _("old-map-county-info").innerHTML = "Leaderboard";
                         _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
                         _("old-map-owner-info").setAttribute('selectitem', 'true')
@@ -836,11 +844,11 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                     for (territory in heat) {
                         red = (heat[territory].power - maxmin[1].power) / (maxmin[0].power - maxmin[1].power) || 0;
                         try {
-                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).style.fill = getColorForPercentage(red);
-                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("owner", heat[territory].winner);
-                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("power", heat[territory].power);
-                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("players", heat[territory].players);
-                            _('map').getElementById(heat[territory].territory.replace(/ /, "")).setAttribute("mapname", "leaderboard");
+                            _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).style.fill = getColorForPercentage(red);
+                            _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute("owner", heat[territory].winner);
+                            _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute("power", heat[territory].power);
+                            _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute("players", heat[territory].players);
+                            _('map').getElementById(heat[territory].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute("mapname", "leaderboard");
                             _("old-map-county-info").innerHTML = "Leaderboard";
                             _("old-map-owner-info").innerHTML = seasonDayObject(season || 1, day || 0, false, "page_leaderboard_update", window.turnsObject);
                             _("old-map-owner-info").setAttribute('selectitem', 'true')
@@ -862,12 +870,25 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
             case 'territories':
                 doAjaxGetRequest('/api/territories' + addendum, 'Territories', function(territory_data) {
                     window.territories = JSON.parse(territory_data.response);
+                    var i = "";
+                    let len_teams = appInfo.teamsObject.length;
+                    // Can be used if you want to display images instead of colors
+                   /* for(j=0; j < len_teams; j++){
+                            i = appInfo.teamsObject[j]["logo"];
+                            _('defs208').innerHTML += "  <pattern id=\"team_logo_"+appInfo.teamsObject[j]["name"].replace(/\W/g, '')+"\" patternUnits=\"userSpaceOnUse\" width=\"50\" height=\"50\"><image href=\""+i+"\" x=\"0\" y=\"0\" width=\"100\" height=\"100\" /></pattern>";
+                    }*/
+                    //appInfo.Mappt = _('map').createSVGPoint();
                     for (territory in window.territories) {
-                        dbg(window.territories[territory].name);
-                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
-                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('owner', territories[territory].owner);
-                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('mapname', "map");
-                        _('map').getElementById(window.territories[territory].name.replace(/[^a-z0-9]+/gi, "")).setAttribute('territoryid', territories[territory].id);
+                           // _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).style.fill = "url(#team_logo_" +territories[territory].owner.replace(/\W/g, '')+ ")";
+                            _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).style.fill = 'var(--'.concat(territories[territory].owner.replace(/\W/g, '').concat('-primary)'));
+                        _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('owner', territories[territory].owner);
+                        _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('mapname', "map");
+                        _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('territoryid', territories[territory].id);
+                        appInfo.panZoomMap = svgPanZoom("#map", {center:true});
+                        appInfo.panZoomMap.fit();
+                        appInfo.panZoomMap.center();
+                        appInfo.panZoomMap.zoom(1);
+                        appInfo.panZoomMap.zoomAtPoint(0.8, {x: 150, y: -1000})
                     }
                     resizeMap();
                     regionsNBridgesInit()
@@ -1315,10 +1336,10 @@ function drawOddsPage(junk) {
             survival_odds = survival_odds * (1 - oddsObject[i].chance);
             player_red = (oddsObject[i].players - player_mm[1].players) / (player_mm[0].players - player_mm[1].players) || 0;
             odds_red = (oddsObject[i].chance - chance_mm[1].chance) / (chance_mm[0].chance - chance_mm[1].chance) || 0;
-            _("heatmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).style.fill = getColorForPercentage(player_red);
-            _("heatmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).setAttribute('players', oddsObject[i].players);
-            _("oddmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).style.fill = getColorForPercentage(odds_red);
-            _("oddmap_".concat(oddsObject[i].territory.replace(/ /g, ""))).setAttribute('odds', oddsObject[i].chance);
+            _("heatmap_".concat(oddsObject[i].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, ""))).style.fill = getColorForPercentage(player_red);
+            _("heatmap_".concat(oddsObject[i].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, ""))).setAttribute('players', oddsObject[i].players);
+            _("oddmap_".concat(oddsObject[i].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, ""))).style.fill = getColorForPercentage(odds_red);
+            _("oddmap_".concat(oddsObject[i].territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, ""))).setAttribute('odds', oddsObject[i].chance);
             obj.data.push(["<a href=\"/territory/{{terr}}\">{{terr}}</a>".replace(/{{terr}}/gi, oddsObject[i]['territory']),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["owner"]),
                 "<a href=\"/team/{{team}}\">{{team}}</a>".replace(/{{team}}/gi, oddsObject[i]["winner"]),
@@ -1357,6 +1378,7 @@ function drawOddsPage(junk) {
         _('odds-expect').innerHTML = territory_expected.toFixed(2);
         _('odds-actual').innerHTML = territory_count.toFixed(2);
         _('leaderboard-wrapper').style.display = 'flex';
+        dbg("AC5");
         _('action-container').style.display = 'flex';
     });
 }
@@ -2279,7 +2301,7 @@ function highlightTerritory(territory) {
     for (i = 0; i < highlighted.length; i++) {
         highlighted[i].classList.remove('map-animated-highlight');
     }
-    _('map').getElementById(territory.replace(/ /g, '')).classList = 'map-animated-highlight';
+    _('map').getElementById(territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).classList = 'map-animated-highlight';
 }
 
 function link_is_external(link_element) {

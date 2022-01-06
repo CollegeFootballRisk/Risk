@@ -124,6 +124,7 @@ table! {
         day -> Int4,
         name -> diesel_citext::sql_types::Citext,
         tname -> diesel_citext::sql_types::Citext,
+        region-> Int4,
         neighbors -> Json,
     }
 }

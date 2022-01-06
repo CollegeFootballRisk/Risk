@@ -27,6 +27,13 @@ pub(crate) async fn join_team(
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Json<String>, Status> {
+/*    let curr_day: Latest = match conn.run(move |c| Latest::latest(c)).await {
+
+                Ok(latest) => {
+                }
+              Err(_e) => { return std::result::Result::Err(Status::InternalServerError);}
+    };*/
+    
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(
@@ -476,7 +483,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             i32,
-            bool
+            bool,
         )>(conn)
     {
         Ok(team_id) => match get_adjacent_territory_owners(target, &latest, conn) {
@@ -598,7 +605,7 @@ pub(crate) fn insert_turn(
         Option<i32>,
         Option<i32>,
         i32,
-        bool
+        bool,
     ),
     user_ratings: Ratings,
     latest: &Latest,
@@ -609,7 +616,10 @@ pub(crate) fn insert_turn(
     merc: bool,
     conn: &PgConnection,
 ) -> QueryResult<usize> {
-    let alt_score: i32 = match user.9{ true => 175, false => 0};
+    let alt_score: i32 = match user.9 {
+        true => 175,
+        false => 0,
+    };
     diesel::insert_into(new_turns::table)
         .values((
             new_turns::user_id.eq(user.1),

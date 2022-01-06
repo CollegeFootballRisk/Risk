@@ -53,6 +53,7 @@ pub(crate) async fn callback(
             return std::result::Result::Err(Status::BadRequest);
         }
     };
+    dbg!(&userinfo);
     match userinfo {
         Ok(user_info) => {
             let new_user = UpsertableUser {
@@ -100,10 +101,10 @@ pub(crate) async fn callback(
                                 _ => std::result::Result::Err(Status::NotAcceptable),
                             }
                         }
-                        Err(_e) => std::result::Result::Err(Status::BadRequest),
+                        Err(_e) => {dbg!(_e); std::result::Result::Err(Status::BadRequest)},
                     }
                 }
-                Err(_ex) => std::result::Result::Err(Status::BadRequest),
+                Err(_ex) => {dbg!(_ex); std::result::Result::Err(Status::BadRequest)},
             }
         }
         _ => std::result::Result::Err(Status::Gone),

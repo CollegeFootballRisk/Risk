@@ -435,12 +435,32 @@ header nav li:last-child {
  	map-wrap Section
 ----------------*/
 
+#moveable-info {
+    text-align: center;
+    z-index: 12; 
+    position: absolute;
+    color: white;
+    background:black; 
+    padding: 10px; 
+    border-radius: 10px;
+    position: absolute;
+}
+
+#moveable-info button{
+    font-size:  small;
+}
+
+#map-owner-info {
+    font-size: small;
+}
+
 .map-wrap {
     position: relative;
     justify-content: center;
     /*min-height: 100vh;*/
     color: #fff;
     text-align: center;
+    width: 100vw;
 }
 
 @media (max-width: 1000px) {
@@ -455,8 +475,8 @@ header nav li:last-child {
 #oddmap_map,
 #heatmap_map,
 #map {
-    height: 90vh !important;
-    width: 90vh !important;
+    height: 85vh !important;
+    width: 100vw !important;
 }
 
 @media (max-width: 1400px) {
@@ -464,7 +484,7 @@ header nav li:last-child {
     #heatmap_map,
     #map {
         width: 100vw !important;
-        height: 100vw !important;
+        height: 85vh !important;
     }
 }
 
@@ -483,7 +503,7 @@ header nav li:last-child {
 
 .map-wrap {
     width: 100%;
-    padding: 10vh 0 !important;
+    padding: 10px 0 !important;
 }
 
 
@@ -1050,6 +1070,11 @@ footer p a {
     color: white;
     margin: 10px;
     border-radius: 5px;
+    font-size: 1.5em;
+}
+
+#roll-container button{
+    font-size: small !important;
 }
 
 #action-container button:hover,
