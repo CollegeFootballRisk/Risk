@@ -27,13 +27,13 @@ pub(crate) async fn join_team(
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Json<String>, Status> {
-/*    let curr_day: Latest = match conn.run(move |c| Latest::latest(c)).await {
+    /*    let curr_day: Latest = match conn.run(move |c| Latest::latest(c)).await {
 
                 Ok(latest) => {
                 }
               Err(_e) => { return std::result::Result::Err(Status::InternalServerError);}
     };*/
-    
+
     match cookies.get_private("jwt") {
         Some(cookie) => {
             match Claims::interpret(

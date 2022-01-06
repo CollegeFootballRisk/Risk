@@ -8,8 +8,8 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="A fun game of Risk written in Rust to determine the best things in Texas.">
-    <meta name="keywords" content="texas, open source, rust, risk, aggie, tamu, texas a&m, university, collegefootballrisk, aggierisk">
+    <meta name="description" content="An annual collegiate strategy game.">
+    <meta name="keywords" content="texas, open source, rust, risk, college, football, university, collegefootballrisk, aggierisk">
     <meta name="robots" content="index, follow">
     <meta name="copyright" content="2021">
     <meta name="language" content="EN">
@@ -21,7 +21,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>College Football Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=20">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=24a">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js"></script>
     <script src="/assets/scripts/svg.js"></script>
@@ -88,7 +88,7 @@
     <ul class="ugrid redditlogin" id="reddit-login-top" style="background: var(--theme-bg-05); display:none;">
         <li>
             <a href="/login/reddit">
-		    <div style="margin-top:50%;"><img alt="reddit login" src="/images/reddit-logo.png"><img alt="strava login" style="height:unset !important;" src="/images/strava/btn_strava_connectwith_orange/btn_strava_connectwith_orange.png"></img><br><br>LOGIN</div>
+		    <div style="margin-top:50%;"><img alt="reddit login" src="/images/reddit-logo.png"><!--<img alt="strava login" style="height:unset !important;" src="/images/strava/btn_strava_connectwith_orange/btn_strava_connectwith_orange.png"></img>--><br><br>LOGIN</div>
             </a>
         </li>
     </ul>
@@ -158,7 +158,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                     Playing Rust Risk
                 </h2><br/>
             </center>
-            <iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>
+	    <!--<iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>-->
             <h3> What is College Football Risk? </h3>
             <p id="what">
                College Football Risk is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for
@@ -176,15 +176,11 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                 <br /> This version of the game is written in the programming language <a rel="noreferrer" href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/documentation/DEVIATIONS.md">GitHub</a></u>.
             </p>
             <p>
-                Unlike in CFR, this game also implements the continents multiplier (although we refer to them as regions). For each region of the map that a team controls, they get a 2x multiplier. The regions are divided on the map as follows:
-                <img alt="Regions" src="/images/map-regions-fill.svg" />
-            </p>
-            <p>
-                Another way in which this game differs from CFR is that for each turn, if a team controls only one territory each player is granted the ability to quintuple or nothing their power. This means that teams which are on the verge of being eliminated may be
+                For each turn, if a team controls only one territory each player is granted the ability to triple or nothing their power. This means that teams which are on the verge of being eliminated may be
                 able to recuperate some of their ability to strike back and to allow for time to strategize or recruit.
             </p>
             <p>
-                Finally, because this game does not have a chaos team (unlike CFR), all players on a dead team are prompted to join a new team.
+                Finally, because this game does not have a chaos team, all players on a dead team are prompted to join a new team.
             </p>
 	    <h3> How do I get stars / move up in rank? </h3>
             <p id="points"> Your total/overall starcount is the <i>median</i> of your stars for each of the following categories:
@@ -458,7 +454,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
     </script>
     <script id="bug_form" type="text/template">
         <p>Shucks, did we miss something? <br/> <br/>If it's truly an error and not a <u><a alt="feature requests go here" href="https://github.com/mautamu/risk" rel="noreferrer">feature request</a></u> or <u><a alt="those go here" rel="noreferrer" href="https://www.youtube.com/watch?v=dQw4w9WgXcQ">complaint about the results of a turn</a></u>,
-            <br/><br/><u><a rel="noreferrer" href="mailto:rustrisk@aggierisk.ml">let us know</a></u><br/><br/> what you were doing and what unexpected behaviour happened please.</p><br/> (You can also include the following trace):
+            <br/><br/><u><a rel="noreferrer" href="mailto:mautam@usa.com">let us know</a></u><br/><br/> what you were doing and what unexpected behaviour happened please.</p><br/> (You can also include the following trace):
         <textarea id="bug-trace-text" style="width:90%;height:100px;">User-Agent: {{uinf}}  Errors: {{errors}}  Pending: {{pending}} </textarea>
         <p><br/><i>On behalf of the Rust Risk team, thank you for reporting this error!</i></p>
     </script>
@@ -545,7 +541,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </center>
         </li>
     </script>
-    <script src="/assets/scripts/main.js?v=22">
+    <script src="/assets/scripts/main.js?v=24c">
     </script>
 </body>
 

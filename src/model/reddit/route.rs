@@ -101,10 +101,16 @@ pub(crate) async fn callback(
                                 _ => std::result::Result::Err(Status::NotAcceptable),
                             }
                         }
-                        Err(_e) => {dbg!(_e); std::result::Result::Err(Status::BadRequest)},
+                        Err(_e) => {
+                            dbg!(_e);
+                            std::result::Result::Err(Status::BadRequest)
+                        }
                     }
                 }
-                Err(_ex) => {dbg!(_ex); std::result::Result::Err(Status::BadRequest)},
+                Err(_ex) => {
+                    dbg!(_ex);
+                    std::result::Result::Err(Status::BadRequest)
+                }
             }
         }
         _ => std::result::Result::Err(Status::Gone),

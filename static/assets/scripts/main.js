@@ -17,7 +17,7 @@ var appInfo = {
     lockDisplay: false,
     dDay: new Date("December 23, 2020 04:00:00"),
     fullOpacity: 0,
-    map: '/images/map8.svg',
+    map: '/images/map8.svg?v=24',
     viewbox: '00 000 900 902',
     season: 0,
     day: 0,
@@ -444,8 +444,8 @@ function mapDisplayUpdate(event, change, override = false) {
 		// All
                 _("map-county-info").innerHTML = event.target.attributes["name"].value;
                 _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br />Region: " + event.target.attributes["region"].value;
-                _("moveable-info").style.left = (event.clientX+60) + "px";
-                _("moveable-info").style.top = event.clientY + "px";
+                _("moveable-info").style.left = (event.pageX+60) + "px";
+                _("moveable-info").style.top = event.pageY + "px";
                 // heat/odds only:
 		twid = prefix + twid;
 	if(prefix == ""){
@@ -884,7 +884,7 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('owner', territories[territory].owner);
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('mapname', "map");
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('territoryid', territories[territory].id);
-                        appInfo.panZoomMap = svgPanZoom("#map", {center:true});
+                        appInfo.panZoomMap = svgPanZoom("#map", {center:true, beforePan: beforePan});
                         appInfo.panZoomMap.fit();
                         appInfo.panZoomMap.center();
                         appInfo.panZoomMap.zoom(1);
@@ -2425,4 +2425,24 @@ function sky2() {
         window.pulse2 = setInterval(doDate2, 1000);
     }
 }
+
+        var beforePan = function(oldPan, newPan){
+          var stopHorizontal = false
+            , stopVertical = false
+            , gutterWidth = 100
+            , gutterHeight = 100
+              // Computed variables
+            , sizes = this.getSizes()
+            , leftLimit = -((sizes.viewBox.x + sizes.viewBox.width) * sizes.realZoom) + gutterWidth
+            , rightLimit = sizes.width - gutterWidth - (sizes.viewBox.x * sizes.realZoom)
+            , topLimit = -((sizes.viewBox.y + sizes.viewBox.height) * sizes.realZoom) + gutterHeight
+            , bottomLimit = sizes.height - gutterHeight - (sizes.viewBox.y * sizes.realZoom)
+
+          customPan = {}
+          customPan.x = Math.max(leftLimit, Math.min(rightLimit, newPan.x))
+          customPan.y = Math.max(topLimit, Math.min(bottomLimit, newPan.y))
+
+          return customPan
+        }
+
 // @license-end

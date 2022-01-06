@@ -476,14 +476,14 @@ header nav li:last-child {
 #heatmap_map,
 #map {
     height: 85vh !important;
-    width: 100vw !important;
+    width: 80vw !important;
 }
 
 @media (max-width: 1400px) {
     #oddmap_map,
     #heatmap_map,
     #map {
-        width: 100vw !important;
+        width: 80vw !important;
         height: 85vh !important;
     }
 }
