@@ -2301,7 +2301,7 @@ function highlightTerritory(territory) {
     for (i = 0; i < highlighted.length; i++) {
         highlighted[i].classList.remove('map-animated-highlight');
     }
-    _('map').getElementById(territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).classList = 'map-animated-highlight';
+    _('map').getElementById(territory.normalize("NFD").replace(/[\u0300-\u036f ]/g, '').replaceAll("\"", '')).classList = 'map-animated-highlight';
 }
 
 function link_is_external(link_element) {
