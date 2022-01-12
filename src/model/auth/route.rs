@@ -236,11 +236,7 @@ pub(crate) async fn make_move(
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
                                     let tmp_usname = c.0.user.clone();
-                                    let awards = conn
-                                        .run(move |connection| {
-                                            get_cfb_points(tmp_usname, connection)
-                                        })
-                                        .await;
+                                    let awards:i32 = 5;
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
