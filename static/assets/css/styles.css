@@ -475,6 +475,7 @@ header nav li:last-child {
 #oddmap_map,
 #heatmap_map,
 #map {
+    border: 2px solid black;
     height: 85vh !important;
     width: 80vw !important;
 }
