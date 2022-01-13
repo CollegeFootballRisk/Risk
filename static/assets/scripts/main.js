@@ -7,7 +7,7 @@
 var appInfo = {
     outstandingRequests: [],
     errorNotifications: [],
-    rollTime: new Date("January 12, 2022 04:00:00"),
+    rollTime: new Date("January 16, 2022 04:00:00"),
     loadTime: new Date(),
     burger: false,
     burgerTrigger: false,
@@ -884,7 +884,65 @@ function drawMap(resolve, reject, source = 'territories', season = 0, day = 0) {
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('owner', territories[territory].owner);
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('mapname', "map");
                         _('map').getElementById(window.territories[territory].name.normalize("NFD").replace(/[\u0300-\u036f ]/g, "")).setAttribute('territoryid', territories[territory].id);
-                        appInfo.panZoomMap = svgPanZoom("#map", {center:true, beforePan: beforePan});
+                        appInfo.panZoomMap = svgPanZoom("#map", {center:true, beforePan: beforePan, customEventsHandler: {
+          haltEventListeners: ['touchstart', 'touchend', 'touchmove', 'touchleave', 'touchcancel']
+        , init: function(options) {
+            var instance = options.instance
+              , initialScale = 1
+              , pannedX = 0
+              , pannedY = 0
+
+            // Init Hammer
+            // Listen only for pointer and touch events
+            this.hammer = Hammer(options.svgElement, {
+              inputClass: Hammer.SUPPORT_POINTER_EVENTS ? Hammer.PointerEventInput : Hammer.TouchInput
+            })
+
+            // Enable pinch
+            this.hammer.get('pinch').set({enable: true})
+
+            // Handle double tap
+            this.hammer.on('doubletap', function(ev){
+              instance.zoomIn()
+            })
+
+            // Handle pan
+            this.hammer.on('panstart panmove', function(ev){
+              // On pan start reset panned variables
+              if (ev.type === 'panstart') {
+                pannedX = 0
+                pannedY = 0
+              }
+
+              // Pan only the difference
+              instance.panBy({x: ev.deltaX - pannedX, y: ev.deltaY - pannedY})
+              pannedX = ev.deltaX
+              pannedY = ev.deltaY
+            })
+
+            // Handle pinch
+            this.hammer.on('pinchstart pinchmove', function(ev){
+              // On pinch start remember initial zoom
+              if (ev.type === 'pinchstart') {
+                initialScale = instance.getZoom()
+                instance.zoomAtPoint(initialScale * ev.scale, {x: ev.center.x, y: ev.center.y})
+              }
+
+              instance.zoomAtPoint(initialScale * ev.scale, {x: ev.center.x, y: ev.center.y})
+            })
+
+            // Prevent moving the page on some devices when panning over SVG
+            options.svgElement.addEventListener('touchmove', function(e){ e.preventDefault(); });
+          }
+
+        , destroy: function(){
+            this.hammer.destroy()
+          } 
+
+			} 
+
+
+			});
                         appInfo.panZoomMap.fit();
                         appInfo.panZoomMap.center();
                         appInfo.panZoomMap.zoom(1);
@@ -2430,7 +2488,7 @@ function sky2() {
           var stopHorizontal = false
             , stopVertical = false
             , gutterWidth = 100
-            , gutterHeight = 100
+            , gutterHeight = 0
               // Computed variables
             , sizes = this.getSizes()
             , leftLimit = -((sizes.viewBox.x + sizes.viewBox.width) * sizes.realZoom) + gutterWidth
