@@ -5,9 +5,9 @@ use rand::distributions::Alphanumeric;
 use rand::Rng;
 
 // Since we're not using a state machine here
-#[allow(clippy::struct_excessive_bools)]
+#[allow(clippy::struct_excessive_bools, unreachable_pub)]
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct SysInfo {
+pub struct SysInfo {
     pub(crate) version: String,
     pub(crate) discord: bool,
     pub(crate) reddit: bool,

@@ -47,7 +47,8 @@ pub(crate) struct TurnInfo {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
-pub(crate) struct Latest {
+#[allow(unreachable_pub)]
+pub struct Latest {
     pub(crate) season: i32,
     pub(crate) day: i32,
 }

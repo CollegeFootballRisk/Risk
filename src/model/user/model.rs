@@ -10,8 +10,8 @@ use schemars::JsonSchema;
 #[derive(Insertable, Queryable, Serialize, Deserialize, JsonSchema, AsChangeset)]
 #[table_name = "users"]
 pub struct UpsertableUser {
-    pub uname: CiString,
-    pub platform: CiString,
+    pub(crate) uname: CiString,
+    pub(crate) platform: CiString,
 }
 
 impl UpsertableUser {
@@ -31,13 +31,13 @@ impl UpsertableUser {
 #[derive(Queryable, Identifiable)]
 #[table_name = "users"]
 pub struct UpdateUser {
-    pub id: i32,
-    pub overall: i32,
-    pub turns: i32,
-    pub game_turns: i32,
-    pub mvps: i32,
-    pub streak: i32,
-    pub awards: i32,
+    pub(crate) id: i32,
+    pub(crate) overall: i32,
+    pub(crate) turns: i32,
+    pub(crate) game_turns: i32,
+    pub(crate) mvps: i32,
+    pub(crate) streak: i32,
+    pub(crate) awards: i32,
 }
 
 impl UpdateUser {
