@@ -40,14 +40,14 @@ pub(crate) struct TeamMerc {
 
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
 pub struct User {
-    pub id: i32,
-    pub uname: CiString,
-    pub platform: CiString,
-    pub turns: Option<i32>,
-    pub game_turns: Option<i32>,
-    pub mvps: Option<i32>,
-    pub streak: Option<i32>,
-    pub awards: Option<i32>, //    pub team: Option<String>
+    pub(crate) id: i32,
+    pub(crate) uname: CiString,
+    pub(crate) platform: CiString,
+    pub(crate) turns: Option<i32>,
+    pub(crate) game_turns: Option<i32>,
+    pub(crate) mvps: Option<i32>,
+    pub(crate) streak: Option<i32>,
+    pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
