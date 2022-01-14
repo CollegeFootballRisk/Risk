@@ -21,19 +21,37 @@ var appInfo = {
     season: 0,
     day: 0,
     mode: 1,
-    settings: null,
-};
-
-if (localStorage.getItem("rr_settings") === null) {
-    appInfo.settings = {
+    settings: {
         map_hover: false,
         map_logos: false,
+        map_overscroll: false,
         debug: false,
-    };
-    localStorage.setItem("rr_settings", JSON.stringify(appInfo.settings));
-} else {
-    appInfo.settings = JSON.parse(localStorage.getItem("rr_settings"));
+        hide_grocery: false,
+    },
+};
+
+// Pull the settings if they exist, otherwise set them
+var settingsList = appInfo.settings;
+try {
+    var intermediate = JSON.parse(localStorage.getItem("rr_settings"));
+    if (typeof intermediate != 'undefined' && intermediate != null) {
+        appInfo.settings = intermediate;
+    }
+    for (setting in settingsList) {
+        dbg(setting, settingsList[setting]);
+        if (typeof appInfo.settings[setting] === 'undefined') {
+            appInfo.settings[setting] = settingsList[setting];
+        }
+    }
+    delete intermediate;
+} catch {
+    dbg("Failed to parse settings. Using default");
 }
+
+// Save the settings in case they've been updated
+localStorage.setItem("rr_settings", JSON.stringify(appInfo.settings))
+
+if (appInfo.settings.hide_grocery) { _('dellogo').classList += "no-before"; }
 
 // Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset
 Date.prototype.stdTimezoneOffset = function() {
@@ -1543,28 +1561,22 @@ function page_settings(contentTag) {
     var cont = templateInfo.innerHTML;
     contentTag.innerHTML += cont.replace(
         /{{bool:([A-z0-9_]+)}}/g,
-        "<select id= 'rr_s_$1' onchange = 'setSetting(\"$1\")'><option value='true'>True</option><option value='false'>False</option></select>"
+        "<select id= 'rr_s_$1' onchange = 'setSetting(\"$1\", \"bool\")'><option value='true'>True</option><option value='false'>False</option></select>"
     );
     for (setting in appInfo.settings) {
-        _(`rr_s_${setting}`).value = appInfo.settings[setting];
+        try { _(`rr_s_${setting}`).value = appInfo.settings[setting]; } catch { dbg(`Setting not available: ${setting}`); }
     }
     dbg(contentTag);
 }
 
-function setSetting(setting) {
+function setSetting(setting, type) {
     var value = _(`rr_s_${setting}`).value;
-    switch (setting) {
-        case "debug":
-            appInfo.settings.debug = value == "true" ? true : false;
-            break;
-        case "map_hover":
-            appInfo.settings.map_hover = value == "true" ? true : false;
-            break;
-        case "map_logos":
-            appInfo.settings.map_logos = value == "true" ? true : false;
+    switch (type) {
+        case "bool":
+            appInfo.settings[setting] = value == "true" ? true : false;
             break;
         default:
-            dbg(`Invalid setting ${setting}`);
+            appInfo.settings[setting] = value;
             break;
     }
     localStorage.setItem("rr_settings", JSON.stringify(appInfo.settings));
@@ -3422,6 +3434,7 @@ function sky2() {
 }
 
 var beforePan = function(oldPan, newPan) {
+    if (appInfo.settings.map_overscroll) { return newPan; }
     var stopHorizontal = false,
         stopVertical = false,
         gutterWidth = 100,

@@ -267,6 +267,14 @@ header a {
     animation: glow 1s ease-in-out infinite alternate;
 }
 
+.no-before {
+    text-decoration: none !important;
+}
+
+.no-before:before {
+    display: none !important;
+}
+
 
 /* from https://www.w3schools.com/howto/howto_css_glowing_text.asp */
 
