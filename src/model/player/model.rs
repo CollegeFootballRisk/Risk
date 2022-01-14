@@ -90,7 +90,7 @@ pub(crate) struct PlayerSummary {
 }
 
 impl PlayerSummary {
-    pub(crate) fn load(conn: &PgConnection) -> Result<Vec<PlayerSummary>, diesel::result::Error>{
+    pub(crate) fn load(conn: &PgConnection) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
         users::table
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
             .select((users::uname, users::platform, teams::tname.nullable()))

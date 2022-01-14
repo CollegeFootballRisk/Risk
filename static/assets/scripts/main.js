@@ -446,6 +446,7 @@ function mapDisplayUpdate(event, change, override = false) {
                 _("map-owner-info").innerHTML = "Owner:  " + event.target.attributes["owner"].value + "<br />Region: " + event.target.attributes["region"].value;
                 _("moveable-info").style.left = (event.pageX+60) + "px";
                 _("moveable-info").style.top = event.pageY + "px";
+	    	_("moveable-info").style.display = 'block';
                 // heat/odds only:
 		twid = prefix + twid;
 	if(prefix == ""){
@@ -538,7 +539,8 @@ function handleBridges() {
 
 
 function mapHover(event) {
-    if (!event.target.matches('path')) return;
+    if (!event.target.matches('path') && appInfo.lockDisplay == true) return;
+    else if (!event.target.matches('path') && appInfo.lockDisplay == false) {_('moveable-info').style.display = 'none'; return;}
     if (event.target.attributes['id'].value.toLowerCase().indexOf('region') != -1) return;
     type = event.type;
     switch (type) {

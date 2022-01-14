@@ -489,6 +489,7 @@ pub(crate) fn handle_territory_info(
                     .position(|&x| x.0 == team_id.0)
                 {
                     Some(_tuple_of_territory) => {
+                        dbg!(&adjacent_territory_owners);
                         let pos = adjacent_territory_owners
                             .iter()
                             .position(|&x| x.1 == target);

@@ -4,8 +4,7 @@
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{
-    Claims, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
-    PlayerSummary
+    Claims, PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
 };
 use crate::sys::SysInfo;
 use crate::Error;
@@ -117,11 +116,11 @@ pub(crate) async fn me(
 
 /// # Player List
 /// Returns all players, but provides simplified data structure for smaller payload size. Unlike
-/// other methods, this one will return before a player has been part of a roll. 
+/// other methods, this one will return before a player has been part of a roll.
 #[openapi(tag = "Players")]
 #[get("/players/full")]
-pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>, Error>{
-    Ok(Json(conn.run(move |c| {PlayerSummary::load(c)}).await?))
+pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>, Error> {
+    Ok(Json(conn.run(move |c| PlayerSummary::load(c)).await?))
 }
 
 /// # Player Batching
