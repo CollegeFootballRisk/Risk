@@ -21,7 +21,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>College Football Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=24j">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=24x">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js"></script>
     <script src="/assets/scripts/svg.js"></script>
@@ -50,7 +50,7 @@
     <header class="header">
         <nav class="navbar">
             <a href="/" class="nav-logo">
-                <div class="nav-logo-text"><b>College Football Risk</b></div>
+                <div class="nav-logo-text"><b><del id ="dellogo" style="text-decoration-color: red; text-decoration-thickness: 3px;">College Football</del> Risk</b></div>
                 <div id="loadiconbox"><img alt="spinny icon" src="/images/logo-white.svg" id="loadicon" class="brand-image"></div>
             </a>
             <ul class="nav-menu">
@@ -88,7 +88,8 @@
     <ul class="ugrid redditlogin" id="reddit-login-top" style="background: var(--theme-bg-05); display:none;">
         <li>
             <a href="/login/reddit">
-		    <div style="margin-top:50%;"><img alt="reddit login" src="/images/reddit-logo.png"><!--<img alt="strava login" style="height:unset !important;" src="/images/strava/btn_strava_connectwith_orange/btn_strava_connectwith_orange.png"></img>--><br><br>LOGIN</div>
+                <div style="margin-top:50%;"><img alt="reddit login" src="/images/reddit-logo.png">
+                    <!--<img alt="strava login" style="height:unset !important;" src="/images/strava/btn_strava_connectwith_orange/btn_strava_connectwith_orange.png"></img>--><br><br>LOGIN</div>
             </a>
         </li>
     </ul>
@@ -108,7 +109,7 @@
             <a rel="noreferrer" href="https://www.wallpaperflare.com/texas-bluebonnet-wildflowers-near-llano-2017-bing-plant-flowering-plant-wallpaper-pzngz">of</a> <a rel="noreferrer" href="https://pixnio.com/nature-landscapes/night/aurora-borealis-astronomy-atmosphere-phenomenon-planet-majestic-sky-night#">this website</a>            are <a rel="noreferrer" href="https://creativecommons.org/publicdomain/zero/1.0/deed.en">goverened by CC0</a> (public domain) or <a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/LICENSE">Mozilla Public License
                 v2.</a>
         </p>
-        <p>It's more fun playing with others. Join us on <a rel="noreferrer" href="https://discord.com/invite/KG2sKHg">Discord</a> or <a rel="noreferrer" href="https://reddit.com/r/RustRisk">Reddit</a>.</p>
+        <p>It's more fun playing with others. Join us on <a rel="noreferrer" href="https://discord.com/invite/KG2sKHg">Discord</a> or <a rel="noreferrer" href="https://reddit.com/r/CollegeFootballRisk">Reddit</a>.</p>
     </footer>
     <script id="templateTerritoryHistory" type="text/template">
         <section class="grid-history">
@@ -151,6 +152,19 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
 	    </code></pre> --->
         </section>
     </script>
+    <script id="settingsBlock" type="text/template">
+        <section class="reviews" style="display: block;">
+            <center>
+                <h2>Settings</h2>
+            </center>
+            <ul class="settingsList">
+                <li>Map hover box persistence: {{bool:map_hover}}</li>
+                <li>Show logos instead of colors: {{bool:map_logos}}</li>
+                <li>Debug: {{bool:debug}}</li>
+            </ul> <br/>
+            <br/> <br/>
+        </section>
+    </script>
     <script id="templateInfo" type="text/template">
         <section class="reviews">
             <center>
@@ -158,11 +172,10 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                     Playing Rust Risk
                 </h2><br/>
             </center>
-	    <!--<iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>-->
+            <!--<iframe src="https://docs.google.com/document/d/e/2PACX-1vTW5gPJIvgf4srrOS9oHB-8IzMsr7R2ZE7n5jMpqhGncrwfuU1HzLKtny8JiaUU9cAY0gM229wFAB3b/pub?embedded=true" width="800" style="min-height:2903px;" frameborder="0" marginheight="0" marginwidth="0"></iframe>-->
             <h3> What is College Football Risk? </h3>
             <p id="what">
-               College Football Risk is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for
-                a team to have the largest number of territories of any team at the end of the season.
+                College Football Risk is a multiplayer game where teams can work together to control a map of the state of Texas. The objective is for a team to have the largest number of territories of any team at the end of the season.
             </p>
             <h3> How does the game work? </h3>
             <p id="gameplay">
@@ -172,64 +185,65 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </p>
             <h3> How is this different from older versions of College Football Risk? </h3>
             <p>
-                This game is quite similar to older versions of CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a rel="noreferrer" href="https://github.com/mautamu/Risk">code</a>, and submit pull requests to change the game.
+                This game is quite similar to older versions of CFR. However, this version of the game is predominately open-source. Anyone can go look at its <a rel="noreferrer" href="https://github.com/mautamu/Risk">code</a>, and submit pull requests
+                to change the game.
                 <br /> This version of the game is written in the programming language <a rel="noreferrer" href="https://www.rust-lang.org/" style="background-color:#B9420F;">Rust</a>. A list of ways it deviates from CFR can be found on the <u><a rel="noreferrer" href="https://github.com/mautamu/Risk/blob/stable/documentation/DEVIATIONS.md">GitHub</a></u>.
             </p>
             <p>
-                For each turn, if a team controls only one territory each player is granted the ability to triple or nothing their power. This means that teams which are on the verge of being eliminated may be
-                able to recuperate some of their ability to strike back and to allow for time to strategize or recruit.
+                For each turn, if a team controls only one territory each player is granted the ability to triple or nothing their power. This means that teams which are on the verge of being eliminated may be able to recuperate some of their ability to strike back and
+                to allow for time to strategize or recruit.
             </p>
             <p>
                 Finally, because this game does not have a chaos team, all players on a dead team are prompted to join a new team.
             </p>
-	    <h3> How do I get stars / move up in rank? </h3>
+            <h3> How do I get stars / move up in rank? </h3>
             <p id="points"> Your total/overall starcount is the <i>median</i> of your stars for each of the following categories:
-            <ul>
-                <li>MVPS (when you are the MVP of a territory):<br/>
-                  <ul style="text-indent:25px;list-style:circle;">
-		    <li>0 MVPS: 1 Star</li>
-                    <li>1-4 MVPS: 2 Stars</li>
-                    <li>5-9 MVPS: 3 Stars</li>
-                    <li>10-24 MVPS: 4 Stars</li>
-                    <li>25+ MVPS: 5 Stars</li>
-                  </ul>
-                </li><br/><br/>
-                <li>Turns (how many turns you've had in all College Football Risk games):<br/>
-                  <ul style="text-indent:25px;list-style:circle;">
-                    <li>0-9 Turns: 1 Star</li>
-                    <li>10-24 Turns: 2 Stars</li>
-                    <li>25-49 Turns: 3 Stars</li>
-                    <li>50-99 Turns: 4 Stars</li>
-                    <li>100+ Turns: 5 Stars</li>
-                  </ul>
-                </li><br/><br/>
-                <li>Game Turns (all the turns you've made in this game):<br/>
-                  <ul style="text-indent:25px;list-style:circle;">
-                    <li>0-4 Turns: 1 Star</li>
-                    <li>5-9 Turns: 2 Stars</li>
-                    <li>10-24 Turns: 3 Stars</li>
-                    <li>25-39 Turns: 4 Stars</li>
-                    <li>40+ Turns: 5 Stars</li>
-                  </ul>
-                </li><br/><br/>
-                <li>CFBR Stars (how many stars you had entering the last day of CFBR season 2):<br/>
-                  <ul style="text-indent:25px;list-style:circle;">
-                    <li>0 Stars: 1 Star</li>
-                    <li>1 Star: 2 Stars</li>
-                    <li>2 Stars: 3 Stars</li>
-                    <li>3 Stars: 4 Stars</li>
-                    <li>4 Stars/5 Stars: 5 Stars</li>
-                  </ul>
-                </li><br/><br/>
-                <li>Streak (how many consecutive turns you've made):<br/>
-                  <ul style="text-indent:25px;list-style:circle;">
-                    <li>0-2 Turns: 1 Star</li>
-                    <li>3-4 Turns: 2 Stars</li>
-                    <li>5-9 Turns: 3 Stars</li>
-                    <li>10-24 Turns: 4 Stars</li>
-                    <li>25+ Turns: 5 Stars</li>
-                  </ul>
-                </li>
+                <ul>
+                    <li>MVPS (when you are the MVP of a territory):<br/>
+                        <ul style="text-indent:25px;list-style:circle;">
+                            <li>0 MVPS: 1 Star</li>
+                            <li>1-4 MVPS: 2 Stars</li>
+                            <li>5-9 MVPS: 3 Stars</li>
+                            <li>10-24 MVPS: 4 Stars</li>
+                            <li>25+ MVPS: 5 Stars</li>
+                        </ul>
+                    </li><br/><br/>
+                    <li>Turns (how many turns you've had in all College Football Risk games):<br/>
+                        <ul style="text-indent:25px;list-style:circle;">
+                            <li>0-9 Turns: 1 Star</li>
+                            <li>10-24 Turns: 2 Stars</li>
+                            <li>25-49 Turns: 3 Stars</li>
+                            <li>50-99 Turns: 4 Stars</li>
+                            <li>100+ Turns: 5 Stars</li>
+                        </ul>
+                    </li><br/><br/>
+                    <li>Game Turns (all the turns you've made in this game):<br/>
+                        <ul style="text-indent:25px;list-style:circle;">
+                            <li>0-4 Turns: 1 Star</li>
+                            <li>5-9 Turns: 2 Stars</li>
+                            <li>10-24 Turns: 3 Stars</li>
+                            <li>25-39 Turns: 4 Stars</li>
+                            <li>40+ Turns: 5 Stars</li>
+                        </ul>
+                    </li><br/><br/>
+                    <li>CFBR Stars (how many stars you had entering the last day of CFBR season 2):<br/>
+                        <ul style="text-indent:25px;list-style:circle;">
+                            <li>0 Stars: 1 Star</li>
+                            <li>1 Star: 2 Stars</li>
+                            <li>2 Stars: 3 Stars</li>
+                            <li>3 Stars: 4 Stars</li>
+                            <li>4 Stars/5 Stars: 5 Stars</li>
+                        </ul>
+                    </li><br/><br/>
+                    <li>Streak (how many consecutive turns you've made):<br/>
+                        <ul style="text-indent:25px;list-style:circle;">
+                            <li>0-2 Turns: 1 Star</li>
+                            <li>3-4 Turns: 2 Stars</li>
+                            <li>5-9 Turns: 3 Stars</li>
+                            <li>10-24 Turns: 4 Stars</li>
+                            <li>25+ Turns: 5 Stars</li>
+                        </ul>
+                    </li>
         </section>
     </script>
     <script id="templateRollInfo" type="text/template">
@@ -261,11 +275,11 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         <section class="map-wrap">
             <h3 id="map-day-info" style="display:none;"></h3>
             <div id="map-controls" style="position:relative; top: 5vh;">
-            <button value="+" style="float:left;padding:8px;background:black;color:white;border:none;border-radius:5px;margin:2px;" onclick="appInfo.panZoomMap.zoomIn();">🔍+</button>
-            <button value = "-" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="appInfo.panZoomMap.zoomOut();">🔍-</button>
-            <button style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="window.location = '/map';">History</button>
-            <button id="regions-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Regions</button>
-            <button id="bridges-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Bridges</button>
+                <button value="+" style="float:left;padding:8px;background:black;color:white;border:none;border-radius:5px;margin:2px;" onclick="appInfo.panZoomMap.zoomIn();">🔍+</button>
+                <button value="-" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="appInfo.panZoomMap.zoomOut();">🔍-</button>
+                <button style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;" onclick="window.location = '/map';">History</button>
+                <button id="regions-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Regions</button>
+                <button id="bridges-button" style="float:right;padding:8px;background:black;color:white;border:none;border-radius:5px;margin: 2px;">Bridges</button>
             </div>
             <div id="map-container">
             </div>
@@ -273,18 +287,18 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         </section>
         <div id="moveable-info" width="500px" height="165px" style="display:none;">
             <div style="font-size:14px;">
-              <b id="map-county-info">North America</b>
-              <br/>
+                <b id="map-county-info">North America</b>
+                <br/>
             </div>
             <div color="white" id="map-owner-info">
             </div>
             <div class="action-container">
-              <button id="attack-button" class="disp-button" disabled="">Attack</button>
-              <button id="defend-button" class="disp-button" disabled="">Defend</button>
-              <button id="visit-button" class="disp-button" disabled="">View</button>
-              <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button>
+                <button id="attack-button" class="disp-button" disabled="">Attack</button>
+                <button id="defend-button" class="disp-button" disabled="">Defend</button>
+                <button id="visit-button" class="disp-button" disabled="">View</button>
+                <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button>
             </div>
-            </div>
+        </div>
     </script>
 
     <script id="templateHistory" type="text/template">
@@ -541,8 +555,8 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </center>
         </li>
     </script>
-    <script src ="/assets/scripts/hammer.js?v=24n"></script>
-    <script src="/assets/scripts/main.js?v=24t"></script>
+    <script src="/assets/scripts/hammer.js?v=24n"></script>
+    <script src="/assets/scripts/main.js?v=24x"></script>
     </script>
 </body>
 
