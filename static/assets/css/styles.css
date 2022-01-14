@@ -437,7 +437,7 @@ header nav li:last-child {
 
 #moveable-info {
     text-align: center;
-    z-index: 12; 
+    z-index: 3; 
     position: absolute;
     color: white;
     background:black; 

@@ -82,6 +82,22 @@ pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
     pub(crate) turns: Vec<PastTurn>,
 }
 
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct PlayerSummary {
+    pub(crate) name: CiString,
+    pub(crate) platform: CiString,
+    pub(crate) team: Option<CiString>,
+}
+
+impl PlayerSummary {
+    pub(crate) fn load(conn: &PgConnection) -> Result<Vec<PlayerSummary>, diesel::result::Error>{
+        users::table
+            .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+            .select((users::uname, users::platform, teams::tname.nullable()))
+            .load::<PlayerSummary>(conn)
+    }
+}
+
 impl PlayerWithTurnsAndAdditionalTeam {
     pub(crate) fn load(
         name: Vec<String>,

@@ -20,7 +20,7 @@ extern crate diesel;
 extern crate rocket_okapi;
 
 mod catchers;
-mod db;
+pub mod db;
 mod error;
 mod hardcode;
 mod model;
@@ -55,6 +55,7 @@ fn rocket() -> _ {
     // The paths on the /api endpoint. Defined up here for cleanliness
     let api_paths = routes_with_openapi![
         player::route::player,
+        player::route::player_full,
         player::route::me,
         player::route::mercs,
         player::route::players,
