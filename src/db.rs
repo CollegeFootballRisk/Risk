@@ -3,6 +3,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use rocket_sync_db_pools::{database, diesel};
-#[database("postgres_global")]
 #[allow(unreachable_pub)]
+#[database("postgres_global")]
 pub struct DbConn(diesel::PgConnection);
