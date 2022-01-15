@@ -83,7 +83,7 @@ pub(crate) async fn callback(
                                     .same_site(SameSite::Lax)
                                     .domain(config.settings.base_url.clone())
                                     .path("/")
-                                    .max_age(Duration::hours(168))
+                                    .max_age(Duration::hours(720))
                                     .finish(),
                             );
                             match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
@@ -93,7 +93,7 @@ pub(crate) async fn callback(
                                             .same_site(SameSite::Lax)
                                             .domain(config.settings.base_url.clone())
                                             .path("/")
-                                            .max_age(Duration::hours(168))
+                                            .max_age(Duration::hours(720))
                                             .finish(),
                                     );
                                     std::result::Result::Ok(Redirect::to("/"))
