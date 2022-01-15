@@ -66,7 +66,7 @@ pub(crate) async fn callback(
                     {
                         Ok(user) => {
                             let datetime = Utc::now();
-                            let timestamp: usize = 604_800 + datetime.timestamp() as usize;
+                            let timestamp: usize = 2_529_000 + datetime.timestamp() as usize;
                             dbg!(&token);
                             let new_claims = Claims {
                                 id: user.id,
@@ -90,7 +90,7 @@ pub(crate) async fn callback(
                                             .same_site(SameSite::Lax)
                                             .domain(config.settings.base_url.clone())
                                             .path("/")
-                                            .max_age(Duration::hours(168))
+                                            .max_age(Duration::hours(720))
                                             .finish(),
                                     );
                                     std::result::Result::Ok(Redirect::to("/"))
