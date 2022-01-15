@@ -116,7 +116,6 @@ fn process_territories(
                         )
                     })
                     .territorycount += 1;
-
                 territory_stats.push(TerritoryStats {
                     team: territory.owner_id,
                     season: territory.season,
@@ -214,7 +213,8 @@ fn process_territories(
                     )
                 })
                 .starpower +=
-                territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();*/
+                territory_players.iter().map(|mover| mover.power/mover.multiplier).sum::<f64>();
+                */
                 // add team stats
                 handle_team_stats(&mut stats, territory_players.clone());
                 territory_stats.push(TerritoryStats {
