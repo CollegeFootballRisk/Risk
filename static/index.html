@@ -359,25 +359,13 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         <h1>{{TerritoryName}}</h1><br/>
     </script>
     <script id="templateOdds" type="text/template">
-        <section class="map-wrap">
+        <section class="map-wrap no-bottom-padding">
             <h1 id="old-map-county-info">Odds</h1>
             <h3 id="map-owner-info">Loading . . . </h3>
             <h3 id="map-owner-teams" selectitem>Loading . . . </h3>
-            <ul class="ugrid" id="action-container" style="display:none;">
-                <li>
-                    <h3>Heat Map</h3>
-                    <h4 id="heat-notif"></h4>
-                    <div id="heat-map"></div>
-                </li>
-                <li>
-                    <h3>Odds Map</h3>
-                    <h4 id="odds-notif"></h4>
-                    <div id="odds-map"></div>
-                </li>
-            </ul>
             </div>
         </section>
-        <section class="leaderboard-wrap" id="leaderboard-wrapper" style="display:none;">
+        <section class="leaderboard-wrap no-bottom-padding no-top-padding" id="leaderboard-wrapper" style="display:none;">
             <ul class="ugrid">
                 <li class="small p20">
                     <h2>Survival Odds</h2><br/><text id="odds-survival"></text></li>
@@ -391,6 +379,35 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                 </table>
             </div>
             <hr>
+        </section>
+        <section class="map-wrap no-top-padding">
+            <ul class="ugrid" id="action-container" style="display:none;">
+                <div id="moveable-info" width="500px" height="165px" style="display:none;">
+                    <div style="font-size:14px;">
+                        <b id="map-county-info">North America</b>
+                        <br/>
+                    </div>
+                    <div color="white" id="map-owner-info">
+                    </div>
+                    <div class="action-container">
+                        <button id="attack-button" class="disp-button" disabled="">Attack</button>
+                        <button id="defend-button" class="disp-button" disabled="">Defend</button>
+                        <button id="visit-button" class="disp-button" disabled="">View</button>
+                        <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button>
+                    </div>
+                </div>
+                <li>
+                    <h3>Heat Map</h3>
+                    <h4 id="heat-notif"></h4>
+                    <div id="heat-map"></div>
+                </li>
+                <li>
+                    <h3>Odds Map</h3>
+                    <h4 id="odds-notif"></h4>
+                    <div id="odds-map"></div>
+                </li>
+            </ul>
+
         </section>
     </script>
     <script id="templateTeam" type="text/template">

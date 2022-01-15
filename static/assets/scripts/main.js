@@ -137,7 +137,8 @@ document.addEventListener(
             case "path":
                 if (
                     appInfo.lockDisplay ||
-                    event.target.attributes["mapname"] == "odds"
+                    event.target.attributes["mapname"].value == "odds" ||
+                    event.target.attributes["mapname"].value == "heat"
                 ) {
                     mapDisplayUpdate(event, false, true);
                 } else {
@@ -564,27 +565,38 @@ function mapDisplayUpdate(event, change, override = false) {
         var prefix = "";
         var leaderboard = false;
         switch (event.target.attributes["mapname"].value) {
+            // This is a lazy way of doing this, in the future this entire function should be remapped for different map types
             case "odds":
                 prefix = "oddmap_" + prefix;
+                _("moveable-info").style.left = event.clientX + 60 + "px";
+                _("moveable-info").style.top = event.clientY + "px";
                 break;
             case "heat":
+                _("moveable-info").style.left = event.clientX + 60 + "px";
+                _("moveable-info").style.top = event.clientY + "px";
                 prefix = "heatmap_" + prefix;
                 break;
             case "leaderboard":
+                _("moveable-info").style.left = event.pageX + 60 + "px";
+                _("moveable-info").style.top = event.pageY + "px";
                 leaderboard = true;
             default:
+                _("moveable-info").style.left = event.pageX + 60 + "px";
+                _("moveable-info").style.top = event.pageY + "px";
                 break;
         }
         // code block
         // All
         _("map-county-info").innerHTML = event.target.attributes["name"].value;
-        _("map-owner-info").innerHTML =
-            "Owner:  " +
-            event.target.attributes["owner"].value +
-            "<br />Region: " +
-            event.target.attributes["region"].value;
-        _("moveable-info").style.left = event.pageX + 60 + "px";
-        _("moveable-info").style.top = event.pageY + "px";
+        try {
+            _("map-owner-info").innerHTML =
+                "Owner:  " +
+                event.target.attributes["owner"].value +
+                "<br />Region: " +
+                event.target.attributes["region"].value;
+        } catch {
+
+        }
         _("moveable-info").style.display = "block";
         // heat/odds only:
         twid = prefix + twid;
@@ -729,7 +741,7 @@ function handleBridges() {
 function mapHover(event) {
     if (!event.target.matches("path") && appInfo.lockDisplay == true) return;
     else if (!event.target.matches("path") && appInfo.lockDisplay == false && !appInfo.settings.map_hover) {
-        _("moveable-info").style.display = "none";
+        try { _("moveable-info").style.display = "none"; } catch {}
         return;
     }
     if (event.target.attributes["id"].value.toLowerCase().indexOf("region") != -1)
@@ -1221,6 +1233,7 @@ function drawMap(resolve, reject, source = "territories", season = 0, day = 0) {
                         }
                         li += "</ul>";
                         _("map-container").innerHTML += li;
+                        mapPanInit("#map");
                         resizeMap();
                         regionsNBridgesInit();
                         resolve(heat);
@@ -1293,90 +1306,7 @@ function drawMap(resolve, reject, source = "territories", season = 0, day = 0) {
                                     .replace(/[\u0300-\u036f ]/g, "")
                                 )
                                 .setAttribute("territoryid", territories[territory].id);
-                            appInfo.panZoomMap = svgPanZoom("#map", {
-                                center: true,
-                                beforePan: beforePan,
-                                customEventsHandler: {
-                                    haltEventListeners: [
-                                        "touchstart",
-                                        "touchend",
-                                        "touchmove",
-                                        "touchleave",
-                                        "touchcancel",
-                                    ],
-                                    init: function(options) {
-                                        var instance = options.instance,
-                                            initialScale = 1,
-                                            pannedX = 0,
-                                            pannedY = 0;
-
-                                        // Init Hammer
-                                        // Listen only for pointer and touch events
-                                        this.hammer = Hammer(options.svgElement, {
-                                            inputClass: Hammer.SUPPORT_POINTER_EVENTS ?
-                                                Hammer.PointerEventInput : Hammer.TouchInput,
-                                        });
-
-                                        // Enable pinch
-                                        this.hammer.get("pinch").set({ enable: true });
-
-                                        // Handle double tap
-                                        this.hammer.on("doubletap", function(ev) {
-                                            instance.zoomIn();
-                                        });
-
-                                        // Handle pan
-                                        this.hammer.on("panstart panmove", function(ev) {
-                                            // On pan start reset panned variables
-                                            if (ev.type === "panstart") {
-                                                pannedX = 0;
-                                                pannedY = 0;
-                                            }
-
-                                            // Pan only the difference
-                                            instance.panBy({
-                                                x: ev.deltaX - pannedX,
-                                                y: ev.deltaY - pannedY,
-                                            });
-                                            pannedX = ev.deltaX;
-                                            pannedY = ev.deltaY;
-                                        });
-
-                                        // Handle pinch
-                                        this.hammer.on("pinchstart pinchmove", function(ev) {
-                                            // On pinch start remember initial zoom
-                                            if (ev.type === "pinchstart") {
-                                                initialScale = instance.getZoom();
-                                                instance.zoomAtPoint(initialScale * ev.scale, {
-                                                    x: ev.center.x,
-                                                    y: ev.center.y,
-                                                });
-                                            }
-
-                                            instance.zoomAtPoint(initialScale * ev.scale, {
-                                                x: ev.center.x,
-                                                y: ev.center.y,
-                                            });
-                                        });
-
-                                        // Prevent moving the page on some devices when panning over SVG
-                                        options.svgElement.addEventListener(
-                                            "touchmove",
-                                            function(e) {
-                                                e.preventDefault();
-                                            }
-                                        );
-                                    },
-
-                                    destroy: function() {
-                                        this.hammer.destroy();
-                                    },
-                                },
-                            });
-                            appInfo.panZoomMap.fit();
-                            appInfo.panZoomMap.center();
-                            appInfo.panZoomMap.zoom(1);
-                            appInfo.panZoomMap.zoomAtPoint(0.8, { x: 150, y: -1000 });
+                            mapPanInit("#map");
                         }
                         resizeMap();
                         regionsNBridgesInit();
@@ -1391,6 +1321,93 @@ function drawMap(resolve, reject, source = "territories", season = 0, day = 0) {
                 break;
         }
     });
+}
+
+function mapPanInit(id) {
+    appInfo.panZoomMap = svgPanZoom(id, {
+        center: true,
+        beforePan: beforePan,
+        customEventsHandler: {
+            haltEventListeners: [
+                "touchstart",
+                "touchend",
+                "touchmove",
+                "touchleave",
+                "touchcancel",
+            ],
+            init: function(options) {
+                var instance = options.instance,
+                    initialScale = 1,
+                    pannedX = 0,
+                    pannedY = 0;
+
+                // Init Hammer
+                // Listen only for pointer and touch events
+                this.hammer = Hammer(options.svgElement, {
+                    inputClass: Hammer.SUPPORT_POINTER_EVENTS ?
+                        Hammer.PointerEventInput : Hammer.TouchInput,
+                });
+
+                // Enable pinch
+                this.hammer.get("pinch").set({ enable: true });
+
+                // Handle double tap
+                this.hammer.on("doubletap", function(ev) {
+                    instance.zoomIn();
+                });
+
+                // Handle pan
+                this.hammer.on("panstart panmove", function(ev) {
+                    // On pan start reset panned variables
+                    if (ev.type === "panstart") {
+                        pannedX = 0;
+                        pannedY = 0;
+                    }
+
+                    // Pan only the difference
+                    instance.panBy({
+                        x: ev.deltaX - pannedX,
+                        y: ev.deltaY - pannedY,
+                    });
+                    pannedX = ev.deltaX;
+                    pannedY = ev.deltaY;
+                });
+
+                // Handle pinch
+                this.hammer.on("pinchstart pinchmove", function(ev) {
+                    // On pinch start remember initial zoom
+                    if (ev.type === "pinchstart") {
+                        initialScale = instance.getZoom();
+                        instance.zoomAtPoint(initialScale * ev.scale, {
+                            x: ev.center.x,
+                            y: ev.center.y,
+                        });
+                    }
+
+                    instance.zoomAtPoint(initialScale * ev.scale, {
+                        x: ev.center.x,
+                        y: ev.center.y,
+                    });
+                });
+
+                // Prevent moving the page on some devices when panning over SVG
+                options.svgElement.addEventListener(
+                    "touchmove",
+                    function(e) {
+                        e.preventDefault();
+                    }
+                );
+            },
+
+            destroy: function() {
+                this.hammer.destroy();
+            },
+        },
+    });
+    appInfo.panZoomMap.fit();
+    appInfo.panZoomMap.center();
+    appInfo.panZoomMap.zoom(1);
+    appInfo.panZoomMap.zoomAtPoint(0.8, { x: 150, y: -1000 });
 }
 
 function drawUserTurnHistory(playerObject) {
@@ -1935,6 +1952,8 @@ function drawOddsPage(junk) {
     var day = seasonday[1];
     var season = seasonday[0];
     //update the team select to only have this season's teams!
+    dbg("Season");
+    dbg(season);
     hideUnselectableTeams(season);
     _("heat-notif").innerHTML = "Where " + team + " deployed forces";
     _("odds-notif").innerHTML = "Where " + team + " had the highest odds";
@@ -2073,8 +2092,8 @@ function drawOddsPage(junk) {
                     oddsObject[i]["chance"].toFixed(2),
                 ]);
             }
-            regionsNBridgesInit();
-            resizeMap();
+            oddsHeatMapWait();
+            // Expose variable to use for testing
             try {
                 window.datatable.destroy();
             } catch {
@@ -2101,6 +2120,205 @@ function drawOddsPage(junk) {
             _("action-container").style.display = "flex";
         }
     );
+}
+
+function oddsHeatMapWait() {
+    window.timeOutLoopCount = 0;
+    window.timeOutLoop = setTimeout(function() {
+        if ((document.getElementById("heatmap_map").contentDocument == null) || (document.getElementById("oddmap_map").contentDocument == null)) {
+            initOddHeatMapMove();
+            window.timeOutLoop = null;
+        } else if (window.timeOutLoopCount > 1000) {
+            errorNotif("Map Error", "Error: could not load maps. We would appreciate a bug report.");
+        }
+    }, 100);
+}
+
+function initOddHeatMapMove() {
+    appInfo.panZoomMap = svgPanZoom('#oddmap_map', {
+        center: true,
+        zoomEnabled: true,
+        controlIconsEnabled: true,
+        customEventsHandler: {
+            haltEventListeners: [
+                "touchstart",
+                "touchend",
+                "touchmove",
+                "touchleave",
+                "touchcancel",
+            ],
+            init: function(options) {
+                var instance = options.instance,
+                    initialScale = 1,
+                    pannedX = 0,
+                    pannedY = 0;
+
+                // Init Hammer
+                // Listen only for pointer and touch events
+                this.hammer = Hammer(options.svgElement, {
+                    inputClass: Hammer.SUPPORT_POINTER_EVENTS ?
+                        Hammer.PointerEventInput : Hammer.TouchInput,
+                });
+
+                // Enable pinch
+                this.hammer.get("pinch").set({ enable: true });
+
+                // Handle double tap
+                this.hammer.on("doubletap", function(ev) {
+                    instance.zoomIn();
+                });
+
+                // Handle pan
+                this.hammer.on("panstart panmove", function(ev) {
+                    // On pan start reset panned variables
+                    if (ev.type === "panstart") {
+                        pannedX = 0;
+                        pannedY = 0;
+                    }
+
+                    // Pan only the difference
+                    instance.panBy({
+                        x: ev.deltaX - pannedX,
+                        y: ev.deltaY - pannedY,
+                    });
+                    pannedX = ev.deltaX;
+                    pannedY = ev.deltaY;
+                });
+
+                // Handle pinch
+                this.hammer.on("pinchstart pinchmove", function(ev) {
+                    // On pinch start remember initial zoom
+                    if (ev.type === "pinchstart") {
+                        initialScale = instance.getZoom();
+                        instance.zoomAtPoint(initialScale * ev.scale, {
+                            x: ev.center.x,
+                            y: ev.center.y,
+                        });
+                    }
+
+                    instance.zoomAtPoint(initialScale * ev.scale, {
+                        x: ev.center.x,
+                        y: ev.center.y,
+                    });
+                });
+
+                // Prevent moving the page on some devices when panning over SVG
+                options.svgElement.addEventListener(
+                    "touchmove",
+                    function(e) {
+                        e.preventDefault();
+                    }
+                );
+            },
+
+            destroy: function() {
+                this.hammer.destroy();
+            },
+        },
+        //Uncomment this in order to get Y axis synchronized pan
+        //beforePan: function(oldP, newP) { return { y: false } },
+    });
+
+    // Expose variable to use for testing
+    appInfo.panZoomMap2 = svgPanZoom('#heatmap_map', {
+        center: true,
+        zoomEnabled: true,
+        controlIconsEnabled: true,
+        customEventsHandler: {
+            haltEventListeners: [
+                "touchstart",
+                "touchend",
+                "touchmove",
+                "touchleave",
+                "touchcancel",
+            ],
+            init: function(options) {
+                var instance = options.instance,
+                    initialScale = 1,
+                    pannedX = 0,
+                    pannedY = 0;
+
+                // Init Hammer
+                // Listen only for pointer and touch events
+                this.hammer = Hammer(options.svgElement, {
+                    inputClass: Hammer.SUPPORT_POINTER_EVENTS ?
+                        Hammer.PointerEventInput : Hammer.TouchInput,
+                });
+
+                // Enable pinch
+                this.hammer.get("pinch").set({ enable: true });
+
+                // Handle double tap
+                this.hammer.on("doubletap", function(ev) {
+                    instance.zoomIn();
+                });
+
+                // Handle pan
+                this.hammer.on("panstart panmove", function(ev) {
+                    // On pan start reset panned variables
+                    if (ev.type === "panstart") {
+                        pannedX = 0;
+                        pannedY = 0;
+                    }
+
+                    // Pan only the difference
+                    instance.panBy({
+                        x: ev.deltaX - pannedX,
+                        y: ev.deltaY - pannedY,
+                    });
+                    pannedX = ev.deltaX;
+                    pannedY = ev.deltaY;
+                });
+
+                // Handle pinch
+                this.hammer.on("pinchstart pinchmove", function(ev) {
+                    // On pinch start remember initial zoom
+                    if (ev.type === "pinchstart") {
+                        initialScale = instance.getZoom();
+                        instance.zoomAtPoint(initialScale * ev.scale, {
+                            x: ev.center.x,
+                            y: ev.center.y,
+                        });
+                    }
+
+                    instance.zoomAtPoint(initialScale * ev.scale, {
+                        x: ev.center.x,
+                        y: ev.center.y,
+                    });
+                });
+
+                // Prevent moving the page on some devices when panning over SVG
+                options.svgElement.addEventListener(
+                    "touchmove",
+                    function(e) {
+                        e.preventDefault();
+                    }
+                );
+            },
+
+            destroy: function() {
+                this.hammer.destroy();
+            },
+        },
+    });
+
+    appInfo.panZoomMap.setOnZoom(function(level) {
+        appInfo.panZoomMap2.zoom(level)
+        appInfo.panZoomMap2.pan(appInfo.panZoomMap.getPan())
+    })
+
+    appInfo.panZoomMap.setOnPan(function(point) {
+        appInfo.panZoomMap2.pan(point)
+    })
+
+    appInfo.panZoomMap2.setOnZoom(function(level) {
+        appInfo.panZoomMap.zoom(level)
+        appInfo.panZoomMap.pan(appInfo.panZoomMap2.getPan())
+    })
+
+    appInfo.panZoomMap2.setOnPan(function(point) {
+        appInfo.panZoomMap.pan(point)
+    })
 }
 
 function page_odds(contentTag) {
@@ -2143,6 +2361,7 @@ function page_odds(contentTag) {
             );
             _("map-owner-teams").innerHTML = str;
             _("map-owner-info").setAttribute("selectitem", "true");
+            dbg(values);
             hideUnselectableTeams(maxSeason);
             dbg(values);
         })
@@ -2844,6 +3063,7 @@ function handleNewPage(title, contentTag, call, vari) {
            sky();
        }*/
     contentTag.innerHTML = "";
+    appInfo.panZoomMap = null;
     appInfo.lockDisplay = false;
     document.title = "College Football Risk | " + title;
     clearInterval(window.pulse);
