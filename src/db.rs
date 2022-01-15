@@ -4,4 +4,4 @@
 
 use rocket_sync_db_pools::{database, diesel};
 #[database("postgres_global")]
-pub(crate) struct DbConn(diesel::PgConnection);
+pub struct DbConn(diesel::PgConnection);

@@ -181,7 +181,6 @@ header .brand-image {
     position: relative;
 }
 
-
 header li {
     list-style: none;
 }
@@ -191,20 +190,20 @@ header a {
 }
 
 #loadiconbox {
-margin: 0;
-position: absolute;
-top: 50%;
--ms-transform: translateY(-50%);
-transform: translateY(-50%);
-bottom: 50%;
-padding-left: 10px;
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+    bottom: 50%;
+    padding-left: 10px;
     display: contents;
-        height: 100%;
+    height: 100%;
 }
 
 .navbar {
-   font-size: 62.5%;
-    	display: flex;
+    font-size: 62.5%;
+    display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 5px 7px;
@@ -234,13 +233,13 @@ padding-left: 10px;
     margin-left: 50px;
 }
 
-.nav-link{
+.nav-link {
     font-size: 18px;
     font-weight: 400;
     color: var(--theme-fg);
 }
 
-.nav-link:hover{
+.nav-link:hover {
     color: var(--theme-accent-1);
 }
 
@@ -248,14 +247,45 @@ padding-left: 10px;
     font-size: 27px;
     font-weight: 500;
     color: var(--theme-fg);
-display: flex;
-flex-direction: row;
+    display: flex;
+    flex-direction: row;
 }
 
 .nav-logo-text {
-	padding-right: 20px;
+    padding-right: 20px;
 }
 
+#dellogo:before {
+    content: "Grocery Store";
+    font-weight: bolder;
+    color: red;
+    line-height: 1;
+    display: inline-block;
+    position: absolute;
+    -webkit-animation: glow 1s ease-in-out infinite alternate;
+    -moz-animation: glow 1s ease-in-out infinite alternate;
+    animation: glow 1s ease-in-out infinite alternate;
+}
+
+.no-before {
+    text-decoration: none !important;
+}
+
+.no-before:before {
+    display: none !important;
+}
+
+
+/* from https://www.w3schools.com/howto/howto_css_glowing_text.asp */
+
+@-webkit-keyframes glow {
+    from {
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+    }
+    to {
+        text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+    }
+}
 
 @media only screen and (max-width: 960px) {
     .nav-menu {
@@ -264,37 +294,30 @@ flex-direction: row;
         top: 3.5rem;
         flex-direction: column;
         background-color: var(--theme-bg-gen);
-	color: var(--theme-fg);
+        color: var(--theme-fg);
         width: 100%;
         border-radius: 10px;
         text-align: center;
         transition: 0.3s;
-        box-shadow:
-            0 10px 27px rgba(0, 0, 0, 0.05);
+        box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
     }
-
     .nav-menu.active {
         left: 0;
     }
-
     .nav-item {
         margin: 2.5rem 0;
     }
-
     .hamburger {
         display: block;
         cursor: pointer;
     }
-
     .hamburger.active .bar:nth-child(2) {
         opacity: 0;
     }
-
     .hamburger.active .bar:nth-child(1) {
         -webkit-transform: translateY(8px) rotate(45deg);
         transform: translateY(8px) rotate(45deg);
     }
-
     .hamburger.active .bar:nth-child(3) {
         -webkit-transform: translateY(-8px) rotate(-45deg);
         transform: translateY(-8px) rotate(-45deg);
@@ -345,8 +368,8 @@ header nav li:last-child {
         padding-left: 5px;
         border-radius: 3px;
     }
-    .hamburger:hover > span {
-	background-color: var(--theme-accent-4);
+    .hamburger:hover>span {
+        background-color: var(--theme-accent-4);
     }
     header nav {
         flex-direction: column;
@@ -437,17 +460,17 @@ header nav li:last-child {
 
 #moveable-info {
     text-align: center;
-    z-index: 12; 
+    z-index: 3;
     position: absolute;
     color: white;
-    background:black; 
-    padding: 10px; 
+    background: black;
+    padding: 10px;
     border-radius: 10px;
     position: absolute;
 }
 
-#moveable-info button{
-    font-size:  small;
+#moveable-info button {
+    font-size: small;
 }
 
 #map-owner-info {
@@ -985,6 +1008,13 @@ footer p a {
 }
 
 
+/* -- Settings -- */
+
+.settingsList li {
+    margin: 10px 0;
+}
+
+
 /* -- Errors -- */
 
 .gradient-border {
@@ -1074,7 +1104,7 @@ footer p a {
     font-size: 1.5em;
 }
 
-#roll-container button{
+#roll-container button {
     font-size: small !important;
 }
 

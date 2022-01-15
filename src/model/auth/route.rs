@@ -235,8 +235,8 @@ pub(crate) async fn make_move(
                             {
                                 Ok((user, multiplier)) => {
                                     //get user's current award information from CFBRisk
-                                    let tmp_usname = c.0.user.clone();
-                                    let awards:i32 = 5;
+                                    let _tmp_usname = c.0.user.clone();
+                                    let awards: i32 = 5;
                                     //get user's current information from Reddit to ensure they still exist
                                     c.0.user.push_str(&awards.to_string());
                                     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -489,6 +489,7 @@ pub(crate) fn handle_territory_info(
                     .position(|&x| x.0 == team_id.0)
                 {
                     Some(_tuple_of_territory) => {
+                        dbg!(&adjacent_territory_owners);
                         let pos = adjacent_territory_owners
                             .iter()
                             .position(|&x| x.1 == target);
@@ -574,6 +575,7 @@ pub(crate) fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnecti
         .unwrap_or(0) as i32
 }
 
+#[allow(dead_code)]
 pub(crate) fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
     match cfbr_stats::table
         .filter(cfbr_stats::player.eq(CiString::from(name)))

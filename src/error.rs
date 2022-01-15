@@ -17,6 +17,8 @@ pub enum Error {
         #[from]
         source: serde_json::Error,
     },
+    #[error(transparent)]
+    Diesel(#[from] diesel::result::Error),
     #[error("Unwrap Error")]
     Yeet {},
     #[error("NotFound Error")]

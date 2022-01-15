@@ -6,8 +6,8 @@ use diesel::prelude::*;
 #[derive(Deserialize, Insertable)]
 #[table_name = "captchas"]
 pub struct Captchas {
-    pub title: String,
-    pub content: String,
+    pub(crate) title: String,
+    pub(crate) content: String,
 }
 #[derive(Serialize, Deserialize)]
 pub(crate) struct UserCaptcha {

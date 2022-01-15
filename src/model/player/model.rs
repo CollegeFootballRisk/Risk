@@ -40,14 +40,14 @@ pub(crate) struct TeamMerc {
 
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
 pub struct User {
-    pub id: i32,
-    pub uname: CiString,
-    pub platform: CiString,
-    pub turns: Option<i32>,
-    pub game_turns: Option<i32>,
-    pub mvps: Option<i32>,
-    pub streak: Option<i32>,
-    pub awards: Option<i32>, //    pub team: Option<String>
+    pub(crate) id: i32,
+    pub(crate) uname: CiString,
+    pub(crate) platform: CiString,
+    pub(crate) turns: Option<i32>,
+    pub(crate) game_turns: Option<i32>,
+    pub(crate) mvps: Option<i32>,
+    pub(crate) streak: Option<i32>,
+    pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
@@ -80,6 +80,22 @@ pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
+}
+
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct PlayerSummary {
+    pub(crate) name: CiString,
+    pub(crate) platform: CiString,
+    pub(crate) team: Option<CiString>,
+}
+
+impl PlayerSummary {
+    pub(crate) fn load(conn: &PgConnection) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
+        users::table
+            .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+            .select((users::uname, users::platform, teams::tname.nullable()))
+            .load::<PlayerSummary>(conn)
+    }
 }
 
 impl PlayerWithTurnsAndAdditionalTeam {
