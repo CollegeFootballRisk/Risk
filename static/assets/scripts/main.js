@@ -2696,7 +2696,7 @@ function page_team_players(contentTag, team) {
                 "TeamMercsFetch",
                 function(data) {
                     drawTeamPlayersPage(values, data, team, false);
-                }
+                }, dbg
             );
         });
 }
