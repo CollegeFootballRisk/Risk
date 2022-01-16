@@ -27,6 +27,7 @@ var appInfo = {
         map_overscroll: false,
         debug: false,
         hide_grocery: false,
+        hide_move: false,
     },
 };
 
@@ -870,7 +871,7 @@ function makeMove(id) {
                     "Move Submitted",
                     "Your move was on territory <b>{{Territory}}</b>.".replace(
                         /{{Territory}}/,
-                        data.response
+                        (appInfo.settings.hide_move)?"[[Hidden by settings]]": data.response
                     ), {
                         text: "Okay",
                     }, {
@@ -3512,17 +3513,24 @@ function getMaxMin(arr, prop) {
 }
 
 function highlightTerritory(territory) {
-    dbg("Highlighting {{Territory}}".replace(/{{Territory}}/, territory));
-    let highlighted = document.getElementsByClassName("map-animated-highlight");
-    for (i = 0; i < highlighted.length; i++) {
-        highlighted[i].classList.remove("map-animated-highlight");
+    if(!appInfo.settings.hide_move){
+        dbg("Highlighting {{Territory}}".replace(/{{Territory}}/, territory));
+        let highlighted = document.getElementsByClassName("map-animated-highlight");
+        for (i = 0; i < highlighted.length; i++) {
+            highlighted[i].classList.remove("map-animated-highlight");
+        }
+        _("map").getElementById(
+            territory
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f ]/g, "")
+            .replaceAll('"', "")
+        ).classList = "map-animated-highlight";
+    } else {
+        try{
+            _('map-note').innerHTML = "";
+        } catch{}
+        dbg("Not displaying roll");
     }
-    _("map").getElementById(
-        territory
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f ]/g, "")
-        .replaceAll('"', "")
-    ).classList = "map-animated-highlight";
 }
 
 function link_is_external(link_element) {
