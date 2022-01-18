@@ -217,6 +217,21 @@ fn process_territories(
                 */
                 // add team stats
                 handle_team_stats(&mut stats, territory_players.clone());
+                // This team might be dead, push to the odds table
+                if teams[0] != territory.owner_id {
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        territory_power: territory_players
+                            .iter()
+                            .map(|mover| mover.power as f64)
+                            .sum::<f64>(),
+                        chance: 0.00,
+                        ..TerritoryStats::default()
+                    });
+                }
                 territory_stats.push(TerritoryStats {
                     team: teams[0],
                     season: territory.season,
@@ -382,6 +397,18 @@ fn process_territories(
                     });
                 }
                 mvps.push(mvp);
+				// Also check if owning team needs spanked:
+                if !map.contains_key(&territory.owner_id) {
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        territory_power: total_power,
+                        chance: 0.00,
+                        ..TerritoryStats::default()
+                    });
+                }
             }
         }
     }
