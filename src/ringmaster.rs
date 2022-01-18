@@ -397,7 +397,7 @@ fn process_territories(
                     });
                 }
                 mvps.push(mvp);
-				// Also check if owning team needs spanked:
+                // Also check if owning team needs spanked:
                 if !map.contains_key(&territory.owner_id) {
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
