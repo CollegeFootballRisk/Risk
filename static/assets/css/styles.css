@@ -3,7 +3,6 @@
 -------------*/
 
 :root {
-    /*--theme-bg: rgba(0, 0, 255, 1);*/
     --theme-bg: rgba(255,255,255,1);
     --theme-bg-05: rgba(255, 255, 255, 0.5);
     --theme-bg-gen: rgb(255, 255, 255);
@@ -13,7 +12,22 @@
     --theme-accent-2: rgba(200, 0, 0, 1);
     --theme-accent-3: rgba(200, 0, 200, 1);
     --theme-accent-4: rgba(0, 200, 0, 1);
+    --master-bg: rgba(255,255,255,1);
 }
+
+[data-theme="dark"] {
+    --theme-bg: rgba(0, 0, 255, 1);
+    --theme-bg-05: rgba(146, 146, 255, 0.5);
+    --theme-bg-gen: rgba(65, 74, 79, 1);
+   --theme-icon-bg: rgba(0, 0, 0, 0.5);
+   --theme-fg: rgba(255, 255, 255, 1);
+   --theme-accent-1: rgba(50, 0, 200, 1);
+   --theme-accent-2: rgba(200, 0, 0, 1);
+   --theme-accent-3: rgba(200, 0, 200, 1);
+   --theme-accent-4: rgba(0, 200, 0, 1);
+   --master-bg:  url('../../images/background-newyears2.jpg') no-repeat center center fixed;
+}
+
 
 * {
     margin: 0;
@@ -72,8 +86,7 @@ a.btn {
 }
 
 body {
-    background-color: var(--theme-bg);
-    /*background: url('../../images/background-newyears2.jpg') no-repeat center center fixed;*/
+    background: var(--master-bg);
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -237,7 +250,7 @@ header a {
 }
 
 .nav-item {
-    margin-left: 50px;
+    margin-left: 30px;
 }
 
 .nav-link {
@@ -1068,14 +1081,14 @@ footer p a {
     background-size: 300% 300%;
     background-position: 0 50%;
     border-radius: calc(2 * var(--border-width));
-    animation: moveGradient 4s alternate infinite;
+   /* animation: moveGradient 4s alternate infinite;*/
 }
 
-@keyframes moveGradient {
+/*@keyframes moveGradient {
     50% {
         background-position: 100% 50%;
     }
-}
+}*/
 
 .gradient-buttons {
     display: flex;

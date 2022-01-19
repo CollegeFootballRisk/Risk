@@ -28,6 +28,7 @@ var appInfo = {
         debug: false,
         hide_grocery: false,
         hide_move: false,
+        dark_mode: true,
     },
 };
 
@@ -53,7 +54,7 @@ try {
 localStorage.setItem("rr_settings", JSON.stringify(appInfo.settings))
 
 if (appInfo.settings.hide_grocery) { _('dellogo').classList += "no-before"; }
-
+document.documentElement.setAttribute('data-theme', appInfo.settings.dark_mode?'dark':'light');
 // Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset
 Date.prototype.stdTimezoneOffset = function() {
     var jan = new Date(this.getFullYear(), 0, 1);
