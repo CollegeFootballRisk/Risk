@@ -636,6 +636,7 @@ pub(crate) fn insert_turn(
         .on_conflict((new_turns::user_id, new_turns::season, new_turns::day))
         .do_update()
         .set((
+            new_turns::alt_score.eq(alt_score),
             new_turns::territory.eq(target),
             new_turns::power.eq(user_power),
             new_turns::multiplier.eq(multiplier),
