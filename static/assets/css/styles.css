@@ -5,6 +5,7 @@
 :root {
     --theme-bg: rgba(255,255,255,1);
     --theme-bg-05: rgba(255, 255, 255, 0.5);
+    --theme-bg-tmp: rgba(255, 255, 255, 0);
     --theme-bg-gen: rgb(255, 255, 255);
     --theme-icon-bg: rgba(0, 0, 0, 0.5);
     --theme-fg: rgba(0, 0, 0, 1);
@@ -19,7 +20,7 @@
 
 [data-theme="dark"] {
     --theme-bg: rgba(0, 0, 255, 1);
-    --theme-bg-05: rgba(45, 45, 50, 1);
+    --theme-bg-05: rgba(146, 146, 255, 0.5);
     --theme-bg-gen: rgba(65, 74, 79, 1);
    --theme-icon-bg: rgba(0, 0, 0, 0.5);
    --theme-fg: rgba(255, 255, 255, 1);
@@ -29,10 +30,12 @@
    --theme-accent-4: rgba(0, 200, 0, 1);
    --bg-img:  url('../../images/background-newyears2.jpg') no-repeat center center fixed;
    --bg-color:  rgba(0,0,0,0);
+   --theme-bg-tmp: rgba(45, 45, 50, 1);
 }
 
 [bg-theme="plain"]{
     --master-bg: var(--bg-color);
+    --theme-bg-05: var(--theme-bg-tmp);
 }
 
 [bg-theme="img"]{
