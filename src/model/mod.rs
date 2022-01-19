@@ -7,6 +7,7 @@ pub(crate) mod discord;
 pub(crate) mod player;
 pub(crate) mod ratings;
 pub(crate) mod reddit;
+pub(crate) mod region;
 pub(crate) mod stats;
 pub(crate) mod sys;
 pub(crate) mod team;
@@ -18,6 +19,7 @@ pub(crate) use player::*;
 pub(crate) use ratings::*;
 pub(crate) use stats::*;
 
+pub(crate) use region::*;
 pub(crate) use team::*;
 pub(crate) use territory::*;
 pub(crate) use turn::*;

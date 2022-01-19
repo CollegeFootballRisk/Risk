@@ -2,7 +2,9 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{PlayerInTurns, TeamInTurns};
-use crate::schema::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
+use crate::schema::{
+    regions, territory_ownership_with_neighbors, territory_ownership_without_neighbors,
+};
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
@@ -15,6 +17,7 @@ pub(crate) struct Territory {
     name: String,
     owner: String,
     region: i32,
+    region_name: i32,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
@@ -23,6 +26,7 @@ pub(crate) struct TerritoryWithNeighbors {
     pub(crate) name: String,
     pub(crate) owner: String,
     pub(crate) region: i32,
+    pub(crate) region_name: String,
     pub(crate) neighbors: Value,
 }
 
@@ -47,11 +51,15 @@ impl TerritoryWithNeighbors {
         territory_ownership_with_neighbors::table
             .filter(territory_ownership_with_neighbors::season.eq(season))
             .filter(territory_ownership_with_neighbors::day.eq(day))
+            .inner_join(
+                regions::table.on(regions::id.eq(territory_ownership_with_neighbors::region)),
+            )
             .select((
                 territory_ownership_with_neighbors::territory_id,
                 territory_ownership_with_neighbors::name,
                 territory_ownership_with_neighbors::tname,
                 territory_ownership_with_neighbors::region,
+                regions::name,
                 territory_ownership_with_neighbors::neighbors,
             ))
             .load::<TerritoryWithNeighbors>(conn)

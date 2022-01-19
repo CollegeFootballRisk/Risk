@@ -74,6 +74,14 @@ table! {
     territories (id) {
         id -> Int4,
         name -> diesel_citext::sql_types::Citext,
+        region -> Int4,
+    }
+}
+
+table! {
+    regions (id){
+        id -> Int4,
+        name -> diesel_citext::sql_types::Citext,
     }
 }
 
@@ -334,3 +342,6 @@ allow_tables_to_appear_in_same_query!(
 );
 
 allow_tables_to_appear_in_same_query!(new_turns, territories);
+
+allow_tables_to_appear_in_same_query!(regions, territory_ownership_with_neighbors);
+allow_tables_to_appear_in_same_query!(regions, territories);
