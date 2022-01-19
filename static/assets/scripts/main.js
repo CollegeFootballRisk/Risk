@@ -57,7 +57,9 @@ localStorage.setItem("rr_settings", JSON.stringify(appInfo.settings))
 if (appInfo.settings.hide_grocery) { _('dellogo').classList += "no-before"; }
 document.documentElement.setAttribute('data-theme', appInfo.settings.dark_mode?'dark':'light');
 document.documentElement.setAttribute('bg-theme', appInfo.settings.no_background?'plain':'img');
-
+if(!appInfo.settings.dark_mode){
+    _('loadicon').setAttribute('src', '/images/logo-black.svg');
+}
 // Taken from https://stackoverflow.com/questions/11887934/how-to-check-if-dst-daylight-saving-time-is-in-effect-and-if-so-the-offset
 Date.prototype.stdTimezoneOffset = function() {
     var jan = new Date(this.getFullYear(), 0, 1);
