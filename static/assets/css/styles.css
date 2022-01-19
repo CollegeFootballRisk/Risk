@@ -3,11 +3,12 @@
 -------------*/
 
 :root {
-    --theme-bg: rgba(0, 0, 255, 1);
-    --theme-bg-05: rgba(146, 146, 255, 0.5);
-    --theme-bg-gen: rgba(65, 74, 79, 1);
+    /*--theme-bg: rgba(0, 0, 255, 1);*/
+    --theme-bg: rgba(255,255,255,1);
+    --theme-bg-05: rgba(255, 255, 255, 0.5);
+    --theme-bg-gen: rgb(255, 255, 255);
     --theme-icon-bg: rgba(0, 0, 0, 0.5);
-    --theme-fg: rgba(255, 255, 255, 1);
+    --theme-fg: rgba(0, 0, 0, 1);
     --theme-accent-1: rgba(50, 0, 200, 1);
     --theme-accent-2: rgba(200, 0, 0, 1);
     --theme-accent-3: rgba(200, 0, 200, 1);
@@ -18,7 +19,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    cursor: url('../../images/cur116.cur'), auto !important;
+    /*cursor: url('../../images/cur116.cur'), auto !important;*/
 }
 
 html,
@@ -54,7 +55,7 @@ a {
     color: inherit;
     cursor: pointer;
     opacity: 0.9;
-    cursor: url('../../images/cur117.cur'), auto !important;
+    /*cursor: url('../../images/cur117.cur'), auto !important;*/
 }
 
 a:hover {
@@ -72,7 +73,7 @@ a.btn {
 
 body {
     background-color: var(--theme-bg);
-    background: url('../../images/background-newyears2.jpg') no-repeat center center fixed;
+    /*background: url('../../images/background-newyears2.jpg') no-repeat center center fixed;*/
     background-repeat: repeat;
     background-attachment: scroll;
     background-size: auto;
@@ -268,9 +269,10 @@ header a {
     line-height: 1;
     display: inline-block;
     position: absolute;
-    -webkit-animation: glow 3s ease-in-out infinite alternate;
+    /*-webkit-animation: glow 3s ease-in-out infinite alternate;
     -moz-animation: glow 3s ease-in-out infinite alternate;
-    animation: glow 3s ease-in-out infinite alternate;
+    animation: glow 3s ease-in-out infinite alternate;*/
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
 }
 
 .no-before {
@@ -487,7 +489,7 @@ header nav li:last-child {
     position: relative;
     justify-content: center;
     /*min-height: 100vh;*/
-    color: #fff;
+    color: var(--theme-fg);
     text-align: center;
     width: 100vw;
 }
@@ -970,7 +972,7 @@ footer {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    color: #fff;
+    color: var(--theme-fg);
     background-color: var(--theme-bg-gen);
     padding: 60px 0;
 }
@@ -996,12 +998,12 @@ footer ul li:last-child {
 footer p {
     text-transform: uppercase;
     font-size: 14px;
-    color: rgba(255, 255, 255, 0.75);
+    color: var(--theme-fg);
     margin-bottom: 10px;
 }
 
 footer p a {
-    color: #fff;
+    color: var(--theme-fg);
 }
 
 @media (max-width: 700px) {
@@ -1061,7 +1063,8 @@ footer p a {
     z-index: -1;
     width: calc(100% + var(--border-width) * 2);
     height: calc(100% + var(--border-width) * 2);
-    background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));
+    /*background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));*/
+    background: black;
     background-size: 300% 300%;
     background-position: 0 50%;
     border-radius: calc(2 * var(--border-width));
@@ -1412,12 +1415,12 @@ footer p a {
     margin-right: 22px;
     margin-left: 20px;
     vertical-align: middle;
-    cursor: url('../../images/cur117.cur'), auto !important;
+    /*cursor: url('../../images/cur117.cur'), auto !important;*/
 }
 
 #map path {
     cursor: pointer;
-    cursor: url('../../images/cur117.cur'), auto !important;
+    /*cursor: url('../../images/cur117.cur'), auto !important;*/
 }
 
 .map-animated-highlight {
