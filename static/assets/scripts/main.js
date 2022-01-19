@@ -2721,6 +2721,54 @@ function page_team(contentTag, team) {
     });
 }
 
+function page_regions(contentTag){
+    var templateRegions = _("templateRegions");
+    contentTag.innerHTML += templateRegions.innerHTML;
+    doAjaxGetRequest(
+        "/api/territories",
+        "Territories",
+        function(territory_data) {
+            var obj = {
+                // Quickly get the headings
+                headings: [
+                    "Region",
+                    "Territories",
+                ],
+
+                // data array
+                data: [],
+            };
+            territory_data = JSON.parse(territory_data.response);
+            for(var i =0; i <territory_data.length; i++){
+                if(typeof  obj['data'][territory_data[i]['region'] - 1] == 'undefined'){
+                    obj['data'][territory_data[i]['region'] - 1] = [ obj['data'][territory_data[i]['region']], []];
+                }
+                obj['data'][territory_data[i]['region'] - 1][0] = territory_data[i]['region_name'];
+                obj['data'][territory_data[i]['region'] - 1][1].push(territory_data[i]['name']);
+            }
+            for(var i =0; i < obj.data.length; i++){
+                obj['data'][i][1].sort();
+                obj['data'][i][1] = obj['data'][i][1].join(', ');
+            }
+            console.log(obj);
+            window.datatable = new DataTable("#region-table", {
+                data: obj,
+                columns: obj.columns,
+                searchable: true,
+                perPage: 50,
+                perPageSelect: false,
+                footer: false,
+                labels: {
+                    info: "",
+                },
+            });
+        },
+        function() {
+            reject("Error");
+        }
+    );
+}
+
 function page_player(contentTag, pid) {
     //fetch player info
     let leaderboard = new Promise((resolve, reject) => {
@@ -3402,6 +3450,9 @@ router
     })
     .add("/player/(.*)", (pid) => {
         handleNewPage(pid, contentTag, page_player, pid);
+    })
+    .add("/regions", () => {
+        handleNewPage("Regions", contentTag, page_regions);
     })
     .add("/docs/", () => {
         window.location = "/docs/";
