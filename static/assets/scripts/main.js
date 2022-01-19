@@ -7,7 +7,7 @@
 var appInfo = {
     outstandingRequests: [],
     errorNotifications: [],
-    rollTime: new Date("January 16, 2022 04:00:00"),
+    rollTime: new Date("January 18, 2022 04:00:00"),
     loadTime: new Date(),
     burger: false,
     burgerTrigger: false,
@@ -3152,11 +3152,11 @@ function askPoll(number) {
     errorNotif(
         "Polls " + numberp1 + " of " + appInfo.pollData.length,
         appInfo.pollData[0].question +
-        "<br />This would take the season from " +
-        early +
-        " to " +
-        late +
-        " days. <br/><br/> Your current response is: <b>" +
+        //"<br />This would take the season from " +
+        //early +
+        //" to " +
+        //early + " days."+
+        " <br/><br/> Your current response is: <b>" +
         currResp +
         " </b><div id='pollResponseError'></div>", {
             text: "Yes",
@@ -3252,7 +3252,7 @@ function doPoll(realize = true) {
                                 appInfo.pollResponses.push(JSON.parse(data.response));
                                 paintPoll();
                                 document.cookie =
-                                    "polled=true; expires=Thu, 31 Dec 2020 12:00:00 UTC; path=/; samesite=lax;";
+                                    "polled=true; expires=Thu, 20 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
                             },
                             function() {
                                 appInfo.pollResponses.push([]);
