@@ -13,11 +13,13 @@
     --theme-accent-3: rgba(200, 0, 200, 1);
     --theme-accent-4: rgba(0, 200, 0, 1);
     --master-bg: rgba(255,255,255,1);
+    --bg-img:  url('../../images/background-light.jpg') no-repeat center center fixed;
+    --bg-color:  rgba(242, 243, 244);
 }
 
 [data-theme="dark"] {
     --theme-bg: rgba(0, 0, 255, 1);
-    --theme-bg-05: rgba(146, 146, 255, 0.5);
+    --theme-bg-05: rgba(45, 45, 50, 1);
     --theme-bg-gen: rgba(65, 74, 79, 1);
    --theme-icon-bg: rgba(0, 0, 0, 0.5);
    --theme-fg: rgba(255, 255, 255, 1);
@@ -25,7 +27,16 @@
    --theme-accent-2: rgba(200, 0, 0, 1);
    --theme-accent-3: rgba(200, 0, 200, 1);
    --theme-accent-4: rgba(0, 200, 0, 1);
-   --master-bg:  url('../../images/background-newyears2.jpg') no-repeat center center fixed;
+   --bg-img:  url('../../images/background-newyears2.jpg') no-repeat center center fixed;
+   --bg-color:  rgba(0,0,0,0);
+}
+
+[bg-theme="plain"]{
+    --master-bg: var(--bg-color);
+}
+
+[bg-theme="img"]{
+    --master-bg: var(--bg-img);
 }
 
 
