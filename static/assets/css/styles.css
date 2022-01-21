@@ -29,7 +29,7 @@
    --theme-accent-3: rgba(200, 0, 200, 1);
    --theme-accent-4: rgba(0, 200, 0, 1);
    --bg-img:  url('../../images/background-newyears2.jpg') no-repeat center center fixed;
-   --bg-color:  rgba(0,0,0,0);
+   --bg-color:  rgba(0,0,0,1);
    --theme-bg-tmp: rgba(45, 45, 50, 1);
 }
 

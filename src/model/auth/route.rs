@@ -284,7 +284,7 @@ pub(crate) async fn make_move(
                                                     UpdateUser::do_update(
                                                         UpdateUser {
                                                             id: user.1,
-                                                            overall: user_power as i32,
+                                                            overall: user_weight as i32,
                                                             turns: user_stats.totalTurns,
                                                             game_turns: user_stats.gameTurns,
                                                             mvps: user_stats.mvps,
