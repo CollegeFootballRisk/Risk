@@ -47,7 +47,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    /*cursor: url('../../images/cur116.cur'), auto !important;*/
+    /*! cursor: url('../../images/cur116.cur'), auto !important; */
 }
 
 html,
@@ -1059,10 +1059,11 @@ footer p a {
 /* -- Errors -- */
 
 .gradient-border {
-    --border-width: 5px;
+    --border-width: 4px;
     left: 0;
     right: 0;
-    top: 35%;
+    top: 50%;
+    transform: translate(0, -50%);
     margin-left: auto;
     margin-right: auto;
     position: fixed;
@@ -1071,15 +1072,23 @@ footer p a {
     /*min-height: 200px;
     max-height: 500px;*/
     width: 500px;
-    margin: 0 auto;
+    margin: auto auto;
     font-family: sans-serif;
     font-size: 1rem;
     text-transform: uppercase;
-    color: white;
+    color: var(--theme-fg);
     border-radius: var(--border-width);
-    padding-top: 5px;
     background: rgba(255, 0, 0, 0.4);
     z-index: 1000;
+}
+
+.gradient-border-inner {
+    background: var(--bg-color);
+    border-radius: calc(2 * var(--border-width));
+    padding: 16px;
+    margin: 0px;
+    width: 100%;
+    height: 100%;
 }
 
 .gradient-border::after {
@@ -1090,19 +1099,20 @@ footer p a {
     z-index: -1;
     width: calc(100% + var(--border-width) * 2);
     height: calc(100% + var(--border-width) * 2);
-    /*background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));*/
-    background: black;
+    background: linear-gradient(60deg, rgba(95, 134, 242, 0.9), rgba(166, 95, 242, 0.9), rgba(242, 95, 208, 0.9), rgba(242, 95, 97, 0.9), rgba(242, 203, 95, 0.9), rgba(171, 242, 95, 0.9), rgba(95, 242, 129, 0.9), rgba(95, 242, 240, 0.9));
     background-size: 300% 300%;
     background-position: 0 50%;
     border-radius: calc(2 * var(--border-width));
-   /* animation: moveGradient 4s alternate infinite;*/
+    animation: moveGradient 4s alternate infinite;
+    padding: 0px;
+    margin: 0px;
 }
 
-/*@keyframes moveGradient {
+@keyframes moveGradient {
     50% {
         background-position: 100% 50%;
     }
-}*/
+}
 
 .gradient-buttons {
     display: flex;
@@ -1137,7 +1147,6 @@ footer p a {
     border-radius: 5px;
     padding: 10px;
     margin: 8px;
-    color: var(--theme-fg);
     border: none;
     padding: 8px;
     color: white;
