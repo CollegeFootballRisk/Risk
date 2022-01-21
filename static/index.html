@@ -21,7 +21,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>College Football Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=25j">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=26">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js"></script>
     <script src="/assets/scripts/svg.js"></script>
@@ -54,9 +54,6 @@
                 <div id="loadiconbox"><img alt="spinny icon" src="/images/logo-white.svg" id="loadicon" class="brand-image"></div>
             </a>
             <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="/" class="nav-link">Home</a>
-                </li>
                 <li class="nav-item">
                     <a href="/leaderboard" class="nav-link">Leaderboard</a>
                 </li>
@@ -235,14 +232,14 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                             <li>40+ Turns: 5 Stars</li>
                         </ul>
                     </li><br/><br/>
-                    <li>CFBR Stars (how many stars you had entering the last day of CFBR season 2):<br/>
-                        <ul style="text-indent:25px;list-style:circle;">
+                    <li>Bonus (automatically applied five stars):<br/>
+                        <!--<ul style="text-indent:25px;list-style:circle;">
                             <li>0 Stars: 1 Star</li>
                             <li>1 Star: 2 Stars</li>
                             <li>2 Stars: 3 Stars</li>
                             <li>3 Stars: 4 Stars</li>
                             <li>4 Stars/5 Stars: 5 Stars</li>
-                        </ul>
+                        </ul>-->
                     </li><br/><br/>
                     <li>Streak (how many consecutive turns you've made):<br/>
                         <ul style="text-indent:25px;list-style:circle;">
@@ -282,6 +279,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
     </script>
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
+            <h1 id="old-map-owner-info"></h1>
             <h3 id="map-day-info" style="display:none;"></h3>
             <div id="map-controls" style="position:relative; top: 5vh;">
                 <button value="+" style="float:left;padding:8px;background:black;color:white;border:none;border-radius:5px;margin:2px;" onclick="appInfo.panZoomMap.zoomIn();">🔍+</button>
@@ -555,7 +553,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                         </div>
                         <div class="lcol2">
                             {{cfb_stars_stars}} <br>
-                            <i>CFB Stars:</i><br> {{cfb_stars}}
+                            <i>Bonus Stars:</i><br> {{cfb_stars}}
                         </div>
                     </div>
                 </h2>
@@ -592,8 +590,8 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </center>
         </li>
     </script>
-    <script src="/assets/scripts/hammer.js?v=25"></script>
-    <script src="/assets/scripts/main.js?v=25j"></script>
+    <script src="/assets/scripts/hammer.js?v=26"></script>
+    <script src="/assets/scripts/main.js?v=26"></script>
     </script>
 </body>
 
