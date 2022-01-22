@@ -1963,7 +1963,7 @@ function page_index(contentTag) {
           getAndHighlightMove(resolve, reject);
         }
         _("map-note").style.display = "unset";
-        doPoll(false);
+        doPoll(false, false);
       });
     })
     .catch((values) => {
@@ -3290,7 +3290,7 @@ function askPoll(number) {
   );
 }
 
-function doPoll(realize = true) {
+function doPoll(realize = true, notify = false) {
   doAjaxGetRequest(
     "/auth/polls",
     "Poll Requests",
@@ -3308,7 +3308,7 @@ function doPoll(realize = true) {
               window.turnsObject[window.turnsObject.length - 1].season &&
               pollData[i].day ==
                 window.turnsObject[window.turnsObject.length - 1].day &&
-              getCookie("polled") != "true")
+              getCookie("polled2") != "true")
           ) {
             doAjaxGetRequest(
               "/auth/poll/response?poll=" + pollData[i].id,
@@ -3317,7 +3317,7 @@ function doPoll(realize = true) {
                 appInfo.pollResponses.push(JSON.parse(data.response));
                 paintPoll();
                 document.cookie =
-                  "polled=true; expires=Thu, 20 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
+                  "polled2=true; expires=Thu, 22 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
               },
               function () {
                 appInfo.pollResponses.push([]);

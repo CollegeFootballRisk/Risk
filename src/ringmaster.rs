@@ -64,7 +64,7 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
 fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
     let rng = match territory_players.len() {
         1 => 0,
-        _ => rand::thread_rng().gen_range(1..territory_players.len()),
+        _ => rand::thread_rng().gen_range(0..territory_players.len()),
     };
     territory_players.remove(rng)
 }
