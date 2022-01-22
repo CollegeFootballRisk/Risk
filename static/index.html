@@ -21,7 +21,7 @@
     <link rel="alternate icon" href="/images/favicon.ico">
     <link rel="mask-icon" href="/images/favico-tab.svg" color="#500000">
     <title>College Football Risk | Home</title>
-    <link rel="stylesheet" href="/assets/css/styles.css?v=24x">
+    <link rel="stylesheet" href="/assets/css/styles.css?v=27">
     <script src="/assets/scripts/datatables.js"></script>
     <script src="/assets/scripts/charts.js"></script>
     <script src="/assets/scripts/svg.js"></script>
@@ -32,19 +32,21 @@
 
 <body onresize="resizeGlobal();">
     <div id="error-notif" class="gradient-border" style="display: block;" notif-id="0">
-        <center><b id="error-notif-title">Please Enable Javascript:</b><br /><br />
-            <div id="error-notif-body">
-                <p> We hate JavaScript as much as the next guy, but unfortunately this site needs JavaScript in order to run. Please enable it!
-            </div>
-        </center>
-        <ul class="gradient-buttons">
-            <li id="error-notif-button-1-container">
-                <button id="error-notif-button-1">Okay</button>
-            </li>
-            <li id="error-notif-button-2-container">
-                <button id="error-notif-button-2">Yikes</button>
-            </li>
-        </ul>
+        <div class = "gradient-border-inner">
+            <center><b id="error-notif-title">Please Enable Javascript:</b><br /><br />
+                <div id="error-notif-body">
+                    <p> We hate JavaScript as much as the next guy, but unfortunately this site needs JavaScript in order to run. Please enable it!
+                </div>
+            </center>
+            <ul class="gradient-buttons">
+                <li id="error-notif-button-1-container">
+                    <button id="error-notif-button-1">Okay</button>
+                </li>
+                <li id="error-notif-button-2-container">
+                    <button id="error-notif-button-2">Yikes</button>
+                </li>
+            </ul>
+        </div>
     </div>
 
     <header class="header">
@@ -54,9 +56,6 @@
                 <div id="loadiconbox"><img alt="spinny icon" src="/images/logo-white.svg" id="loadicon" class="brand-image"></div>
             </a>
             <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="/" class="nav-link">Home</a>
-                </li>
                 <li class="nav-item">
                     <a href="/leaderboard" class="nav-link">Leaderboard</a>
                 </li>
@@ -71,6 +70,9 @@
                 </li>
                 <li class="nav-item">
                     <a href="/bug" class="nav-link">Bugs</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/settings" class="nav-link">Settings</a>
                 </li>
                 <!--   <li class="nav-item">
                     <text class="nav-link">Day:</text> <select><option>1</option></select>
@@ -161,7 +163,10 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                 <li>Map hover box persistence: {{bool:map_hover}}</li>
                 <li>Show logos instead of colors: {{bool:map_logos}}</li>
                 <li>Hide grocery store text: {{bool:hide_grocery}}</li>
+                <li>Hide move on map and in box when submitted: {{bool:hide_move}}</li>
                 <li>Don't confine map to box (allow overscroll): {{bool:map_overscroll}}</li>
+                <li>Enable dark mode: {{bool:dark_mode}}</li>
+                <li>No background image: {{bool:no_background}}</li>
                 <li>Debug: {{bool:debug}}</li>
             </ul> <br/>
             <i> Note: some settings may need a refresh to take effect </i>
@@ -229,14 +234,14 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                             <li>40+ Turns: 5 Stars</li>
                         </ul>
                     </li><br/><br/>
-                    <li>CFBR Stars (how many stars you had entering the last day of CFBR season 2):<br/>
-                        <ul style="text-indent:25px;list-style:circle;">
+                    <li>Bonus (automatically applied five stars):<br/>
+                        <!--<ul style="text-indent:25px;list-style:circle;">
                             <li>0 Stars: 1 Star</li>
                             <li>1 Star: 2 Stars</li>
                             <li>2 Stars: 3 Stars</li>
                             <li>3 Stars: 4 Stars</li>
                             <li>4 Stars/5 Stars: 5 Stars</li>
-                        </ul>
+                        </ul>-->
                     </li><br/><br/>
                     <li>Streak (how many consecutive turns you've made):<br/>
                         <ul style="text-indent:25px;list-style:circle;">
@@ -265,17 +270,21 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         </section>
     </script>
     <script id="templateAnnouncements" type="text/template">
-        <!--<section class="reviews" style="padding-bottom: 0px !important;">
+        <section class="reviews" style="padding-bottom: 0px !important;">
             <h3> Announcements </h3>
             <p>
                 <ul style="list-style:circle !important;">
-                    <li>Despite what the clock says, the first roll will take place on 21 July 2021 at 22:00 (10:00PM) CDT.</li>
+                    <li>Rolls will begin to occur 30 minutes earlier beginning Monday, 24 Jan. Rolls will now run at 10:30 ET, 9:30 CT, 8:30 MT, 7:30 PT.</li>
                 </ul>
             </p>
-        </section>-->
+            <ul id="pollInfo" style="margin-bottom:100px;">
+                <li><text style="color:red;"><a onclick="doPoll(true, true);">Click here to take poll (if no poll appears on click, there are no polls to take)<!--You can take <u>the poll</u> to extend game play now.--></a></text></li>
+            </ul>
+        </section>
     </script>
     <script id="templateMap" type="text/template">
         <section class="map-wrap">
+            <h1 id="old-map-owner-info"></h1>
             <h3 id="map-day-info" style="display:none;"></h3>
             <div id="map-controls" style="position:relative; top: 5vh;">
                 <button value="+" style="float:left;padding:8px;background:black;color:white;border:none;border-radius:5px;margin:2px;" onclick="appInfo.panZoomMap.zoomIn();">🔍+</button>
@@ -309,6 +318,15 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             <h3>Turn History</h3>
             <div id="history">
                 <table id="history-table">
+                </table>
+            </div>
+        </section>
+    </script>
+    <script id="templateRegions" type="text/template">
+        <section class="leaderboard-wrap">
+            <h3>Regions</h3>
+            <div id="regionmess">
+                <table id="region-table">
                 </table>
             </div>
         </section>
@@ -348,9 +366,8 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </ul>
             <hr>
             <div id="rollInfo"></div>
-            <ul id="pollInfo" style="margin-bottom:100px;">
-                <li><text style="color:red;"><a onclick="doPoll();"><!--You can take <u>the poll</u> to extend game play now.--></a></text></li>
-            </ul>
+            <iframe src="https://player.twitch.tv/?channel=DodgerOfZion&parent=collegefootballrisk.com" height="80%" width="80%" style="width:80vw; height:80vw;" allowfullscreen="true">
+            </iframe>
             <hr>
             <h2><text style="color:red;" id="last-day-notice"></text></h2>
         </section>
@@ -359,25 +376,13 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
         <h1>{{TerritoryName}}</h1><br/>
     </script>
     <script id="templateOdds" type="text/template">
-        <section class="map-wrap">
+        <section class="map-wrap no-bottom-padding">
             <h1 id="old-map-county-info">Odds</h1>
             <h3 id="map-owner-info">Loading . . . </h3>
             <h3 id="map-owner-teams" selectitem>Loading . . . </h3>
-            <ul class="ugrid" id="action-container" style="display:none;">
-                <li>
-                    <h3>Heat Map</h3>
-                    <h4 id="heat-notif"></h4>
-                    <div id="heat-map"></div>
-                </li>
-                <li>
-                    <h3>Odds Map</h3>
-                    <h4 id="odds-notif"></h4>
-                    <div id="odds-map"></div>
-                </li>
-            </ul>
             </div>
         </section>
-        <section class="leaderboard-wrap" id="leaderboard-wrapper" style="display:none;">
+        <section class="leaderboard-wrap no-bottom-padding no-top-padding" id="leaderboard-wrapper" style="display:none;">
             <ul class="ugrid">
                 <li class="small p20">
                     <h2>Survival Odds</h2><br/><text id="odds-survival"></text></li>
@@ -391,6 +396,35 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                 </table>
             </div>
             <hr>
+        </section>
+        <section class="map-wrap no-top-padding">
+            <ul class="ugrid" id="action-container" style="display:none;">
+                <div id="moveable-info" width="500px" height="165px" style="display:none;">
+                    <div style="font-size:14px;">
+                        <b id="map-county-info">North America</b>
+                        <br/>
+                    </div>
+                    <div color="white" id="map-owner-info">
+                    </div>
+                    <div class="action-container">
+                        <button id="attack-button" class="disp-button" disabled="">Attack</button>
+                        <button id="defend-button" class="disp-button" disabled="">Defend</button>
+                        <button id="visit-button" class="disp-button" disabled="">View</button>
+                        <button id="hover-button" class="hover-button disp-button" onclick="returnHover();" disabled="">Hover</button>
+                    </div>
+                </div>
+                <li>
+                    <h3>Heat Map</h3>
+                    <h4 id="heat-notif"></h4>
+                    <div id="heat-map"></div>
+                </li>
+                <li>
+                    <h3>Odds Map</h3>
+                    <h4 id="odds-notif"></h4>
+                    <div id="odds-map"></div>
+                </li>
+            </ul>
+
         </section>
     </script>
     <script id="templateTeam" type="text/template">
@@ -521,7 +555,7 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
                         </div>
                         <div class="lcol2">
                             {{cfb_stars_stars}} <br>
-                            <i>CFB Stars:</i><br> {{cfb_stars}}
+                            <i>Bonus Stars:</i><br> {{cfb_stars}}
                         </div>
                     </div>
                 </h2>
@@ -558,8 +592,8 @@ Master Key (mautam@usa.com, lead developer): CA28BE1B0CE4844F
             </center>
         </li>
     </script>
-    <script src="/assets/scripts/hammer.js?v=24n"></script>
-    <script src="/assets/scripts/main.js?v=24x"></script>
+    <script src="/assets/scripts/hammer.js?v=27"></script>
+    <script src="/assets/scripts/main.js?v=27"></script>
     </script>
 </body>
 

@@ -284,7 +284,7 @@ pub(crate) async fn make_move(
                                                     UpdateUser::do_update(
                                                         UpdateUser {
                                                             id: user.1,
-                                                            overall: user_power as i32,
+                                                            overall: user_weight as i32,
                                                             turns: user_stats.totalTurns,
                                                             game_turns: user_stats.gameTurns,
                                                             mvps: user_stats.mvps,
@@ -489,7 +489,7 @@ pub(crate) fn handle_territory_info(
                     .position(|&x| x.0 == team_id.0)
                 {
                     Some(_tuple_of_territory) => {
-                        dbg!(&adjacent_territory_owners);
+                        //dbg!(&adjacent_territory_owners);
                         let pos = adjacent_territory_owners
                             .iter()
                             .position(|&x| x.1 == target);
@@ -636,6 +636,7 @@ pub(crate) fn insert_turn(
         .on_conflict((new_turns::user_id, new_turns::season, new_turns::day))
         .do_update()
         .set((
+            new_turns::alt_score.eq(alt_score),
             new_turns::territory.eq(target),
             new_turns::power.eq(user_power),
             new_turns::multiplier.eq(multiplier),

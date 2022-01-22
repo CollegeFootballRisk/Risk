@@ -31,7 +31,7 @@ pub use error::Error;
 #[rustfmt::skip]
 mod security;
 use crate::db::DbConn;
-use crate::model::{auth, player, stats, sys, team, territory, turn};
+use crate::model::{auth, player, region, stats, sys, team, territory, turn};
 use rocket::fs::{relative, FileServer};
 use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
@@ -60,6 +60,7 @@ fn rocket() -> _ {
         player::route::mercs,
         player::route::players,
         player::route::player_multifetch,
+        region::route::regions,
         turn::route::turns,
         turn::route::all_turns,
         turn::route::rolllog,

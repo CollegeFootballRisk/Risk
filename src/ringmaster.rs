@@ -64,7 +64,7 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
 fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
     let rng = match territory_players.len() {
         1 => 0,
-        _ => rand::thread_rng().gen_range(1..territory_players.len()),
+        _ => rand::thread_rng().gen_range(0..territory_players.len()),
     };
     territory_players.remove(rng)
 }
@@ -116,7 +116,6 @@ fn process_territories(
                         )
                     })
                     .territorycount += 1;
-
                 territory_stats.push(TerritoryStats {
                     team: territory.owner_id,
                     season: territory.season,
@@ -214,9 +213,25 @@ fn process_territories(
                     )
                 })
                 .starpower +=
-                territory_players.iter().map(|mover| mover.power/mover.multiplier.unwrap_or(1.0)).sum::<f64>();*/
+                territory_players.iter().map(|mover| mover.power/mover.multiplier).sum::<f64>();
+                */
                 // add team stats
                 handle_team_stats(&mut stats, territory_players.clone());
+                // This team might be dead, push to the odds table
+                if teams[0] != territory.owner_id {
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        territory_power: territory_players
+                            .iter()
+                            .map(|mover| mover.power as f64)
+                            .sum::<f64>(),
+                        chance: 0.00,
+                        ..TerritoryStats::default()
+                    });
+                }
                 territory_stats.push(TerritoryStats {
                     team: teams[0],
                     season: territory.season,
@@ -382,6 +397,18 @@ fn process_territories(
                     });
                 }
                 mvps.push(mvp);
+                // Also check if owning team needs spanked:
+                if !map.contains_key(&territory.owner_id) {
+                    territory_stats.push(TerritoryStats {
+                        team: territory.owner_id,
+                        season: territory.season,
+                        day: territory.day,
+                        territory: territory.territory_id,
+                        territory_power: total_power,
+                        chance: 0.00,
+                        ..TerritoryStats::default()
+                    });
+                }
             }
         }
     }

@@ -26,7 +26,7 @@ pub(crate) async fn players(
             let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
             match parsed_team_name {
                 Ok(team) => {
-                    println!("{}", team);
+                    //println!("{}", team);
                     let users = conn.run(|c| TeamPlayer::load(vec![team], c)).await;
                     if users.len() as i32 >= 1 {
                         std::result::Result::Ok(Json(users))
@@ -56,7 +56,7 @@ pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMer
     let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
     match parsed_team_name {
         Ok(team) => {
-            println!("{}", team);
+            //println!("{}", team);
             let users = conn.run(|c| TeamMerc::load_mercs(vec![team], c)).await;
             if users.len() as i32 >= 1 {
                 std::result::Result::Ok(Json(users))

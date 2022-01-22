@@ -312,12 +312,12 @@ impl Stats {
     }
 
     pub fn starpower(&mut self, starpower: f64) -> &mut Self {
-        self.starpower = starpower;
+        self.starpower += starpower;
         self
     }
 
     pub fn effectivepower(&mut self, effectivepower: f64) -> &mut Self {
-        self.effectivepower = effectivepower;
+        self.effectivepower += effectivepower;
         self
     }
 
