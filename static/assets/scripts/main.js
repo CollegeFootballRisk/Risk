@@ -7,7 +7,7 @@
 var appInfo = {
   outstandingRequests: [],
   errorNotifications: [],
-  rollTime: new Date("January 18, 2022 04:00:00"),
+  rollTime: new Date("January 25, 2022 03:30:00"),
   loadTime: new Date(),
   burger: false,
   burgerTrigger: false,
@@ -16,7 +16,7 @@ var appInfo = {
   lockDisplay: false,
   dDay: new Date("December 23, 2020 04:00:00"),
   fullOpacity: 0,
-  map: "/images/map8.svg?v=24",
+  map: "/images/map8.svg?v=28",
   viewbox: "00 000 900 902",
   season: 0,
   day: 0,
@@ -80,19 +80,19 @@ Date.prototype.isDstObserved = function () {
 };
 
 var today = new Date();
-hourOffset = 4;
+hourOffset = 3;
 if (today.isDstObserved()) {
-  hourOffset = 3;
+  hourOffset = 2;
 }
 // end of SO code.
 
 appInfo.dDay.setUTCHours(hourOffset);
 
-appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
+appInfo.rollTime.setUTCHours(hourOffset, 30, 0, 0);
 
 if (appInfo.rollTime < new Date()) {
   appInfo.rollTime = new Date();
-  appInfo.rollTime.setUTCHours(hourOffset, 0, 0, 0);
+  appInfo.rollTime.setUTCHours(hourOffset, 30, 0, 0);
   if (appInfo.rollTime < new Date()) {
     appInfo.rollTime.setUTCDate(appInfo.rollTime.getUTCDate() + 1);
   }
@@ -3317,7 +3317,7 @@ function doPoll(realize = true, notify = false) {
                 appInfo.pollResponses.push(JSON.parse(data.response));
                 paintPoll();
                 document.cookie =
-                  "polled2=true; expires=Thu, 22 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
+                  "polled2=true; expires=Thu, 23 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
               },
               function () {
                 appInfo.pollResponses.push([]);
