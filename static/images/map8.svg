@@ -1749,7 +1749,7 @@
   <g
      id="Regions"
      transform="translate(0,0)"
-     style="stroke:#ffffff;stroke-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none; display:true;pointer-events: none;">
+     style="stroke:#ffffff;stroke-opacity:1;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none; display:none;pointer-events: none;">
     <path
        id="Pacific Northwest"
        style="fill:#000000;fill-opacity:0;stroke:#ff0000;stroke-width:6;stroke-miterlimit:4;stroke-dasharray:12, 12;stroke-dashoffset:0;stroke-opacity:1;pointer-event: none"
