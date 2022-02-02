@@ -622,6 +622,13 @@ function mapDisplayUpdate(event, change, override = false) {
     twid = prefix + twid;
     if (prefix == "") {
       try {
+        var terr = window.territories.find(terr => {if (terr.name == event.target.attributes["name"].value) return terr}); 
+        if(typeof terr != "undefined"){
+          var neighbors = terr["neighbors"].map(ele => {return ele.name});
+          _("neighbor-list").innerHTML = "Neighbors: "+ neighbors.join(", ");
+        } else{
+          _("neighbor-list").innerHTML = "Can't find neighbors";
+        }
         if (
           appInfo.attackable_territory_names.includes(
             event.target.attributes["name"].value
@@ -979,16 +986,23 @@ function drawActionBoardSheet(resolve, reject) {
       _("action-container").style.display = "flex";
       let action_item =
         '<label for="{{id}}">{{name}}:</label> <input type="number" id="ac_{{id}}" name="ac_{{id}}" class="pointcount" value="0" min="0" max="100"> <br/>';
-      for (k in appInfo.attackable_territories) {
-        _("attack-list").innerHTML += action_item
-          .replace(/{{name}}/g, appInfo.attackable_territories[k].name)
-          .replace(/{{id}}/g, appInfo.attackable_territories[k].id);
-      }
-      for (l in appInfo.defendable_territories) {
-        _("defend-list").innerHTML += action_item
-          .replace(/{{name}}/g, appInfo.defendable_territories[l].name)
-          .replace(/{{id}}/g, appInfo.defendable_territories[l].id);
-      }
+        var attack_seq = {};
+        var defend_seq = {};
+        for (k in appInfo.attackable_territories) {
+           attack_seq[appInfo.attackable_territories[k].name] = action_item
+            .replace(/{{name}}/g, appInfo.attackable_territories[k].name)
+            .replace(/{{id}}/g, appInfo.attackable_territories[k].id);
+        }
+  
+        attack_seq = sort_keys(attack_seq);
+        _("attack-list").innerHTML += Object.values(attack_seq).join("");
+        for (l in appInfo.defendable_territories) {
+          defend_seq[appInfo.defendable_territories[l].name] = action_item
+            .replace(/{{name}}/g, appInfo.defendable_territories[l].name)
+            .replace(/{{id}}/g, appInfo.defendable_territories[l].id);
+        }
+        defend_seq = sort_keys(defend_seq);
+        _("defend-list").innerHTML += Object.values(defend_seq).join("");
       _("sender").style.display = "block";
       _("max_points_available").value = "0";
 
@@ -1058,16 +1072,23 @@ function drawActionBoard(resolve, reject) {
       dbg("AC4");
       _("action-container").style.display = "flex";
       let action_item = '<button onclick="makeMove({{id}});">{{name}}</button>';
+      var attack_seq = {};
+      var defend_seq = {};
       for (k in appInfo.attackable_territories) {
-        _("attack-list").innerHTML += action_item
+         attack_seq[appInfo.attackable_territories[k].name] = action_item
           .replace(/{{name}}/g, appInfo.attackable_territories[k].name)
           .replace(/{{id}}/g, appInfo.attackable_territories[k].id);
       }
+
+      attack_seq = sort_keys(attack_seq);
+      _("attack-list").innerHTML += Object.values(attack_seq).join("");
       for (l in appInfo.defendable_territories) {
-        _("defend-list").innerHTML += action_item
+        defend_seq[appInfo.defendable_territories[l].name] = action_item
           .replace(/{{name}}/g, appInfo.defendable_territories[l].name)
           .replace(/{{id}}/g, appInfo.defendable_territories[l].id);
       }
+      defend_seq = sort_keys(defend_seq);
+      _("defend-list").innerHTML += Object.values(defend_seq).join("");
       dbg("Territory actions drawn");
       resolve("Okay");
     } catch (error) {
@@ -3537,6 +3558,16 @@ router
   });
 
 /*** UTILITIES ***/
+
+function sort_keys(seq){
+  return Object.keys(seq).sort().reduce(
+    (obj, key) => { 
+      obj[key] = seq[key]; 
+      return obj;
+    }, 
+    {}
+  );
+}
 
 function _(id) {
   return document.getElementById(id);
