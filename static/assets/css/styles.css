@@ -502,6 +502,7 @@ header nav li:last-child {
     padding: 10px;
     border-radius: 10px;
     position: absolute;
+    max-width: 300px;
 }
 
 #moveable-info button {

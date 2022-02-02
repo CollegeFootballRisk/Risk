@@ -624,7 +624,7 @@ function mapDisplayUpdate(event, change, override = false) {
       try {
         var terr = window.territories.find(terr => {if (terr.name == event.target.attributes["name"].value) return terr}); 
         if(typeof terr != "undefined"){
-          var neighbors = terr["neighbors"].map(ele => {return ele.name});
+          var neighbors = terr["neighbors"].map(ele => {return "<a href = \"/territory/"+ele.name +"\">"+ele.name+"</a>"});
           _("neighbor-list").innerHTML = "Neighbors: "+ neighbors.join(", ");
         } else{
           _("neighbor-list").innerHTML = "Can't find neighbors";
@@ -2823,7 +2823,7 @@ function page_regions(contentTag) {
         obj["data"][territory_data[i]["region"] - 1][0] =
           territory_data[i]["region_name"];
         obj["data"][territory_data[i]["region"] - 1][1].push(
-          territory_data[i]["name"]
+          "<a href = \"/territory/" +territory_data[i]["name"]+"\">"+territory_data[i]["name"]+"</a>"
         );
       }
       for (var i = 0; i < obj.data.length; i++) {
