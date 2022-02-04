@@ -1,0 +1,3 @@
+[submodule "static/images/branding"]
+	path = static/images/branding
+	url = https://github.com/CollegeFootballRisk/branding
