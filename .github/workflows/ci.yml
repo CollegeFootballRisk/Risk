@@ -41,13 +41,16 @@ jobs:
       run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
     - name: Clippy
       run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
+    - name: Generate release tag
+      id: tag
+      run: |
+        echo "::set-output name=release_tag::Nightly_$(date +"%Y.%m.%d_%H-%M")"
     - name: Build Release
-      if: startsWith(github.ref, 'refs/tags/')
       run: cargo build --release --features default,chaos,risk_reddit
     - name: Release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with: 
+        tag_name: ${{ steps.tag.outputs.release_tag }}
         files: |
           target/release/rrserver
           target/release/rrringmaster
