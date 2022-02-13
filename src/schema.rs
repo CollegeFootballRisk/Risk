@@ -243,6 +243,7 @@ table! {
         id -> Int4,
         territory_id -> Int4,
         adjacent_id -> Int4,
+        note -> Text,
     }
 }
 

@@ -20,6 +20,8 @@ rand = {version = "0.8", features = ["std"]}
 rand_chacha="0.3"
 reqwest = { version = "0.11.8", default-features = false, features = ["json", "rustls-tls"] }
 rocket = {version = "0.5.0-rc.1", features = ["secrets", "json"] }
+#rocket-governor = {package ="rocket-governor", git = "https://github.com/CollegeFootballRisk/rocket-governor", rev = "8668f86", features = ["limit_info"], optional = true}
+#rocket-governor-cloudflare = {package ="rocket-governor", git = "https://github.com/CollegeFootballRisk/rocket-governor", rev = "db2787f", features = ["limit_info", "cloudflare"], optional = true}
 rocket_sync_db_pools = {version = "0.1.0-rc.1", features=["diesel_postgres_pool"]}
 rocket_oauth2 = {version = "0.5.0-rc.1", features = ["hyper_rustls_adapter"]}
 okapi = {version = "0.6.0-alpha-1" }
@@ -34,7 +36,10 @@ urlencoding = "1.1.0"
 #xdg = "2.2.0" # will use this to move files from build to /var/www at preference
 
 [features]
+chaos = []
 default = ["risk_reddit"]
+#risk_cloudflare = ["rocket-governor-cloudflare"]
+#risk_no_cloudflare = ["rocket-governor"]
 risk_discord = []
 risk_groupme = []
 risk_image = ["image", "nsvg"]

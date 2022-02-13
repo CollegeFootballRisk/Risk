@@ -16,7 +16,7 @@ var appInfo = {
   lockDisplay: false,
   dDay: new Date("December 23, 2020 04:00:00"),
   fullOpacity: 0,
-  map: "/images/map8.svg?v=28",
+  map: "/images/map8.svg?v=30",
   viewbox: "00 000 900 902",
   season: 0,
   day: 0,
@@ -1316,6 +1316,10 @@ function drawMap(resolve, reject, source = "territories", season = 0, day = 0) {
             }
             //appInfo.Mappt = _('map').createSVGPoint();
             for (territory in window.territories) {
+              if(window.territories[territory].name == 'Bermuda'){
+                window.territories[territory].neighbors.filter(function(obj){return drawChaosLine(obj.name.normalize("NFD")
+                .replace(/[\u0300-\u036f ]/g, ""))});
+              }
               if (appInfo.settings.map_logos) {
                 _("map").getElementById(
                   window.territories[territory].name
@@ -3813,6 +3817,19 @@ function sky2() {
     window.pulse2 = setInterval(doDate2, 1000);
   }
 }
+
+function drawChaosLine(territory_name){
+  var end = _('map').getElementById('Bermuda').getBBox();
+  var start = _('map').getElementById(territory_name).getBBox();
+  var start_y = start.y + 0.5*(start.height);
+  var start_x = start.x + 0.5*(start.width);
+  var end_y = end.y + 0.5*(end.height);
+  var end_x = end.x + 0.5*(end.width);
+  var newpath = document.createElementNS('http://www.w3.org/2000/svg',"path");
+  newpath.setAttributeNS(null, "d", `M ${start_x},${start_y} ${end_x},${end_y}`);
+  newpath.setAttributeNS(null, "style", `fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;`);
+  _('map').getElementById('Bridges').appendChild(newpath);
+  }
 
 var beforePan = function (oldPan, newPan) {
   if (appInfo.settings.map_overscroll) {

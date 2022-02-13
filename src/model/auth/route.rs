@@ -500,8 +500,14 @@ pub(crate) fn handle_territory_info(
                             Some(_npos) => {
                                 if team_id.0 != 0 {
                                     let mut regional_multiplier =
-                                        2 * handleregionalownership(&latest, team_id.0, conn)
+                                        handleregionalownership(&latest, team_id.0, conn)
                                             .unwrap_or(0);
+                                    // If we're doing chaos stuff, then we want to keep
+                                    // Chaos from getting additional point
+                                    if team_id.0 == 47 && cfg!(feature = "chaos") {
+                                        regional_multiplier -= 1;
+                                    }
+                                    regional_multiplier *= 2;
                                     if regional_multiplier == 0 {
                                         regional_multiplier = 1;
                                     }

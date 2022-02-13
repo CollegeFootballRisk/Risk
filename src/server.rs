@@ -21,6 +21,7 @@ extern crate rocket_okapi;
 
 mod catchers;
 pub mod db;
+//pub mod limits;
 mod error;
 mod hardcode;
 mod model;
@@ -31,8 +32,10 @@ pub use error::Error;
 #[rustfmt::skip]
 mod security;
 use crate::db::DbConn;
+//use crate::limits::RateLimitGuard;
 use crate::model::{auth, player, region, stats, sys, team, territory, turn};
 use rocket::fs::{relative, FileServer};
+//use rocket_governor::rocket_governor_catcher;
 use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 
@@ -92,9 +95,10 @@ fn rocket() -> _ {
     */
     let mut saturn_v = rocket::build()
         .attach(DbConn::fairing())
+        //        .attach(rocket_governor::LimitHeaderGen::default())
         .register(
             "/",
-            catchers![catchers::not_found, catchers::internal_error],
+            catchers![catchers::not_found, catchers::internal_error], // Add rocket_governer_catcher here
         )
         .mount("/api", api_paths)
         .mount("/", FileServer::from(relative!("static")).rank(2))

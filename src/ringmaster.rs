@@ -430,7 +430,7 @@ fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Pla
 }
 
 #[cfg(feature = "risk_image")]
-fn make_image(territories: Vec<TerritoryOwnersInsert>, conn: &PgConnection) {
+fn make_image(territories: &[TerritoryOwnersInsert], conn: &PgConnection) {
     use crate::structs::Team;
     extern crate image;
     extern crate nsvg;
@@ -479,6 +479,88 @@ fn user_update(
         &turninfoblock.season.unwrap().to_string()
     );
     sql_query(query).load(conn)
+}
+
+/// Updates chaos bridges randomly
+#[cfg(feature = "chaos")]
+fn chaos_update(
+    territories: &[TerritoryOwnersInsert],
+    conn: &PgConnection,
+) -> Result<(), diesel::result::Error> {
+    use crate::schema::territory_adjacency;
+    use crate::schema::territory_adjacency::*;
+    // First, get the maximum and minimum territory numbers
+    let max_territory: i32 = territories
+        .iter()
+        .max_by(|a, b| a.territory_id.cmp(&b.territory_id))
+        .map(|k| k.territory_id)
+        .unwrap_or(-1);
+    let min_territory: i32 = territories
+        .iter()
+        .min_by(|a, b| a.territory_id.cmp(&b.territory_id))
+        .map(|k| k.territory_id)
+        .unwrap_or(-2);
+    // Decide how many bridges to add
+    // First, read config for Max/Min:
+    let rocket = rocket::build();
+    let settings = rocket.figment();
+    let max_bridges: u32 = settings
+        .extract_inner("risk.max_chaos_bridges")
+        .unwrap_or(5);
+    let min_bridges: u32 = settings
+        .extract_inner("risk.min_chaos_bridges")
+        .unwrap_or(1);
+    let chaos_territory_id: i32 = settings
+        .extract_inner("risk.chaos_territory_id")
+        .unwrap_or(999);
+    let chaos_bridges_twoway: bool = settings
+        .extract_inner("risk.chaos_bridges_twoway")
+        .unwrap_or(false);
+    dbg!(
+        max_territory,
+        min_territory,
+        max_bridges,
+        min_bridges,
+        chaos_bridges_twoway,
+        chaos_territory_id
+    );
+    // Random!
+    // NOTE: THIS IS [low, high)
+    let num: u32 = rand::thread_rng().gen_range(min_bridges..max_bridges);
+    // Remove old bridges with note 'chaos_auto_managed'
+    diesel::delete(territory_adjacency::table.filter(note.eq("chaos_auto_managed")))
+        .execute(conn)?;
+    // Add new bridges with note 'chaos_auto_managed'
+    // Goes 0, 1, 2, 3, num-1; excludes num just like normal languages
+    let mut new_stuff = Vec::new();
+    #[derive(Insertable)]
+    #[table_name = "territory_adjacency"]
+    struct TerritoryAdjacent<'a> {
+        territory_id: i32,
+        adjacent_id: i32,
+        note: &'a str,
+    }
+    dbg!(num);
+    for _ in 0..num {
+        // Select random teritory id:
+        let territory: i32 = rand::thread_rng().gen_range(min_territory..(max_territory + 1));
+        new_stuff.push(TerritoryAdjacent {
+            territory_id: chaos_territory_id,
+            adjacent_id: territory,
+            note: "chaos_auto_managed",
+        });
+        if chaos_bridges_twoway {
+            new_stuff.push(TerritoryAdjacent {
+                territory_id: territory,
+                adjacent_id: chaos_territory_id,
+                note: "chaos_auto_managed",
+            });
+        }
+    }
+    diesel::insert_into(territory_adjacency::table)
+        .values(&new_stuff)
+        .execute(conn)?;
+    Ok(())
 }
 
 fn main() {
@@ -570,6 +652,15 @@ fn runtime() -> Result<(), diesel::result::Error> {
     }
 
     #[cfg(feature = "risk_image")]
-    make_image(owners, &conn);
+    make_image(&owners, &conn);
+
+    #[cfg(feature = "chaos")]
+    {
+        match chaos_update(&owners, &conn) {
+            Ok(_) => println!("Chaos bridges updated."),
+            Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
+        }
+    }
+
     Ok(())
 }
