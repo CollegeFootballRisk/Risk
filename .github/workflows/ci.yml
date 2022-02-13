@@ -42,6 +42,7 @@ jobs:
     - name: Clippy
       run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
     - name: Build Release
+      if: startsWith(github.ref, 'refs/tags/')
       run: cargo build --release --features default,chaos,risk_reddit
     - name: Release
       uses: softprops/action-gh-release@v1
