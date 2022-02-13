@@ -556,12 +556,12 @@ pub(crate) fn get_adjacent_territory_owners(
     conn: &PgConnection,
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
-        .filter(territory_adjacency::territory_id.eq(target))
+        .filter(territory_adjacency::adjacent_id.eq(target))
         .filter(territory_ownership::season.eq(latest.season))
         .filter(territory_ownership::day.eq(latest.day))
         .inner_join(
             territory_ownership::table
-                .on(territory_ownership::territory_id.eq(territory_adjacency::adjacent_id)),
+                .on(territory_ownership::territory_id.eq(territory_adjacency::territory_id)),
         )
         .select((
             territory_ownership::owner_id,
