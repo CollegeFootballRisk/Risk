@@ -976,11 +976,23 @@ function drawActionBoardSheet(resolve, reject) {
               neighbors += 1;
             }
           }
-          if (neighbors != 0) {
+          // CHAOS HOTFIX
+          if (neighbors != 0 && (territories[i].name != "Bermuda")) {
             appInfo.defendable_territories[territories[i].id] = territories[i];
             appInfo.defendable_territory_names.push(territories[i].name);
           }
         }
+                //CHAOS HOTFIX
+                if(territories[i].name == "Bermuda"){
+                  for(n in territories[i].neighbors){
+                    if(territories[i].neighbors[n].owner == userteam){
+                      if(appInfo.defendable_territory_names.indexOf(territories[i].neighbors[n].name) == -1){
+                        appInfo.defendable_territories[territories[i].neighbors[n].id] = territories[i].neighbors[n];
+                        appInfo.defendable_territory_names.push(territories[i].neighbors[n].name);
+                      }
+                    }
+                  }
+                }
       }
       dbg("AC2");
       _("action-container").style.display = "flex";
@@ -1063,11 +1075,25 @@ function drawActionBoard(resolve, reject) {
               neighbors += 1;
             }
           }
-          if (neighbors != 0) {
+          // CHAOS HOTFIX
+          // TODO: ACTUAL FIX
+          if (neighbors != 0 && (territories[i].name != "Bermuda")) {
             appInfo.defendable_territories[territories[i].id] = territories[i];
             appInfo.defendable_territory_names.push(territories[i].name);
           }
         }
+                //CHAOS HOTFIX
+                if(territories[i].name == "Bermuda"){
+                  for(n in territories[i].neighbors){
+                    if(territories[i].neighbors[n].owner == userteam){
+                      if(appInfo.defendable_territory_names.indexOf(territories[i].neighbors[n].name) == -1){
+                        var terr_to_in = territories.find((b) => {return b.name == territories[i].neighbors[n].name;});
+                        appInfo.defendable_territories[terr_to_in.id] = terr_to_in;
+                        appInfo.defendable_territory_names.push(territories[i].neighbors[n].name);
+                      }
+                    }
+                  }
+                }
       }
       dbg("AC4");
       _("action-container").style.display = "flex";
