@@ -237,7 +237,10 @@ impl PlayerWithTurns {
 }
 
 impl TeamPlayer {
-    pub(crate) fn load(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamPlayer> {
+    pub(crate) fn load(
+        tname: Vec<String>,
+        conn: &PgConnection,
+    ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
         let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         moves::table
             .filter(moves::tname.eq_any(ciTname))
@@ -249,10 +252,9 @@ impl TeamPlayer {
                 (moves::season, moves::day, moves::stars),
             ))
             .load::<TeamPlayer>(conn)
-            .expect("Error loading players")
     }
 
-    pub(crate) fn loadall(conn: &PgConnection) -> Vec<TeamPlayer> {
+    pub(crate) fn loadall(conn: &PgConnection) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
         moves::table
             .select((
                 moves::tname,
@@ -262,12 +264,14 @@ impl TeamPlayer {
                 (moves::season, moves::day, moves::stars),
             ))
             .load::<TeamPlayer>(conn)
-            .expect("Error loading players")
     }
 }
 
 impl TeamMerc {
-    pub(crate) fn load_mercs(tname: Vec<String>, conn: &PgConnection) -> Vec<TeamMerc> {
+    pub(crate) fn load_mercs(
+        tname: Vec<String>,
+        conn: &PgConnection,
+    ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
         let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         allow_tables_to_appear_in_same_query!(users, moves);
         use diesel::dsl::not;
@@ -283,7 +287,6 @@ impl TeamMerc {
                 users::overall,
             ))
             .load::<TeamMerc>(conn)
-            .expect("Error loading mercs")
     }
 }
 

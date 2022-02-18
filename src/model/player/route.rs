@@ -27,8 +27,7 @@ pub(crate) async fn players(
             match parsed_team_name {
                 Ok(team) => {
                     //println!("{}", team);
-                    let users = conn.run(|c| TeamPlayer::load(vec![team], c)).await;
-                    if users.len() as i32 >= 1 {
+                    if let Ok(users) = conn.run(|c| TeamPlayer::load(vec![team], c)).await {
                         std::result::Result::Ok(Json(users))
                     } else {
                         Error::not_found()
@@ -38,8 +37,7 @@ pub(crate) async fn players(
             }
         }
         None => {
-            let users = conn.run(|c| TeamPlayer::loadall(c)).await;
-            if users.len() as i32 >= 1 {
+            if let Ok(users) = conn.run(|c| TeamPlayer::loadall(c)).await {
                 std::result::Result::Ok(Json(users))
             } else {
                 Error::not_found()
@@ -57,8 +55,7 @@ pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMer
     match parsed_team_name {
         Ok(team) => {
             //println!("{}", team);
-            let users = conn.run(|c| TeamMerc::load_mercs(vec![team], c)).await;
-            if users.len() as i32 >= 1 {
+            if let Ok(users) = conn.run(|c| TeamMerc::load_mercs(vec![team], c)).await {
                 std::result::Result::Ok(Json(users))
             } else {
                 std::result::Result::Err(Status(rocket::http::Status::NotFound))
@@ -77,40 +74,19 @@ pub(crate) async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
-    //let cookie = cookies.get_private("jwt").map_err(Error::unauthorized())?;
-    match cookies.get_private("jwt") {
-        Some(cookie) => {
-            match Claims::interpret(
-                config.settings.cookie_key.as_bytes(),
-                cookie.value().to_string(),
-            ) {
-                Ok(c) => {
-                    let username = c.0.user.clone();
-                    let users = conn
-                        .run(move |connection| {
-                            PlayerWithTurnsAndAdditionalTeam::load(
-                                vec![username],
-                                false,
-                                connection,
-                            )
-                        })
-                        .await;
-                    match users {
-                        Some(user) => {
-                            if user.name.to_lowercase() == c.0.user.to_lowercase() {
-                                std::result::Result::Ok(Json(user))
-                            } else {
-                                std::result::Result::Err(Status(rocket::http::Status::NotFound))
-                            }
-                        }
-                        None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
-                    }
-                }
-                Err(_e) => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
-            }
-        }
-        None => std::result::Result::Err(Status(rocket::http::Status::Unauthorized)),
+) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
+    let c = Claims::from_private_cookie(cookies, config)?;
+    let username = c.0.user.clone();
+    let user = conn
+        .run(move |connection| {
+            PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
+        })
+        .await
+        .ok_or(Error::NotFound {})?;
+    if user.name.to_lowercase() == c.0.user.to_lowercase() {
+        std::result::Result::Ok(Json(user))
+    } else {
+        std::result::Result::Err(Error::NotFound {})
     }
 }
 
@@ -160,12 +136,7 @@ pub(crate) async fn player(
     let users = conn
         .run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c))
         .await;
-    //if users.len() as i32 == 1 {
-    match users {
         Some(user) => std::result::Result::Ok(Json(user)),
         None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
     }
-    // } else {
-    //   std::result::Result::Err(Status(rocket::http::Status::NotFound))
-    //}
 }

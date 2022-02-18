@@ -2,9 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::schema::{continuation_polls, continuation_responses, new_turns, territories};
+use crate::sys::SysInfo;
 use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use rocket::http::CookieJar;
+use rocket::State;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -68,6 +71,20 @@ impl Claims {
             Ok(c) => Ok((c.claims, c.header)),
             Err(err) => Err(err.to_string()),
         }
+    }
+
+    pub(crate) fn from_private_cookie(
+        cookies: &CookieJar<'_>,
+        config: &State<SysInfo>,
+    ) -> Result<(Claims, Header), crate::Error> {
+        let cookie = cookies
+            .get_private("jwt")
+            .ok_or(crate::Error::Unauthorized {})?;
+        Claims::interpret(
+            config.settings.cookie_key.as_bytes(),
+            cookie.value().to_string(),
+        )
+        .map_err(|_| crate::Error::BadRequest {})
     }
 }
 
