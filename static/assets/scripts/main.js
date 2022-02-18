@@ -861,7 +861,8 @@ function getTurns(resolve, reject) {
 
 function makeMove(id) {
   appInfo.doubleOrNothing = false;
-  if (appInfo.defendable_territory_names.length == 1) {
+  // If there's only one territory to attack, or there are 0 because this is Chaos
+  if ((appInfo.defendable_territory_names.length == 1) || (appInfo.defendable_territory_names.length == 0)) {
     //Prompt the player if they want to double or nothing their move
     doubleOrNothingText = window.prompt(
       "Type YES to triple-or-nothing your move's power. Otherwise type NO."
@@ -952,7 +953,7 @@ function drawActionBoardSheet(resolve, reject) {
     appInfo.defendable_territory_names = [];
     dbg("AC1");
     _("action-container").outerHTML =
-      '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+      '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdJyyUSGf0CG8hDwq7YOOY2vZt20EtMKWXPa0rIKRTF3mKdWg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
   } else {
     try {
       dbg("Drawing Actions.");
@@ -1051,7 +1052,7 @@ function drawActionBoard(resolve, reject) {
     appInfo.defendable_territory_names = [];
     dbg("AC3");
     _("action-container").outerHTML =
-      '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdgFLw31qP-ZuDsjcKGQuPn6mIBIOXRir84qzkmSNWXr3RWJg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
+      '<iframe title="Poll" src="https://docs.google.com/forms/d/e/1FAIpQLSdJyyUSGf0CG8hDwq7YOOY2vZt20EtMKWXPa0rIKRTF3mKdWg/viewform?embedded=true" width="640" height="2903" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>';
   } else {
     try {
       dbg("Drawing Actions.");
@@ -1879,7 +1880,7 @@ function page_territory(contentTag, t_object) {
                     .replace(
                       /{{star_style}}/,
                       territoryTurn.players[i]["mvp"]
-                        ? 'style="color:var(--theme-accent-1);"'
+                        ? 'style="font-weight:bolder;"'
                         : ""
                     )
                     .replace(

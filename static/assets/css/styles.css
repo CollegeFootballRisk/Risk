@@ -572,28 +572,20 @@ header nav li:last-child {
     padding: 40px 0;
 }
 
-
-/*.map-wrap .background-image {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-color: #2196F3;
-    z-index: -1;
+.map-control {
+    float:right;
+    padding:8px;
+    background:var(--bg-color);
+    color:var(--theme-fg);
+    border:none;
+    border-radius:5px;
+    margin: 2px;
 }
 
-.map-wrap .background-image:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #414a4f;
-    opacity: 0.75;
-}*/
+.map-control:hover {
+    background: var(--theme-fg);
+    color: var(--bg-color);
+}
 
 .map-wrap h1 {
     font: bold 60px 'Open Sans', sans-serif;
@@ -826,6 +818,11 @@ h3[selectitem]::after {
     pointer-events: none;
 }
 
+#team-turns {
+    max-width: 90vw;
+    overflow-x: auto;
+}
+
 .leaderboard-wrap {
     /*padding-top: 0px !important;*/
 }
@@ -854,6 +851,7 @@ h3[selectitem]::after {
 
 #territory-complete-players {
     max-width: 90vw;
+    overflow-x: auto;
     width: 70vw;
 }
 
@@ -1171,10 +1169,7 @@ footer p a {
 }
 
 #attack-list button,
-#attack-button,
-#regions-button,
-#heatmap_regions-button,
-#oddmap_regions-button {
+#attack-button {
     background: var(--theme-accent-1);
 }
 
@@ -1189,9 +1184,6 @@ footer p a {
 }
 
 #hover-button,
-#bridges-button,
-#heatmap_bridges-button,
-#oddmap_bridges-button,
 .hover-button {
     background: var(--theme-accent-4);
 }
