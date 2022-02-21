@@ -132,11 +132,9 @@ pub(crate) async fn player_multifetch(
 pub(crate) async fn player(
     player: String,
     conn: DbConn,
-) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, Status> {
+) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
     let users = conn
         .run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c))
-        .await;
-        Some(user) => std::result::Result::Ok(Json(user)),
-        None => std::result::Result::Err(Status(rocket::http::Status::NotFound)),
-    }
+        .await.ok_or(crate::Error::NotFound{})?;
+        std::result::Result::Ok(Json(users))
 }

@@ -862,7 +862,7 @@ function getTurns(resolve, reject) {
 function makeMove(id) {
   appInfo.doubleOrNothing = false;
   // If there's only one territory to attack, or there are 0 because this is Chaos
-  if ((appInfo.defendable_territory_names.length == 1) || (appInfo.defendable_territory_names.length == 0)) {
+  if ((appInfo.defendable_territory_names.length == 1 && appInfo.userObject.active_team.name != "Chaos") || (appInfo.userObject.active_team.name == "Chaos" && appInfo.defendable_territory_names.length == 0)) {
     //Prompt the player if they want to double or nothing their move
     doubleOrNothingText = window.prompt(
       "Type YES to triple-or-nothing your move's power. Otherwise type NO."
