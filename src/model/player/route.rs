@@ -11,7 +11,6 @@ use crate::Error;
 use rocket::http::CookieJar;
 use rocket::serde::json::Json;
 use rocket::State;
-use urlencoding::FromUrlEncodingError;
 
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
@@ -20,20 +19,15 @@ use urlencoding::FromUrlEncodingError;
 pub(crate) async fn players(
     team: Option<String>,
     conn: DbConn,
-) -> Result<Json<Vec<TeamPlayer>>, Error> {
+) -> Result<Json<Vec<TeamPlayer>>, crate::Error> {
     match team {
         Some(team) => {
-            let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
-            match parsed_team_name {
-                Ok(team) => {
-                    //println!("{}", team);
-                    if let Ok(users) = conn.run(|c| TeamPlayer::load(vec![team], c)).await {
-                        std::result::Result::Ok(Json(users))
-                    } else {
-                        Error::not_found()
-                    }
-                }
-                _ => Error::not_found(),
+            let team_name: String = urlencoding::decode(&team)?.into_owned();
+            //println!("{}", team);
+            if let Ok(users) = conn.run(|c| TeamPlayer::load(vec![team_name], c)).await {
+                std::result::Result::Ok(Json(users))
+            } else {
+                Error::not_found()
             }
         }
         None => {
@@ -50,18 +44,13 @@ pub(crate) async fn players(
 /// Get all of the mercenary players on a team (returns all players on all teams if no team is provided).
 #[openapi(tag = "Players")]
 #[get("/mercs?<team>")]
-pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, Status> {
-    let parsed_team_name: Result<String, FromUrlEncodingError> = urlencoding::decode(&team);
-    match parsed_team_name {
-        Ok(team) => {
-            //println!("{}", team);
-            if let Ok(users) = conn.run(|c| TeamMerc::load_mercs(vec![team], c)).await {
-                std::result::Result::Ok(Json(users))
-            } else {
-                std::result::Result::Err(Status(rocket::http::Status::NotFound))
-            }
-        }
-        _ => std::result::Result::Err(Status(rocket::http::Status::Conflict)),
+pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, crate::Error> {
+    let team_name: String = urlencoding::decode(&team)?.into_owned();
+    //println!("{}", team);
+    if let Ok(users) = conn.run(|c| TeamMerc::load_mercs(vec![team_name], c)).await {
+        std::result::Result::Ok(Json(users))
+    } else {
+        std::result::Result::Err(crate::Error::NotFound {})
     }
 }
 
@@ -135,6 +124,7 @@ pub(crate) async fn player(
 ) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
     let users = conn
         .run(|c| PlayerWithTurnsAndAdditionalTeam::load(vec![player], true, c))
-        .await.ok_or(crate::Error::NotFound{})?;
-        std::result::Result::Ok(Json(users))
+        .await
+        .ok_or(crate::Error::NotFound {})?;
+    std::result::Result::Ok(Json(users))
 }

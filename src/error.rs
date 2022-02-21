@@ -37,6 +37,12 @@ pub enum Error {
     #[error("Internal Server Error")]
     InternalServerError {},
 
+    #[error("Utf8Error")]
+    FromUtf8Error {
+        #[from]
+        source: std::string::FromUtf8Error,
+    },
+
     #[error("Teapot")]
     Teapot,
 }
@@ -53,6 +59,7 @@ impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
             Error::NotFound {} => Status::NotFound.respond_to(req),
             Error::BadRequest {} => Status::BadRequest.respond_to(req),
             Error::InternalServerError {} => Status::InternalServerError.respond_to(req),
+            Error::FromUtf8Error { .. } => Status::BadRequest.respond_to(req),
             Error::Teapot => Status::ImATeapot.respond_to(req),
             _ => Status::InternalServerError.respond_to(req),
         }

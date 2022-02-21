@@ -64,9 +64,7 @@ impl Claims {
     }
 
     pub(crate) fn interpret(key: &[u8], token: String) -> Result<(Claims, Header), String> {
-        let validation = Validation {
-            ..Validation::default()
-        };
+        let validation = Validation::default();
         match decode::<Claims>(&token, &DecodingKey::from_secret(key), &validation) {
             Ok(c) => Ok((c.claims, c.header)),
             Err(err) => Err(err.to_string()),
