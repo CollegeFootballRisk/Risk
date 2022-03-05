@@ -4,7 +4,6 @@
 use crate::model::StarBreakdown64;
 use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
-use diesel::result::Error;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
@@ -92,7 +91,7 @@ impl TeamPlayerMoves {
         day_seek: i32,
         team: Option<String>,
         conn: &PgConnection,
-    ) -> Vec<TeamPlayerMoves> {
+    ) -> Result<Vec<TeamPlayerMoves>, diesel::result::Error> {
         match team {
             Some(team_seek) => {
                 let ciTeam_seek = CiString::from(team_seek);
@@ -112,7 +111,6 @@ impl TeamPlayerMoves {
                     .filter(team_player_moves::day.eq(day_seek))
                     .filter(team_player_moves::team.eq(ciTeam_seek))
                     .load::<TeamPlayerMoves>(conn)
-                    .expect("Error loading moves")
             }
             None => team_player_moves::table
                 .select((
@@ -128,8 +126,7 @@ impl TeamPlayerMoves {
                 ))
                 .filter(team_player_moves::season.eq(season_seek))
                 .filter(team_player_moves::day.eq(day_seek))
-                .load::<TeamPlayerMoves>(conn)
-                .expect("Error loading moves"),
+                .load::<TeamPlayerMoves>(conn),
         }
     }
 }
@@ -140,7 +137,7 @@ impl TeamInTurns {
         day: &i32,
         territory: &str,
         conn: &PgConnection,
-    ) -> Result<Vec<TeamInTurns>, Error> {
+    ) -> Result<Vec<TeamInTurns>, diesel::result::Error> {
         odds::table
             .select((
                 odds::team_name,

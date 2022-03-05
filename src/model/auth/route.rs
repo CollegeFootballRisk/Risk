@@ -26,130 +26,80 @@ pub(crate) async fn join_team(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<String>, Status> {
-    /*    let curr_day: Latest = match conn.run(move |c| Latest::latest(c)).await {
+) -> Result<Json<String>, crate::Error> {
+    // Get user information from cookies
+    let c = Claims::from_private_cookie(cookies, config)?;
+    //see if user already has team, and if user has current_team
+    let username = c.0.user.clone();
+    let users = conn
+        .run(move |connection| {
+            PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
+        })
+        .await
+        .ok_or(crate::Error::Unauthorized {})?;
 
-                Ok(latest) => {
-                }
-              Err(_e) => { return std::result::Result::Err(Status::InternalServerError);}
-    };*/
-
-    match cookies.get_private("jwt") {
-        Some(cookie) => {
-            match Claims::interpret(
-                config.settings.cookie_key.as_bytes(),
-                cookie.value().to_string(),
-            ) {
-                Ok(c) => {
-                    //see if user already has team, and if user has current_team
-                    let username = c.0.user.clone();
-                    let users = conn
-                        .run(move |connection| {
-                            PlayerWithTurnsAndAdditionalTeam::load(
-                                vec![username],
-                                false,
-                                connection,
-                            )
-                        })
-                        .await;
-                    match users {
-                        Some(users) => {
-                            if users.name.to_lowercase() == c.0.user.to_lowercase() {
-                                //see if user needs a new team, or a team in general
-                                match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
-                                    None => {
-                                        //check team exists
-                                        match conn
-                                            .run(move |connection| {
-                                                TeamInfo::load(connection)
-                                                    .iter()
-                                                    .any(|e| e.id == team)
-                                            })
-                                            .await
-                                        {
-                                            true => {
-                                                // check that team has territories
-                                                match conn
-                                                    .run(move |connection| {
-                                                        CurrentStrength::load_id(team, connection)
-                                                    })
-                                                    .await
-                                                {
-                                                    Ok(strength) => {
-                                                        if strength.territories > 0 {
-                                                            match users
-                                                                .team
-                                                                .unwrap_or_else(
-                                                                    TeamWithColors::blank,
-                                                                )
-                                                                .name
-                                                            {
-                                                                Some(_e) => {
-                                                                    //merc!
-                                                                    match conn.run(move |cn| update_user(
-                                                                        false, c.0.id, team, cn,
-                                                                    )).await {
-                                                                        Ok(_e) => {
-                                                                            std::result::Result::Ok(Json(
-                                                                                String::from("Okay"),
-                                                                            ))
-                                                                        }
-                                                                        Err(_e) => {
-                                                                            std::result::Result::Err(
-                                                                                Status::InternalServerError,
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                }
-                                                                None => {
-                                                                    //new kid on the block
-                                                                    match conn.run(move |cn| update_user(
-                                                                        true, c.0.id, team, cn,
-                                                                    )).await {
-                                                                        Ok(_e) => {
-                                                                            std::result::Result::Ok(Json(
-                                                                                String::from("Okay"),
-                                                                            ))
-                                                                        }
-                                                                        Err(_e) => {
-                                                                            std::result::Result::Err(
-                                                                                Status::InternalServerError,
-                                                                            )
-                                                                        }
-                                                                    }
-                                                                }
-                                                            }
-                                                        } else {
-                                                            std::result::Result::Err(
-                                                                Status::Forbidden,
-                                                            )
-                                                        }
-                                                    }
-                                                    Err(_e) => std::result::Result::Err(
-                                                        Status::NotAcceptable,
-                                                    ),
-                                                }
+    // Check that DB and cookie correspond
+    if users.name.to_lowercase() == c.0.user.to_lowercase() {
+        //see if user needs a new team, or a team in general
+        match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
+            None => {
+                //check team exists
+                match conn
+                    .run(move |connection| TeamInfo::load(connection).iter().any(|e| e.id == team))
+                    .await
+                {
+                    true => {
+                        // check that team has territories
+                        match conn
+                            .run(move |connection| CurrentStrength::load_id(team, connection))
+                            .await
+                        {
+                            Ok(strength) => {
+                                if strength.territories > 0 {
+                                    match users.team.unwrap_or_else(TeamWithColors::blank).name {
+                                        Some(_e) => {
+                                            //merc!
+                                            match conn
+                                                .run(move |cn| update_user(false, c.0.id, team, cn))
+                                                .await
+                                            {
+                                                Ok(_e) => std::result::Result::Ok(Json(
+                                                    String::from("Okay"),
+                                                )),
+                                                Err(_e) => std::result::Result::Err(
+                                                    crate::Error::InternalServerError {},
+                                                ),
                                             }
-                                            false => {
-                                                std::result::Result::Err(Status::NotAcceptable)
+                                        }
+                                        None => {
+                                            //new kid on the block
+                                            match conn
+                                                .run(move |cn| update_user(true, c.0.id, team, cn))
+                                                .await
+                                            {
+                                                Ok(_e) => std::result::Result::Ok(Json(
+                                                    String::from("Okay"),
+                                                )),
+                                                Err(_e) => std::result::Result::Err(
+                                                    crate::Error::InternalServerError {},
+                                                ),
                                             }
                                         }
                                     }
-                                    Some(_e) => {
-                                        std::result::Result::Err(Status::InternalServerError)
-                                    }
+                                } else {
+                                    std::result::Result::Err(crate::Error::BadRequest {})
                                 }
-                            } else {
-                                std::result::Result::Err(Status::Unauthorized)
                             }
+                            Err(_e) => std::result::Result::Err(crate::Error::BadRequest {}),
                         }
-                        None => std::result::Result::Err(Status::Unauthorized),
                     }
+                    false => std::result::Result::Err(crate::Error::BadRequest {}),
                 }
-                Err(_e) => std::result::Result::Err(Status::Unauthorized),
             }
+            Some(_e) => std::result::Result::Err(crate::Error::InternalServerError {}),
         }
-        None => std::result::Result::Err(Status::Unauthorized),
+    } else {
+        std::result::Result::Err(crate::Error::Unauthorized {})
     }
 }
 
@@ -158,41 +108,22 @@ pub(crate) async fn join_team(
 pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    remote_addr: SocketAddr,
     config: &State<SysInfo>,
-) -> Result<Json<String>, Status> {
-    match conn.run(move |c| Latest::latest(c)).await {
-        Ok(latest) => {
-            //get cookie, verify it -> Claims (id, user, refresh_token)
-            match cookies.get_private("jwt") {
-                Some(cookie) => {
-                    match Claims::interpret(
-                        config.settings.cookie_key.as_bytes(),
-                        cookie.value().to_string(),
-                    ) {
-                        Ok(c) => {
-                            let _cinfo = ClientInfo {
-                                claims: c.0.clone(),
-                                ip: remote_addr.to_string(),
-                            };
-                            // get the territory the user has attacked
-                            std::result::Result::Ok(Json(
-                                conn.run(move |connection| {
-                                    MoveInfo::get(latest.season, latest.day, c.0.id, connection)
-                                })
-                                .await
-                                .territory
-                                .unwrap_or_else(|| String::from("")),
-                            ))
-                        }
-                        Err(_err) => std::result::Result::Err(Status::Unauthorized),
-                    }
-                }
-                None => std::result::Result::Err(Status::Unauthorized),
-            }
-        }
-        _ => std::result::Result::Err(Status::BadRequest),
-    }
+) -> Result<Json<String>, crate::Error> {
+    // Get latest turn
+    let latest = conn
+        .run(move |c| Latest::latest(c))
+        .await
+        .map_err(|_| crate::Error::InternalServerError {})?;
+    // Get user information from cookies
+    let c = Claims::from_private_cookie(cookies, config)?;
+    // Return the territory the user has attacked
+    std::result::Result::Ok(Json(
+        conn.run(move |connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection))
+            .await
+            .territory
+            .unwrap_or_else(|| String::from("")),
+    ))
 }
 
 #[get("/move?<target>&<aon>", rank = 1)]
@@ -203,139 +134,127 @@ pub(crate) async fn make_move(
     conn: DbConn,
     remote_addr: SocketAddr,
     config: &State<SysInfo>,
-) -> Result<Json<String>, Status> {
-    match conn.run(move |c| Latest::latest(c)).await {
-        Ok(latest) => {
-            //get cookie, verify it -> Claims (id, user, refresh_token)
-            match cookies.get_private("jwt") {
-                Some(cookie) => {
-                    match Claims::interpret(
-                        config.settings.cookie_key.as_bytes(),
-                        cookie.value().to_string(),
-                    ) {
-                        Ok(mut c) => {
-                            let _cinfo = ClientInfo {
-                                claims: c.0.clone(),
-                                ip: remote_addr.to_string(),
-                            };
-                            // id, name Json(c.0.user)
-                            //get user's team information, and whether they can make that move
-                            let temp_pfix = c.0.clone();
-                            let temp_ltst = Latest {
-                                season: latest.season,
-                                day: latest.day,
-                            };
-                            match conn
-                                .run(move |connection| {
-                                    handle_territory_info(
-                                        &temp_pfix, target, temp_ltst, connection, aon,
-                                    )
-                                })
-                                .await
-                            {
-                                Ok((user, multiplier)) => {
-                                    //get user's current award information from CFBRisk
-                                    let _tmp_usname = c.0.user.clone();
-                                    let awards: i32 = 5;
-                                    //get user's current information from Reddit to ensure they still exist
-                                    c.0.user.push_str(&awards.to_string());
-                                    //at this point we know the user is authorized to make the action, so let's go ahead and make it
-                                    let user_stats = Stats {
-                                        totalTurns: user.3.unwrap_or(0),
-                                        gameTurns: user.4.unwrap_or(0),
-                                        mvps: user.5.unwrap_or(0),
-                                        streak: user.6.unwrap_or(0),
-                                        awards: awards as i32,
-                                    };
-                                    let user_ratings = Ratings::load(&user_stats);
-                                    let user_weight: f64 = match user_ratings.overall {
-                                        1 => 1.0,
-                                        2 => 2.0,
-                                        3 => 3.0,
-                                        4 => 4.0,
-                                        5 => 5.0,
-                                        _ => 1.0,
-                                    };
-                                    let user_power: f64 = multiplier * user_weight as f64;
-                                    let mut merc: bool = false;
-                                    if user.0 != user.8 {
-                                        merc = true;
-                                    }
-                                    match conn
-                                        .run(move |connection| {
-                                            insert_turn(
-                                                &user,
-                                                user_ratings,
-                                                &latest,
-                                                target,
-                                                multiplier,
-                                                user_weight,
-                                                user_power,
-                                                merc,
-                                                connection,
-                                            )
-                                        })
-                                        .await
-                                    {
-                                        Ok(_ok) => {
-                                            //now we go update the user
-                                            match conn
-                                                .run(move |connection| {
-                                                    UpdateUser::do_update(
-                                                        UpdateUser {
-                                                            id: user.1,
-                                                            overall: user_weight as i32,
-                                                            turns: user_stats.totalTurns,
-                                                            game_turns: user_stats.gameTurns,
-                                                            mvps: user_stats.mvps,
-                                                            streak: user_stats.streak,
-                                                            awards: user_stats.awards,
-                                                        },
-                                                        connection,
-                                                    )
-                                                })
-                                                .await
-                                            {
-                                                Ok(_oka) => std::result::Result::Ok(Json(
-                                                    String::from("Okay"),
-                                                )),
-                                                Err(_e) => std::result::Result::Err(Status::Found),
-                                            }
-                                        }
-                                        Err(_e) => {
-                                            dbg!(_e);
-                                            std::result::Result::Err(Status::ImATeapot)
-                                        }
-                                    }
-                                }
-                                Err(_e) => {
-                                    dbg!(_e);
-                                    std::result::Result::Err(Status::ImATeapot)
-                                }
-                            }
-                        }
-                        Err(_err) => std::result::Result::Err(Status::Unauthorized),
+) -> Result<Json<String>, crate::Error> {
+    // Get latest turn
+    let latest = conn
+        .run(move |c| Latest::latest(c))
+        .await
+        .map_err(|_| crate::Error::InternalServerError {})?;
+    // Get user information from cookies
+    let mut c = Claims::from_private_cookie(cookies, config)?;
+
+    let _cinfo = ClientInfo {
+        claims: c.0.clone(),
+        ip: remote_addr.to_string(),
+    };
+    // id, name Json(c.0.user)
+    //get user's team information, and whether they can make that move
+    let temp_pfix = c.0.clone();
+    let temp_ltst = Latest {
+        season: latest.season,
+        day: latest.day,
+    };
+    match conn
+        .run(move |connection| {
+            handle_territory_info(&temp_pfix, target, temp_ltst, connection, aon)
+        })
+        .await
+    {
+        Ok((user, multiplier)) => {
+            //get user's current award information from CFBRisk
+            let _tmp_usname = c.0.user.clone();
+            let awards: i32 = 5;
+            //get user's current information from Reddit to ensure they still exist
+            c.0.user.push_str(&awards.to_string());
+            //at this point we know the user is authorized to make the action, so let's go ahead and make it
+            let user_stats = Stats {
+                totalTurns: user.3.unwrap_or(0),
+                gameTurns: user.4.unwrap_or(0),
+                mvps: user.5.unwrap_or(0),
+                streak: user.6.unwrap_or(0),
+                awards: awards as i32,
+            };
+            let user_ratings = Ratings::load(&user_stats);
+            let user_weight: f64 = match user_ratings.overall {
+                1 => 1.0,
+                2 => 2.0,
+                3 => 3.0,
+                4 => 4.0,
+                5 => 5.0,
+                _ => 1.0,
+            };
+            let user_power: f64 = multiplier * user_weight as f64;
+            let mut merc: bool = false;
+            if user.0 != user.8 {
+                merc = true;
+            }
+            match conn
+                .run(move |connection| {
+                    insert_turn(
+                        &user,
+                        user_ratings,
+                        &latest,
+                        target,
+                        multiplier,
+                        user_weight,
+                        user_power,
+                        merc,
+                        connection,
+                    )
+                })
+                .await
+            {
+                Ok(_ok) => {
+                    //now we go update the user
+                    match conn
+                        .run(move |connection| {
+                            UpdateUser::do_update(
+                                UpdateUser {
+                                    id: user.1,
+                                    overall: user_weight as i32,
+                                    turns: user_stats.totalTurns,
+                                    game_turns: user_stats.gameTurns,
+                                    mvps: user_stats.mvps,
+                                    streak: user_stats.streak,
+                                    awards: user_stats.awards,
+                                },
+                                connection,
+                            )
+                        })
+                        .await
+                    {
+                        Ok(_oka) => std::result::Result::Ok(Json(String::from("Okay"))),
+                        Err(_e) => std::result::Result::Err(crate::Error::InternalServerError {}),
                     }
                 }
-                None => std::result::Result::Err(Status::Unauthorized),
+                Err(_e) => {
+                    dbg!(_e);
+                    std::result::Result::Err(crate::Error::Teapot)
+                }
             }
         }
-        _ => std::result::Result::Err(Status::BadRequest),
+        Err(_e) => {
+            dbg!(_e);
+            std::result::Result::Err(crate::Error::Teapot)
+        }
     }
 }
 
 #[get("/polls", rank = 1)]
 //#[cfg(feature = "risk_security")]
-pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, Status> {
-    match conn.run(move |connection| Latest::latest(connection)).await {
-        Ok(latest) => match conn
-            .run(move |c| Poll::get(latest.season, latest.day, c))
-            .await
-        {
-            Ok(polls) => std::result::Result::Ok(Json(polls)),
-            Err(_E) => std::result::Result::Err(Status::InternalServerError),
-        },
-        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, crate::Error> {
+    // Get latest turn
+    let latest = conn
+        .run(move |c| Latest::latest(c))
+        .await
+        .map_err(|_| crate::Error::InternalServerError {})?;
+
+    match conn
+        .run(move |c| Poll::get(latest.season, latest.day, c))
+        .await
+    {
+        Ok(polls) => std::result::Result::Ok(Json(polls)),
+        Err(_E) => std::result::Result::Err(crate::Error::InternalServerError {}),
     }
 }
 
