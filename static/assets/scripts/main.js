@@ -7,7 +7,7 @@
 var appInfo = {
   outstandingRequests: [],
   errorNotifications: [],
-  rollTime: new Date("January 25, 2022 03:30:00"),
+  rollTime: new Date("February 08, 2022 03:30:00"),
   loadTime: new Date(),
   burger: false,
   burgerTrigger: false,
@@ -16,7 +16,7 @@ var appInfo = {
   lockDisplay: false,
   dDay: new Date("December 23, 2020 04:00:00"),
   fullOpacity: 0,
-  map: "/images/map8.svg?v=30",
+  map: "/images/map8.svg?v=31",
   viewbox: "00 000 900 902",
   season: 0,
   day: 0,
@@ -3369,7 +3369,7 @@ function doPoll(realize = true, notify = false) {
                 appInfo.pollResponses.push(JSON.parse(data.response));
                 paintPoll();
                 document.cookie =
-                  "polled2=true; expires=Thu, 23 Jan 2022 12:00:00 UTC; path=/; samesite=lax;";
+                  "polled2=true; expires=Thu, 05 Feb 2022 12:00:00 UTC; path=/; samesite=lax;";
               },
               function () {
                 appInfo.pollResponses.push([]);
@@ -3883,5 +3883,9 @@ var beforePan = function (oldPan, newPan) {
 
   return customPan;
 };
+
+function moth() {
+	errorNotif("Unfortunately, the clock is ticking", "the hours are going by. The past increases, the future recedes. Possibilities decreasing, regrets mounting. <br/><br/> Do you understand?", {"text": "I Understand"}, {"text": "remain ignorant"});
+}
 
 // @license-end
