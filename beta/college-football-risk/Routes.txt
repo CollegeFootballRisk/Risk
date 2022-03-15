@@ -1,0 +1,38 @@
+Routes:
+/***
+    === Handled by Oxide (rrserver) ===
+***/
+/api/* -> Rust Risk
+/auth/* -> Rust Risk
+/docs/* -> Rust Risk
+/login/* -> Rust Risk
+
+/***
+    === Handled by Iron (frontend) ===
+***/
+/ -> /map/owners/latest, with goodies
+/map/{"owners"|"battle"|"heat"|"odds"}/{"latest"|season:i32}/{day:i32}/ ->
+    "owners": the owners of the territory on the day; quick link to battles
+    "battle": heatmap of the forces deployed by all teams on the day; quick link to owners
+    "heat": heatmap of the forces deployed by a specific team on the day; quick link to odds
+    "odds": heatmap of the odds a team had on the day; quick link to heat
+
+    Map Buttons:
+        Zoom in
+        Zoom out
+        Owners->Battle, Heat->Odds
+        Season/Day
+        Regions
+        Bridges
+        "battle": Leaderboard pull-out
+        "heat"|"odds": Territory break-down pull-out
+
+/about -> Credits
+/how -> How to Play
+/settings -> Settings
+/setup -> Initial set-up 
+
+
+Main Menu:
+Map | How to Play | API | {?logged_in:Settings} | {?!logged_in:Login} | Bugs | About
+
