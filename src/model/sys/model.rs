@@ -16,6 +16,18 @@ pub struct SysInfo {
     pub(crate) captcha: bool,
     pub(crate) settings: SysSettings,
 }
+
+pub struct appSettings {
+    // Time string for the next roll
+    pub(crate) rollTime: String,
+    // Map URL
+    pub(crate) map: String,
+    // ViewBox for the map:
+    pub(crate) viewbox: String,
+    // Website Title:
+    pub(crate) webtitle: String,
+}
+
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub(crate) struct SysSettings {
     pub(crate) name: String,

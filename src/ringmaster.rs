@@ -20,6 +20,8 @@ use rand::prelude::*;
 use rand_chacha::ChaCha12Rng;
 use std::collections::HashMap;
 
+const ALT_CUTOFF: i32 = 75;
+
 use structs::{
     Bar, PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
     Victor,
@@ -62,6 +64,7 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
 }
 
 fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
+    territory_players.retain(|x| x.alt_score >= ALT_CUTOFF);
     let rng = match territory_players.len() {
         1 => 0,
         _ => rand::thread_rng().gen_range(0..territory_players.len()),
@@ -331,7 +334,7 @@ fn process_territories(
 
                 for player in &territory_players {
                     //dbg!(player.id, player.team);
-                    if player.alt_score >= 175 {
+                    if player.alt_score >= ALT_CUTOFF {
                         continue;
                     }
                     map.get_mut(&player.team)
