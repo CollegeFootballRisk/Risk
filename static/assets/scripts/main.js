@@ -14,13 +14,14 @@ var appInfo = {
   teamsObject: null,
   userObject: null,
   lockDisplay: false,
-  dDay: new Date("December 23, 2020 04:00:00"),
+  //dDay: new Date("December 23, 2020 04:00:00"),
   fullOpacity: 0,
   map: "/images/map8.svg?v=31",
   viewbox: "00 000 900 902",
   season: 0,
   day: 0,
   mode: 1,
+  webTitle: "College Football Risk",
   settings: {
     map_hover: false,
     map_logos: false,
@@ -86,7 +87,7 @@ if (today.isDstObserved()) {
 }
 // end of SO code.
 
-appInfo.dDay.setUTCHours(hourOffset);
+//appInfo.dDay.setUTCHours(hourOffset);
 
 appInfo.rollTime.setUTCHours(hourOffset, 30, 0, 0);
 
@@ -3229,7 +3230,7 @@ function handleNewPage(title, contentTag, call, vari) {
   contentTag.innerHTML = "";
   appInfo.panZoomMap = null;
   appInfo.lockDisplay = false;
-  document.title = "College Football Risk | " + title;
+  document.title = appInfo.webTitle + " | " + title;
   clearInterval(window.pulse);
   call(contentTag, vari);
   if (appInfo.burgerTrigger) {
@@ -3793,7 +3794,7 @@ function merry() {
   }
 }
 
-function sky() {
+/*function sky() {
   //fade:
   try {
     clearInterval(window.pulse);
@@ -3843,7 +3844,7 @@ function sky2() {
 
     window.pulse2 = setInterval(doDate2, 1000);
   }
-}
+}*/
 
 function drawChaosLine(territory_name){
   var end = _('map').getElementById('Bermuda').getBBox();
