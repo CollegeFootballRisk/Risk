@@ -9,6 +9,7 @@ extern crate diesel;
 extern crate serde_derive;
 extern crate rand;
 extern crate rand_chacha;
+pub mod optional;
 pub mod schema;
 pub mod structs;
 
@@ -48,12 +49,11 @@ fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
     teams
 }
 
+/// Based on random number `lottery`, return the ID of the MVP user
 fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
     let mut victorsum = 0_f64;
-    //println!("Map: {:?}", map);
     let mut victor = 0;
     for (key, val) in &map {
-        //println!("Key {:?} Val {:?}",key,val);
         victorsum += val.power;
         if lottery - victorsum < 0_f64 {
             victor = *key;
@@ -72,6 +72,7 @@ fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
     territory_players.remove(rng)
 }
 
+/// Go territory by territory and determine new owner, MVP, and statistics
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
@@ -97,16 +98,7 @@ fn process_territories(
         match teams.len() {
             0 => {
                 dbg!("Zero Team");
-                new_owners.push(TerritoryOwnersInsert {
-                    territory_id: territory.territory_id,
-                    territory_name: None,
-                    owner_id: territory.owner_id,
-                    day: territory.day + 1,
-                    season: territory.season,
-                    previous_owner_id: territory.owner_id,
-                    random_number: 0_f64,
-                    mvp: Some(0),
-                });
+                new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
                 // add team territory count to stats
                 stats
                     .entry(territory.owner_id)
@@ -138,16 +130,7 @@ fn process_territories(
                 {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
-                    new_owners.push(TerritoryOwnersInsert {
-                        territory_id: territory.territory_id,
-                        territory_name: None,
-                        owner_id: territory.owner_id,
-                        day: territory.day + 1,
-                        season: territory.season,
-                        previous_owner_id: territory.owner_id,
-                        random_number: 0_f64,
-                        mvp: Some(0),
-                    });
+                    new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
                     // add team territory count to stats
                     stats
                         .entry(territory.owner_id)
@@ -173,16 +156,7 @@ fn process_territories(
                 dbg!("One Team");
                 let mvp = get_mvp(territory_players.clone());
                 mvps.push(mvp.clone());
-                new_owners.push(TerritoryOwnersInsert {
-                    territory_id: territory.territory_id,
-                    territory_name: None,
-                    owner_id: teams[0],
-                    day: territory.day + 1,
-                    season: territory.season,
-                    previous_owner_id: territory.owner_id,
-                    random_number: 0_f64,
-                    mvp: Some(mvp.user_id),
-                });
+                new_owners.push(TerritoryOwnersInsert::new(&territory, teams[0], None, Some(mvp.user_id)));
                 stats
                     .entry(teams[0])
                     .or_insert_with(|| {
@@ -283,16 +257,7 @@ fn process_territories(
                 {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
-                    new_owners.push(TerritoryOwnersInsert {
-                        territory_id: territory.territory_id,
-                        territory_name: None,
-                        owner_id: territory.owner_id,
-                        day: territory.day + 1,
-                        season: territory.season,
-                        previous_owner_id: territory.owner_id,
-                        random_number: 0_f64,
-                        mvp: Some(0),
-                    });
+                    new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
                     // add team territory count to stats
                     stats
                         .entry(territory.owner_id)
@@ -355,16 +320,7 @@ fn process_territories(
                     .drain_filter(|player| player.team == victor)
                     .collect::<Vec<_>>();
                 let mvp = get_mvp(territory_victors);
-                new_owners.push(TerritoryOwnersInsert {
-                    territory_id: territory.territory_id,
-                    territory_name: None,
-                    owner_id: victor,
-                    day: territory.day + 1,
-                    season: territory.season,
-                    previous_owner_id: territory.owner_id,
-                    random_number: lottery,
-                    mvp: Some(mvp.user_id),
-                });
+                new_owners.push(TerritoryOwnersInsert::new(&territory, victor, Some(lottery), Some(mvp.user_id)));
 
                 stats
                     .entry(victor)
@@ -419,8 +375,6 @@ fn process_territories(
 }
 
 fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<PlayerMoves>) {
-    //dbg!("wallop");
-    //dbg!(&territory_players.len());
     for i in territory_players {
         stats
             .entry(i.team)
@@ -432,46 +386,7 @@ fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Pla
     }
 }
 
-#[cfg(feature = "risk_image")]
-fn make_image(territories: &[TerritoryOwnersInsert], conn: &PgConnection) {
-    use crate::structs::Team;
-    extern crate image;
-    extern crate nsvg;
-    // first we got get the SVG image
-    use std::fs;
-    let teams = Team::load(conn);
-    let mut vec = fs::read_to_string("resources/map.svg").unwrap();
-    let base: String = "{{?}}".to_owned();
-    let mut team_map = HashMap::new();
-    match teams {
-        Ok(teams) => {
-            for team in teams {
-                team_map.insert(team.id, team.color);
-            }
-            for item in territories {
-                vec = vec.replace(
-                    &base.replace('?', &item.territory_id.to_string()),
-                    team_map.get(&item.owner_id).unwrap(),
-                );
-            }
-            let svg = nsvg::parse_str(&vec, nsvg::Units::Pixel, 96.0).unwrap();
-            let image = svg.rasterize(2.0).unwrap();
-            let (width, height) = image.dimensions();
-            image::save_buffer(
-                "../server/static/images/curr_map.png",
-                &image.into_raw(),
-                width,
-                height,
-                image::ColorType::Rgba8,
-            )
-            .expect("Failed to save png.");
-        }
-        Err(e) => {
-            dbg!(e);
-        }
-    }
-}
-
+/// Updates the statistics for all users after the roll
 fn user_update(
     turninfoblock: &TurnInfo,
     conn: &PgConnection,
@@ -566,22 +481,15 @@ fn chaos_update(
     Ok(())
 }
 
-fn main() {
-    use std::time::Instant;
-    let now = Instant::now();
-    let state = runtime();
-    let elapsed = now.elapsed();
-    let end = Instant::now();
-    println!("Elapsed: {:.2?}", elapsed);
-    println!("Start Time: {:.2?}", now);
-    println!("End Time: {:.2?}", end);
-    std::process::exit(match state {
-        Ok(_) => 0,
-        Err(err) => {
-            eprintln!("error: {:?}", err);
-            1
-        }
-    });
+fn do_playoffs() {
+    // If we have playoffs. then we need to cast off a new day
+    // Steps:
+    // 1. For each bracket, determine the winner
+    // 1a. If a bracket has a tie, then randomly declare a winner
+    // 2. Create new territory ownership by bracket
+    // 3. Create new statistics, giving each team equal territories and zero players
+    // 4. Pop on the new day
+    // Because we're not technically carrying out a new day, we don't add anything to any player account.
 }
 
 fn runtime() -> Result<(), diesel::result::Error> {
@@ -655,7 +563,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     }
 
     #[cfg(feature = "risk_image")]
-    make_image(&owners, &conn);
+    optional::image::make_image(&owners, &conn);
 
     #[cfg(feature = "chaos")]
     {
@@ -666,4 +574,24 @@ fn runtime() -> Result<(), diesel::result::Error> {
     }
 
     Ok(())
+}
+
+/// Main function; runs RNG to determine new day parameters.
+fn main() {
+    use std::time::Instant;
+    // Set up variables to know timing
+    let now = Instant::now();
+    let state = runtime();
+    let elapsed = now.elapsed();
+    let end = Instant::now();
+    println!("Elapsed: {:.2?}", elapsed);
+    println!("Start Time: {:.2?}", now);
+    println!("End Time: {:.2?}", end);
+    std::process::exit(match state {
+        Ok(_) => 0,
+        Err(err) => {
+            eprintln!("error: {:?}", err);
+            1
+        }
+    });
 }

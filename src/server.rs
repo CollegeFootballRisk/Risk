@@ -52,7 +52,9 @@ fn rocket() -> _ {
         hardcode::js_api_map,
         hardcode::js_api_team_players,
         hardcode::js_api_player,
-        hardcode::robots
+        hardcode::robots,
+        hardcode::favicon,
+        hardcode::global_css,
     ];
 
     // The paths on the /api endpoint. Defined up here for cleanliness

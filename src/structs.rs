@@ -12,7 +12,6 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::sql_types::Bool;
 use diesel::{insert_into, update};
-use diesel_citext::types::CiString;
 use std::collections::HashMap;
 
 #[derive(QueryableByName)]
@@ -70,7 +69,6 @@ pub struct Team {
 pub struct TerritoryOwners {
     pub id: i32,
     pub territory_id: i32,
-    pub territory_name: Option<CiString>,
     pub owner_id: i32,
     pub day: i32,
     pub season: i32,
@@ -83,7 +81,6 @@ pub struct TerritoryOwners {
 #[table_name = "territory_ownership"]
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
-    pub territory_name: Option<CiString>,
     pub owner_id: i32,
     pub day: i32,
     pub season: i32,
@@ -380,6 +377,26 @@ impl TerritoryOwners {
 }
 
 impl TerritoryOwnersInsert {
+    pub fn new(
+        territory: &TerritoryOwners,
+        owner: i32,
+        random_number: Option<f64>,
+        mvp: Option<i32>,
+    ) -> Self {
+        TerritoryOwnersInsert {
+            territory_id: territory.territory_id,
+            owner_id: owner,
+            day: territory.day + 1,
+            season: territory.season,
+            previous_owner_id: territory.owner_id,
+            random_number: match random_number {
+                Some(rn) => rn,
+                None => 0_f64,
+            },
+            mvp: mvp,
+        }
+    }
+
     pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::territory_ownership;
         insert_into(territory_ownership)

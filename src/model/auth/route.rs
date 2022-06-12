@@ -141,7 +141,7 @@ pub(crate) async fn make_move(
         .await
         .map_err(|_| crate::Error::InternalServerError {})?;
     // Get user information from cookies
-    let mut c = Claims::from_private_cookie(cookies, config)?;
+    let c = Claims::from_private_cookie(cookies, config)?;
 
     let _cinfo = ClientInfo {
         claims: c.0.clone(),
@@ -163,16 +163,16 @@ pub(crate) async fn make_move(
         Ok((user, multiplier)) => {
             //get user's current award information from CFBRisk
             let _tmp_usname = c.0.user.clone();
-            let awards: i32 = 5;
+            //let awards: i32 = 5;
             //get user's current information from Reddit to ensure they still exist
-            c.0.user.push_str(&awards.to_string());
+            //c.0.user.push_str(&awards.to_string());
             //at this point we know the user is authorized to make the action, so let's go ahead and make it
             let user_stats = Stats {
                 totalTurns: user.3.unwrap_or(0),
                 gameTurns: user.4.unwrap_or(0),
                 mvps: user.5.unwrap_or(0),
                 streak: user.6.unwrap_or(0),
-                awards: awards as i32,
+              //  awards: awards as i32,
             };
             let user_ratings = Ratings::load(&user_stats);
             let user_weight: f64 = match user_ratings.overall {
@@ -185,7 +185,7 @@ pub(crate) async fn make_move(
             };
             let user_power: f64 = multiplier * user_weight as f64;
             let mut merc: bool = false;
-            if user.0 != user.8 {
+            if user.0 != user.7 {
                 merc = true;
             }
             match conn
@@ -216,7 +216,7 @@ pub(crate) async fn make_move(
                                     game_turns: user_stats.gameTurns,
                                     mvps: user_stats.mvps,
                                     streak: user_stats.streak,
-                                    awards: user_stats.awards,
+                                   // awards: user_stats.awards,
                                 },
                                 connection,
                             )
@@ -365,7 +365,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             Option<i32>,
-            Option<i32>,
+           // Option<i32>,
             i32,
             bool,
         ),
@@ -384,7 +384,7 @@ pub(crate) fn handle_territory_info(
             users::game_turns,
             users::mvps,
             users::streak,
-            users::awards,
+           // users::awards,
             users::current_team,
             users::is_alt,
         ))
@@ -396,7 +396,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             Option<i32>,
-            Option<i32>,
+            //Option<i32>,
             i32,
             bool,
         )>(conn)
@@ -526,7 +526,7 @@ pub(crate) fn insert_turn(
         Option<i32>,
         Option<i32>,
         Option<i32>,
-        Option<i32>,
+        //Option<i32>,
         i32,
         bool,
     ),
@@ -539,7 +539,7 @@ pub(crate) fn insert_turn(
     merc: bool,
     conn: &PgConnection,
 ) -> QueryResult<usize> {
-    let alt_score: i32 = match user.9 {
+    let alt_score: i32 = match user.8 {
         true => 175,
         false => 0,
     };

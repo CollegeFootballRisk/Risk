@@ -45,7 +45,6 @@ table! {
         game_turns -> Nullable<Int4>,
         mvps -> Nullable<Int4>,
         streak -> Nullable<Int4>,
-        awards -> Nullable<Int4>,
         role_id -> Nullable<Int4>,
         playing_for -> Int4,
         is_alt -> Bool,
@@ -164,7 +163,6 @@ table! {
     territory_ownership (id) {
         id -> Int4,
         territory_id -> Int4,
-        territory_name -> Nullable<diesel_citext::sql_types::Citext>,
         owner_id -> Int4,
         day -> Int4,
         season -> Int4,

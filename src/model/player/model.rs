@@ -47,7 +47,7 @@ pub struct User {
     pub(crate) game_turns: Option<i32>,
     pub(crate) mvps: Option<i32>,
     pub(crate) streak: Option<i32>,
-    pub(crate) awards: Option<i32>, //    pub team: Option<String>
+    //pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
@@ -182,7 +182,7 @@ impl PlayerWithTurns {
                     users::game_turns,
                     users::mvps,
                     users::streak,
-                    users::awards,
+                    //users::awards,
                 ),
                 (
                     teams::tname.nullable(),
@@ -199,7 +199,7 @@ impl PlayerWithTurns {
                 gameTurns: user.0.game_turns.unwrap_or(0),
                 mvps: user.0.mvps.unwrap_or(0),
                 streak: user.0.streak.unwrap_or(0),
-                awards: user.0.awards.unwrap_or(0),
+                //awards: user.0.awards.unwrap_or(0),
             };
             let users_turns = past_turns::table
                 .filter(past_turns::user_id.eq(&user.0.id))
@@ -328,7 +328,7 @@ impl User {
                 users::game_turns,
                 users::mvps,
                 users::streak,
-                users::awards,
+                //users::awards,
             ))
             .first::<User>(conn)
     }

@@ -12,6 +12,18 @@ pub(crate) async fn robots() -> String {
         .to_string()
 }
 
+//Favicon
+#[get("/favicon.png", rank = 0)]
+pub(crate) async fn favicon() -> NamedFile {
+    NamedFile::open("static/favicon.png").await.ok().unwrap()
+}
+
+// CSS
+#[get("/global.css", rank = 0)]
+pub(crate) async fn global_css() -> NamedFile {
+        NamedFile::open("static/global.css").await.ok().unwrap()
+}
+
 // These are JS Routes
 #[get("/<_data>", rank = 1)]
 pub(crate) async fn js_api_leaderboard(_data: Option<String>) -> NamedFile {

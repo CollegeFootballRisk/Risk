@@ -13,7 +13,7 @@ pub(crate) struct Stats {
     pub(crate) gameTurns: i32,
     pub(crate) mvps: i32,
     pub(crate) streak: i32,
-    pub(crate) awards: i32,
+   // pub(crate) awards: i32,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]

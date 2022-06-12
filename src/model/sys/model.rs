@@ -17,9 +17,9 @@ pub struct SysInfo {
     pub(crate) settings: SysSettings,
 }
 
-pub struct appSettings {
+pub struct AppSettings {
     // Time string for the next roll
-    pub(crate) rollTime: String,
+    pub(crate) rolltime: String,
     // Map URL
     pub(crate) map: String,
     // ViewBox for the map:

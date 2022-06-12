@@ -10,7 +10,7 @@ pub(crate) struct Ratings {
     pub(crate) gameTurns: i32,
     pub(crate) mvps: i32,
     pub(crate) streak: i32,
-    pub(crate) awards: i32,
+    //pub(crate) awards: i32,
 }
 
 impl Ratings {
@@ -18,19 +18,20 @@ impl Ratings {
         let totalTurns = Self::fromarr(stat.totalTurns, [0, 10, 25, 50, 100]);
         let gameTurns = Self::fromarr(stat.gameTurns, [0, 5, 10, 25, 40]);
         let mvps = Self::fromarr(stat.mvps, [0, 1, 5, 10, 25]);
-        let awards = Self::fromarr(stat.awards, [0, 1, 2, 3, 4]);
+        //let awards = Self::fromarr(stat.awards, [0, 1, 2, 3, 4]);
         let streak = Self::fromarr(stat.streak, [0, 3, 5, 10, 25]);
-        let mut numbers = vec![totalTurns, gameTurns, mvps, awards, streak];
+        let mut numbers = vec![totalTurns, gameTurns, mvps, streak]; // awards
         numbers.sort_unstable();
-        let mid = numbers.len() / 2;
-        let overall: i32 = numbers[mid];
+        dbg!(numbers[1], numbers[2]);
+        let mid = ((numbers[1] as f32 + numbers[2] as f32) / 2_f32).round() as i32;
+        let overall: i32 = mid;
         Ratings {
             overall,
             totalTurns,
             gameTurns,
             mvps,
             streak,
-            awards,
+        //    awards,
         }
     }
 
