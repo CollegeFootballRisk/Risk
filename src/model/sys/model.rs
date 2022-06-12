@@ -17,6 +17,7 @@ pub struct SysInfo {
     pub(crate) settings: SysSettings,
 }
 
+#[allow(dead_code)]
 pub struct AppSettings {
     // Time string for the next roll
     pub(crate) rolltime: String,
