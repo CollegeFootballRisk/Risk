@@ -6,8 +6,7 @@ table! {
     past_turns (id) {
         id -> Int4,
         user_id -> Int4,
-        season -> Int4,
-        day -> Int4,
+        turn_id -> Int4,
         territory -> Int4,
         mvp -> Bool,
         power -> Double,
@@ -87,8 +86,8 @@ table! {
 table! {
     turninfo (id) {
         id -> Int4,
-        season -> Nullable<Int4>,
-        day -> Nullable<Int4>,
+        season -> Int4,
+        day -> Int4,
         complete -> Nullable<Bool>,
         active -> Nullable<Bool>,
         finale -> Nullable<Bool>,
@@ -164,8 +163,7 @@ table! {
         id -> Int4,
         territory_id -> Int4,
         owner_id -> Int4,
-        day -> Int4,
-        season -> Int4,
+        turn_id -> Int4,
         previous_owner_id -> Int4,
         random_number -> Double,
         mvp -> Nullable<Int4>,
@@ -193,8 +191,8 @@ table! {
 }
 
 table! {
-    statistics (sequence) {
-        sequence -> Int4,
+    statistics (turn_id) {
+        turn_id -> Int4,
         season -> Int4,
         day -> Int4,
         team -> Int4,
@@ -216,10 +214,8 @@ table! {
 }
 
 table! {
-    stats (sequence) {
-        sequence -> Int4,
-        season -> Int4,
-        day -> Int4,
+    stats (turn_id) {
+        turn_id -> Int4,
         team -> Int4,
         rank -> Int4,
         territorycount -> Int4,
@@ -242,14 +238,14 @@ table! {
         territory_id -> Int4,
         adjacent_id -> Int4,
         note -> Text,
+        turn_id -> Nullable<Int4>,
     }
 }
 
 table! {
     territory_stats (id) {
         team -> Int4,
-        season -> Int4,
-        day -> Int4,
+        turn_id -> Int4,
         ones -> Int4,
         twos -> Int4,
         threes -> Int4,
@@ -290,8 +286,7 @@ table! {
     new_turns (id) {
         id -> Int4,
         user_id -> Int4,
-        season -> Int4,
-        day -> Int4,
+        turn_id -> Int4,
         territory -> Int4,
         mvp -> Bool,
         power -> Double,
@@ -306,8 +301,7 @@ table! {
 table! {
     continuation_polls (id){
         id -> Int4,
-        season -> Int4,
-        day -> Int4,
+        turn_id -> Int4,
         question -> Text,
         incrment -> Int4,
     }
@@ -337,10 +331,14 @@ allow_tables_to_appear_in_same_query!(
     users,
     territory_ownership,
     territory_adjacency,
-    territories
+    territories,
+    turninfo
 );
 
 allow_tables_to_appear_in_same_query!(new_turns, territories);
 
 allow_tables_to_appear_in_same_query!(regions, territory_ownership_with_neighbors);
 allow_tables_to_appear_in_same_query!(regions, territories);
+
+allow_tables_to_appear_in_same_query!(new_turns, turninfo);
+allow_tables_to_appear_in_same_query!(continuation_polls, turninfo);

@@ -24,8 +24,7 @@ pub struct Bar {
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
-    pub season: i32,
-    pub day: i32,
+    pub turn_id: i32,
     pub territory: i32,
     pub mvp: bool,
     pub power: f64,
@@ -40,9 +39,7 @@ pub struct PlayerMoves {
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
 #[table_name = "stats"]
 pub struct Stats {
-    pub sequence: i32,
-    pub season: i32,
-    pub day: i32,
+    pub turn_id: i32,
     pub team: i32,
     pub rank: i32,
     pub territorycount: i32,
@@ -70,8 +67,7 @@ pub struct TerritoryOwners {
     pub id: i32,
     pub territory_id: i32,
     pub owner_id: i32,
-    pub day: i32,
-    pub season: i32,
+    pub turn_id: i32,
     pub previous_owner_id: i32,
     pub random_number: f64,
     pub mvp: Option<i32>,
@@ -82,8 +78,7 @@ pub struct TerritoryOwners {
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
     pub owner_id: i32,
-    pub day: i32,
-    pub season: i32,
+    pub turn_id: i32,
     pub previous_owner_id: i32,
     pub random_number: f64,
     pub mvp: Option<i32>,
@@ -93,8 +88,7 @@ pub struct TerritoryOwnersInsert {
 #[table_name = "territory_stats"]
 pub struct TerritoryStats {
     pub team: i32,
-    pub season: i32,
-    pub day: i32,
+    pub turn_id: i32,
     pub ones: i32,
     pub twos: i32,
     pub threes: i32,
@@ -110,8 +104,8 @@ pub struct TerritoryStats {
 #[table_name = "turninfo"]
 pub struct TurnInfo {
     pub id: i32,
-    pub season: Option<i32>,
-    pub day: Option<i32>,
+    pub season: i32,
+    pub day: i32,
     pub complete: Option<bool>,
     pub active: Option<bool>,
     pub finale: Option<bool>,
@@ -169,10 +163,9 @@ impl Victor {
 }
 
 impl PlayerMoves {
-    pub fn load(season: &i32, day: &i32, conn: &PgConnection) -> Result<Vec<PlayerMoves>, Error> {
+    pub fn load(turn_id: &i32, conn: &PgConnection) -> Result<Vec<PlayerMoves>, Error> {
         new_turns::table
-            .filter(new_turns::season.eq(season))
-            .filter(new_turns::day.eq(day))
+            .filter(new_turns::turn_id.eq(turn_id))
             .order_by(new_turns::territory.desc())
             .load::<PlayerMoves>(conn)
     }
@@ -189,8 +182,7 @@ impl PlayerMoves {
         new_turns::table
             .select((
                 new_turns::user_id,
-                new_turns::season,
-                new_turns::day,
+                new_turns::turn_id,
                 new_turns::territory,
                 new_turns::mvp,
                 new_turns::power,
@@ -206,8 +198,7 @@ impl PlayerMoves {
             .insert_into(past_turns::table)
             .into_columns((
                 past_turns::user_id,
-                past_turns::season,
-                past_turns::day,
+                past_turns::turn_id,
                 past_turns::territory,
                 past_turns::mvp,
                 past_turns::power,
@@ -225,7 +216,7 @@ impl PlayerMoves {
 impl Stats {
     pub fn insert(
         stats: HashMap<i32, Stats>,
-        sequence: i32,
+        turn_id: i32,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
         // calculate whichever has the highest number of territories and such
@@ -249,9 +240,7 @@ impl Stats {
                 _ => i.starpower / f64::from(i.territorycount),
             };
             amended_stats.push(Stats {
-                sequence,
-                season: i.season,
-                day: i.day,
+                turn_id: turn_id,
                 team: i.team,
                 rank: rankings,
                 territorycount: i.territorycount,
@@ -273,11 +262,9 @@ impl Stats {
     }
 
     #[must_use]
-    pub fn new(seq: i32, season: i32, day: i32, team: i32) -> Stats {
+    pub fn new(turn_id: i32, team: i32) -> Stats {
         Stats {
-            sequence: seq,
-            season,
-            day,
+            turn_id,
             team,
             rank: 0,
             territorycount: 0,
@@ -348,8 +335,7 @@ impl Default for TerritoryStats {
     fn default() -> Self {
         Self {
             team: 0,
-            season: 0,
-            day: 0,
+            turn_id: 0,
             ones: 0,
             twos: 0,
             threes: 0,
@@ -365,13 +351,11 @@ impl Default for TerritoryStats {
 
 impl TerritoryOwners {
     pub fn load(
-        season: &i32,
-        day: &i32,
+        turn_id: &i32,
         conn: &PgConnection,
     ) -> Result<Vec<TerritoryOwners>, Error> {
         territory_ownership::table
-            .filter(territory_ownership::season.eq(season))
-            .filter(territory_ownership::day.eq(day))
+            .filter(territory_ownership::turn_id.eq(turn_id))
             .load::<TerritoryOwners>(conn)
     }
 }
@@ -386,8 +370,7 @@ impl TerritoryOwnersInsert {
         TerritoryOwnersInsert {
             territory_id: territory.territory_id,
             owner_id: owner,
-            day: territory.day + 1,
-            season: territory.season,
+            turn_id: territory.turn_id + 1,
             previous_owner_id: territory.owner_id,
             random_number: match random_number {
                 Some(rn) => rn,
@@ -431,8 +414,8 @@ impl TurnInfo {
         //use schema::turninfo::dsl::*;
         diesel::insert_into(turninfo::table)
             .values((
-                turninfo::season.eq(&Some(season)),
-                turninfo::day.eq(&Some(day)),
+                turninfo::season.eq(season),
+                turninfo::day.eq(day),
                 turninfo::complete.eq(&Some(false)),
                 turninfo::active.eq(&Some(active)),
                 turninfo::finale.eq(&Some(finale)),

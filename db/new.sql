@@ -1222,7 +1222,7 @@ ALTER TABLE ONLY public.continuation_responses
 --
 
 ALTER TABLE ONLY public.new_turns
-    ADD CONSTRAINT new_turns_user_id_season_day_key UNIQUE (user_id, season, day);
+    ADD CONSTRAINT new_turns_user_id_season_day_key UNIQUE (user_id, turn_id);
 
 
 --

@@ -38,8 +38,8 @@ pub(crate) struct PastTurn {
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct TurnInfo {
     pub(crate) id: i32,
-    pub(crate) season: Option<i32>,
-    pub(crate) day: Option<i32>,
+    pub(crate) season: i32,
+    pub(crate) day: i32,
     pub(crate) complete: Option<bool>,
     pub(crate) active: Option<bool>,
     pub(crate) finale: Option<bool>,
@@ -51,6 +51,7 @@ pub(crate) struct TurnInfo {
 pub struct Latest {
     pub(crate) season: i32,
     pub(crate) day: i32,
+    pub(crate) id: i32,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
@@ -98,37 +99,11 @@ impl TurnInfo {
 }
 
 impl Latest {
-    pub(crate) fn latest(conn: &PgConnection) -> Result<Latest, String> {
-        use diesel::dsl::{max, min};
-        let season = turninfo::table
-            .select(max(turninfo::season))
-            .first::<Option<i32>>(conn);
-        match season {
-            Ok(season) => {
-                let day = turninfo::table
-                    .select(min(turninfo::day))
-                    .filter(turninfo::season.eq(season.unwrap_or(0)))
-                    .filter(turninfo::complete.eq(false))
-                    .filter(turninfo::active.eq(true))
-                    .first::<Option<i32>>(conn);
-                match day {
-                    Ok(day) => match (season, day) {
-                        (Some(season), Some(day)) => Ok(Latest { season, day }),
-                        (Some(season), None) => {
-                            let dayz = turninfo::table
-                                .select(max(turninfo::day))
-                                .filter(turninfo::season.eq(season))
-                                .first::<Option<i32>>(conn);
-                            let day: i32 = dayz.unwrap_or(Some(0)).unwrap_or(0);
-                            Ok(Latest { season, day })
-                        }
-                        _ => Ok(Latest { season: 0, day: 0 }),
-                    },
-                    _ => Err("Database Error".to_owned()),
-                }
-            }
-            _ => Err("Database Error".to_owned()),
-        }
+    pub(crate) fn latest(conn: &PgConnection) -> Result<Latest, diesel::result::Error> {
+        turninfo::table
+            .select((turninfo::season, turninfo::day, turninfo::id))
+            .order(turninfo::id.desc())
+            .first::<Latest>(conn)
     }
 }
 

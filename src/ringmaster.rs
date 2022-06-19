@@ -104,17 +104,14 @@ fn process_territories(
                     .entry(territory.owner_id)
                     .or_insert_with(|| {
                         Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
+                            territory.turn_id + 1,
                             territory.owner_id,
                         )
                     })
                     .territorycount += 1;
                 territory_stats.push(TerritoryStats {
                     team: territory.owner_id,
-                    season: territory.season,
-                    day: territory.day,
+                    turn_id: territory.turn_id,
                     territory: territory.territory_id,
                     ..TerritoryStats::default()
                 });
@@ -136,9 +133,7 @@ fn process_territories(
                         .entry(territory.owner_id)
                         .or_insert_with(|| {
                             Stats::new(
-                                territory.season * 1000 + territory.season + 1,
-                                territory.season,
-                                territory.day,
+                                territory.turn_id + 1,
                                 territory.owner_id,
                             )
                         })
@@ -146,8 +141,7 @@ fn process_territories(
 
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
-                        season: territory.season,
-                        day: territory.day,
+                        turn_id: territory.turn_id,
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
@@ -161,9 +155,7 @@ fn process_territories(
                     .entry(teams[0])
                     .or_insert_with(|| {
                         Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
+                            territory.turn_id + 1,
                             teams[0],
                         )
                     })
@@ -172,9 +164,7 @@ fn process_territories(
                     .entry(territory.owner_id)
                     .or_insert_with(|| {
                         Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
+                            territory.turn_id + 1,
                             territory.owner_id,
                         )
                     })
@@ -198,8 +188,7 @@ fn process_territories(
                 if teams[0] != territory.owner_id {
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
-                        season: territory.season,
-                        day: territory.day,
+                        turn_id: territory.turn_id,
                         territory: territory.territory_id,
                         territory_power: territory_players
                             .iter()
@@ -211,8 +200,7 @@ fn process_territories(
                 }
                 territory_stats.push(TerritoryStats {
                     team: teams[0],
-                    season: territory.season,
-                    day: territory.day,
+                    turn_id: territory.turn_id,
                     ones: territory_players
                         .iter()
                         .filter(|player| player.stars == 1)
@@ -263,9 +251,7 @@ fn process_territories(
                         .entry(territory.owner_id)
                         .or_insert_with(|| {
                             Stats::new(
-                                territory.season * 1000 + territory.season + 1,
-                                territory.season,
-                                territory.day,
+                                territory.turn_id + 1,
                                 territory.owner_id,
                             )
                         })
@@ -273,8 +259,7 @@ fn process_territories(
 
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
-                        season: territory.season,
-                        day: territory.day,
+                        turn_id: territory.turn_id,
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
@@ -286,9 +271,7 @@ fn process_territories(
                     .entry(territory.owner_id)
                     .or_insert_with(|| {
                         Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
+                            territory.turn_id + 1,
                             territory.owner_id,
                         )
                     })
@@ -326,9 +309,7 @@ fn process_territories(
                     .entry(victor)
                     .or_insert_with(|| {
                         Stats::new(
-                            territory.season * 1000 + territory.season + 1,
-                            territory.season,
-                            territory.day,
+                            territory.turn_id + 1,
                             victor,
                         )
                     })
@@ -342,8 +323,7 @@ fn process_territories(
                 for (key, val) in &map {
                     territory_stats.push(TerritoryStats {
                         team: *key,
-                        season: territory.season,
-                        day: territory.day,
+                        turn_id: territory.turn_id,
                         ones: val.ones,
                         twos: val.twos,
                         threes: val.threes,
@@ -360,8 +340,7 @@ fn process_territories(
                 if !map.contains_key(&territory.owner_id) {
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
-                        season: territory.season,
-                        day: territory.day,
+                        turn_id: territory.turn_id,
                         territory: territory.territory_id,
                         territory_power: total_power,
                         chance: 0.00,
@@ -378,7 +357,7 @@ fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Pla
     for i in territory_players {
         stats
             .entry(i.team)
-            .or_insert_with(|| Stats::new(i.season * 1000 + i.day + 1, i.season, i.day, i.team))
+            .or_insert_with(|| Stats::new(i.turn_id + 1, i.team))
             .starpower(i.power / i.multiplier)
             .effectivepower(i.power.round() as f64)
             .add_player_or_merc(i.merc)
@@ -393,8 +372,8 @@ fn user_update(
 ) -> Result<Vec<Bar>, diesel::result::Error> {
     let query = format!(
         "SELECT do_user_update({},{})",
-        &turninfoblock.day.unwrap().to_string(),
-        &turninfoblock.season.unwrap().to_string()
+        &turninfoblock.day.to_string(),
+        &turninfoblock.season.to_string()
     );
     sql_query(query).load(conn)
 }
@@ -403,10 +382,10 @@ fn user_update(
 #[cfg(feature = "chaos")]
 fn chaos_update(
     territories: &[TerritoryOwnersInsert],
+    turn_id_n: i32,
     conn: &PgConnection,
 ) -> Result<(), diesel::result::Error> {
     use crate::schema::territory_adjacency;
-    use crate::schema::territory_adjacency::*;
     // First, get the maximum and minimum territory numbers
     let max_territory: i32 = territories
         .iter()
@@ -446,8 +425,8 @@ fn chaos_update(
     // NOTE: THIS IS [low, high)
     let num: u32 = rand::thread_rng().gen_range(min_bridges..max_bridges);
     // Remove old bridges with note 'chaos_auto_managed'
-    diesel::delete(territory_adjacency::table.filter(note.eq("chaos_auto_managed")))
-        .execute(conn)?;
+    //diesel::delete(territory_adjacency::table.filter(note.eq("chaos_auto_managed")))
+    //    .execute(conn)?;
     // Add new bridges with note 'chaos_auto_managed'
     // Goes 0, 1, 2, 3, num-1; excludes num just like normal languages
     let mut new_stuff = Vec::new();
@@ -457,6 +436,7 @@ fn chaos_update(
         territory_id: i32,
         adjacent_id: i32,
         note: &'a str,
+        turn_id: Option<i32>,
     }
     dbg!(num);
     for _ in 0..num {
@@ -466,12 +446,14 @@ fn chaos_update(
             territory_id: chaos_territory_id,
             adjacent_id: territory,
             note: "chaos_auto_managed",
+            turn_id: Some(turn_id_n)
         });
         if chaos_bridges_twoway {
             new_stuff.push(TerritoryAdjacent {
                 territory_id: territory,
                 adjacent_id: chaos_territory_id,
                 note: "chaos_auto_managed",
+                turn_id: Some(turn_id_n)
             });
         }
     }
@@ -481,6 +463,7 @@ fn chaos_update(
     Ok(())
 }
 
+#[allow(dead_code)]
 fn do_playoffs() {
     // If we have playoffs. then we need to cast off a new day
     // Steps:
@@ -502,14 +485,12 @@ fn runtime() -> Result<(), diesel::result::Error> {
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
     let players = PlayerMoves::load(
-        &turninfoblock.season.unwrap(),
-        &turninfoblock.day.unwrap(),
+        &turninfoblock.id,
         &conn,
     )?;
     // And a list of all territories, and their current owners:
     let territories = TerritoryOwners::load(
-        &turninfoblock.season.unwrap(),
-        &turninfoblock.day.unwrap(),
+        &turninfoblock.id,
         &conn,
     )?;
     // If there are no moves to load, we'll exit as something's not right.
@@ -550,8 +531,8 @@ fn runtime() -> Result<(), diesel::result::Error> {
         }
     }
     match TurnInfo::insert_new(
-        turninfoblock.season.unwrap(),
-        turninfoblock.day.unwrap() + 1,
+        turninfoblock.season,
+        turninfoblock.day + 1,
         true,
         false,
         &conn,
@@ -567,7 +548,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
 
     #[cfg(feature = "chaos")]
     {
-        match chaos_update(&owners, &conn) {
+        match chaos_update(&owners, turninfoblock.id+1, &conn) {
             Ok(_) => println!("Chaos bridges updated."),
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }

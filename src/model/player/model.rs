@@ -4,7 +4,7 @@
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn};
-use crate::schema::{moves, past_turns, team_player_moves, teams, territories, users};
+use crate::schema::{moves, past_turns, team_player_moves, teams, territories, turninfo, users};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;
@@ -205,15 +205,16 @@ impl PlayerWithTurns {
                 .filter(past_turns::user_id.eq(&user.0.id))
                 .inner_join(teams::table.on(teams::id.eq(past_turns::team)))
                 .inner_join(territories::table.on(territories::id.eq(past_turns::territory)))
+                .inner_join(turninfo::table.on(turninfo::id.eq(past_turns::turn_id)))
                 .select((
-                    past_turns::season,
-                    past_turns::day,
+                    turninfo::season,
+                    turninfo::day,
                     past_turns::stars,
                     past_turns::mvp,
                     territories::name,
                     teams::tname,
                 ))
-                .order((past_turns::season.desc(), past_turns::day.desc()))
+                .order(past_turns::turn_id.desc())
                 .load::<PastTurn>(conn)
                 .expect("Error loading user turns");
             let uwp = PlayerWithTurns {

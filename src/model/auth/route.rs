@@ -153,6 +153,7 @@ pub(crate) async fn make_move(
     let temp_ltst = Latest {
         season: latest.season,
         day: latest.day,
+        id: latest.id,
     };
     match conn
         .run(move |connection| {
@@ -476,8 +477,7 @@ pub(crate) fn get_adjacent_territory_owners(
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
         .filter(territory_adjacency::adjacent_id.eq(target))
-        .filter(territory_ownership::season.eq(latest.season))
-        .filter(territory_ownership::day.eq(latest.day))
+        .filter(territory_ownership::turn_id.eq(latest.id))
         .inner_join(
             territory_ownership::table
                 .on(territory_ownership::territory_id.eq(territory_adjacency::territory_id)),
@@ -492,8 +492,7 @@ pub(crate) fn get_adjacent_territory_owners(
 pub(crate) fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
-        .filter(territory_ownership::season.eq(latest.season))
-        .filter(territory_ownership::day.eq(latest.day))
+        .filter(territory_ownership::turn_id.eq(latest.id))
         .filter(territory_ownership::owner_id.eq(team))
         .select(count(territory_ownership::owner_id))
         .first(conn)
@@ -546,8 +545,7 @@ pub(crate) fn insert_turn(
     diesel::insert_into(new_turns::table)
         .values((
             new_turns::user_id.eq(user.1),
-            new_turns::season.eq(latest.season),
-            new_turns::day.eq(latest.day),
+            new_turns::turn_id.eq(latest.id),
             new_turns::territory.eq(target),
             new_turns::mvp.eq(false),
             new_turns::power.eq(user_power),
@@ -558,7 +556,7 @@ pub(crate) fn insert_turn(
             new_turns::alt_score.eq(alt_score),
             new_turns::merc.eq(merc),
         ))
-        .on_conflict((new_turns::user_id, new_turns::season, new_turns::day))
+        .on_conflict((new_turns::user_id, new_turns::turn_id))
         .do_update()
         .set((
             new_turns::alt_score.eq(alt_score),

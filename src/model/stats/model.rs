@@ -109,7 +109,7 @@ impl StatHistory {
         statistics::table
             .filter(statistics::tname.eq(CiString::from(team)))
             .select((
-                statistics::sequence,
+                statistics::turn_id,
                 statistics::season,
                 statistics::day,
                 statistics::playercount,
@@ -180,7 +180,7 @@ impl StatLeaderboard {
             ))
             .filter(statistics::season.eq(season))
             .filter(statistics::day.eq(day))
-            .order(statistics::sequence.desc())
+            .order(statistics::turn_id.desc())
             .load::<StatLeaderboard>(conn)
     }
 }

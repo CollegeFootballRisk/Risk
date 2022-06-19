@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::schema::{continuation_polls, continuation_responses, new_turns, territories};
+use crate::schema::{continuation_polls, continuation_responses, new_turns, territories, turninfo};
 use crate::sys::SysInfo;
 use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
@@ -43,7 +43,7 @@ pub(crate) struct Poll {
     pub(crate) season: i32,
     pub(crate) day: i32,
     pub(crate) question: String,
-    pub(crate) incrment: i32,
+    pub(crate) increment: i32,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -90,8 +90,9 @@ impl MoveInfo {
     pub(crate) fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
         let r = new_turns::table
             .filter(new_turns::user_id.eq(user_id))
-            .filter(new_turns::season.eq(season))
-            .filter(new_turns::day.eq(day))
+            .filter(turninfo::season.eq(season))
+            .filter(turninfo::day.eq(day))
+            .inner_join(turninfo::table.on(new_turns::turn_id.eq(turninfo::id)))
             .inner_join(territories::table.on(new_turns::territory.eq(territories::id)))
             .select(territories::name)
             .first(conn);
@@ -111,8 +112,10 @@ impl Poll {
         conn: &PgConnection,
     ) -> Result<Vec<Poll>, diesel::result::Error> {
         continuation_polls::table
-            .filter(continuation_polls::season.eq(season))
-            .filter(continuation_polls::day.ge(day))
+            .inner_join(turninfo::table.on(turninfo::id.eq(continuation_polls::turn_id)))
+            .filter(turninfo::season.eq(season))
+            .filter(turninfo::day.ge(day))
+            .select((continuation_polls::id, turninfo::season, turninfo::day, continuation_polls::question, continuation_polls::incrment))
             .load::<Poll>(conn)
     }
 }
