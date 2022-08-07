@@ -98,16 +98,16 @@ fn process_territories(
         match teams.len() {
             0 => {
                 dbg!("Zero Team");
-                new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
+                new_owners.push(TerritoryOwnersInsert::new(
+                    &territory,
+                    territory.owner_id,
+                    None,
+                    None,
+                ));
                 // add team territory count to stats
                 stats
                     .entry(territory.owner_id)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.turn_id + 1,
-                            territory.owner_id,
-                        )
-                    })
+                    .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 1;
                 territory_stats.push(TerritoryStats {
                     team: territory.owner_id,
@@ -127,16 +127,16 @@ fn process_territories(
                 {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
-                    new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
+                    new_owners.push(TerritoryOwnersInsert::new(
+                        &territory,
+                        territory.owner_id,
+                        None,
+                        None,
+                    ));
                     // add team territory count to stats
                     stats
                         .entry(territory.owner_id)
-                        .or_insert_with(|| {
-                            Stats::new(
-                                territory.turn_id + 1,
-                                territory.owner_id,
-                            )
-                        })
+                        .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                         .territorycount += 1;
 
                     territory_stats.push(TerritoryStats {
@@ -150,24 +150,19 @@ fn process_territories(
                 dbg!("One Team");
                 let mvp = get_mvp(territory_players.clone());
                 mvps.push(mvp.clone());
-                new_owners.push(TerritoryOwnersInsert::new(&territory, teams[0], None, Some(mvp.user_id)));
+                new_owners.push(TerritoryOwnersInsert::new(
+                    &territory,
+                    teams[0],
+                    None,
+                    Some(mvp.user_id),
+                ));
                 stats
                     .entry(teams[0])
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.turn_id + 1,
-                            teams[0],
-                        )
-                    })
+                    .or_insert_with(|| Stats::new(territory.turn_id + 1, teams[0]))
                     .territorycount += 1;
                 stats
                     .entry(territory.owner_id)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.turn_id + 1,
-                            territory.owner_id,
-                        )
-                    })
+                    .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 0;
                 /*stats
                 .entry(teams[0])
@@ -245,16 +240,16 @@ fn process_territories(
                 {
                     // Then this is the same case as if there is no teams, next
                     dbg!("Team has no power");
-                    new_owners.push(TerritoryOwnersInsert::new(&territory, territory.owner_id, None, None));
+                    new_owners.push(TerritoryOwnersInsert::new(
+                        &territory,
+                        territory.owner_id,
+                        None,
+                        None,
+                    ));
                     // add team territory count to stats
                     stats
                         .entry(territory.owner_id)
-                        .or_insert_with(|| {
-                            Stats::new(
-                                territory.turn_id + 1,
-                                territory.owner_id,
-                            )
-                        })
+                        .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                         .territorycount += 1;
 
                     territory_stats.push(TerritoryStats {
@@ -269,12 +264,7 @@ fn process_territories(
                 let mut map = HashMap::new();
                 stats
                     .entry(territory.owner_id)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.turn_id + 1,
-                            territory.owner_id,
-                        )
-                    })
+                    .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 0;
                 for team in teams {
                     map.insert(team, Victor::default()); // stars, power, ones, twos, threes, fours, fives
@@ -303,16 +293,16 @@ fn process_territories(
                     .drain_filter(|player| player.team == victor)
                     .collect::<Vec<_>>();
                 let mvp = get_mvp(territory_victors);
-                new_owners.push(TerritoryOwnersInsert::new(&territory, victor, Some(lottery), Some(mvp.user_id)));
+                new_owners.push(TerritoryOwnersInsert::new(
+                    &territory,
+                    victor,
+                    Some(lottery),
+                    Some(mvp.user_id),
+                ));
 
                 stats
                     .entry(victor)
-                    .or_insert_with(|| {
-                        Stats::new(
-                            territory.turn_id + 1,
-                            victor,
-                        )
-                    })
+                    .or_insert_with(|| Stats::new(territory.turn_id + 1, victor))
                     .territorycount += 1;
 
                 let total_power = territory_players
@@ -446,14 +436,14 @@ fn chaos_update(
             territory_id: chaos_territory_id,
             adjacent_id: territory,
             note: "chaos_auto_managed",
-            turn_id: Some(turn_id_n)
+            turn_id: Some(turn_id_n),
         });
         if chaos_bridges_twoway {
             new_stuff.push(TerritoryAdjacent {
                 territory_id: territory,
                 adjacent_id: chaos_territory_id,
                 note: "chaos_auto_managed",
-                turn_id: Some(turn_id_n)
+                turn_id: Some(turn_id_n),
             });
         }
     }
@@ -484,15 +474,9 @@ fn runtime() -> Result<(), diesel::result::Error> {
     turninfoblock.start_time_now();
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
-    let players = PlayerMoves::load(
-        &turninfoblock.id,
-        &conn,
-    )?;
+    let players = PlayerMoves::load(&turninfoblock.id, &conn)?;
     // And a list of all territories, and their current owners:
-    let territories = TerritoryOwners::load(
-        &turninfoblock.id,
-        &conn,
-    )?;
+    let territories = TerritoryOwners::load(&turninfoblock.id, &conn)?;
     // If there are no moves to load, we'll exit as something's not right.
     // TODO: Return Err, not Ok
     if players.is_empty() {
@@ -548,7 +532,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
 
     #[cfg(feature = "chaos")]
     {
-        match chaos_update(&owners, turninfoblock.id+1, &conn) {
+        match chaos_update(&owners, turninfoblock.id + 1, &conn) {
             Ok(_) => println!("Chaos bridges updated."),
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }

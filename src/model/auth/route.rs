@@ -173,7 +173,7 @@ pub(crate) async fn make_move(
                 gameTurns: user.4.unwrap_or(0),
                 mvps: user.5.unwrap_or(0),
                 streak: user.6.unwrap_or(0),
-              //  awards: awards as i32,
+                //  awards: awards as i32,
             };
             let user_ratings = Ratings::load(&user_stats);
             let user_weight: f64 = match user_ratings.overall {
@@ -217,7 +217,7 @@ pub(crate) async fn make_move(
                                     game_turns: user_stats.gameTurns,
                                     mvps: user_stats.mvps,
                                     streak: user_stats.streak,
-                                   // awards: user_stats.awards,
+                                    // awards: user_stats.awards,
                                 },
                                 connection,
                             )
@@ -366,7 +366,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             Option<i32>,
             Option<i32>,
-           // Option<i32>,
+            // Option<i32>,
             i32,
             bool,
         ),
@@ -385,7 +385,7 @@ pub(crate) fn handle_territory_info(
             users::game_turns,
             users::mvps,
             users::streak,
-           // users::awards,
+            // users::awards,
             users::current_team,
             users::is_alt,
         ))

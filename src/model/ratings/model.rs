@@ -31,7 +31,7 @@ impl Ratings {
             gameTurns,
             mvps,
             streak,
-        //    awards,
+            //    awards,
         }
     }
 

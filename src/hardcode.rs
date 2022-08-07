@@ -21,7 +21,7 @@ pub(crate) async fn favicon() -> NamedFile {
 // CSS
 #[get("/global.css", rank = 0)]
 pub(crate) async fn global_css() -> NamedFile {
-        NamedFile::open("static/global.css").await.ok().unwrap()
+    NamedFile::open("static/global.css").await.ok().unwrap()
 }
 
 // These are JS Routes

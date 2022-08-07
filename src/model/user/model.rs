@@ -37,7 +37,7 @@ pub struct UpdateUser {
     pub(crate) game_turns: i32,
     pub(crate) mvps: i32,
     pub(crate) streak: i32,
-   // pub(crate) awards: i32,
+    // pub(crate) awards: i32,
 }
 
 impl UpdateUser {
@@ -50,7 +50,7 @@ impl UpdateUser {
                 users::game_turns.eq(user.game_turns),
                 users::mvps.eq(user.mvps),
                 users::streak.eq(user.streak),
-               // users::awards.eq(user.awards),
+                // users::awards.eq(user.awards),
             ))
             .execute(conn)
     }

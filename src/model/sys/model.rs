@@ -18,7 +18,7 @@ pub struct SysInfo {
 }
 
 #[allow(dead_code)]
-pub struct AppSettings {
+pub(crate) struct AppSettings {
     // Time string for the next roll
     pub(crate) rolltime: String,
     // Map URL

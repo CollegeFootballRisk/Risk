@@ -115,7 +115,13 @@ impl Poll {
             .inner_join(turninfo::table.on(turninfo::id.eq(continuation_polls::turn_id)))
             .filter(turninfo::season.eq(season))
             .filter(turninfo::day.ge(day))
-            .select((continuation_polls::id, turninfo::season, turninfo::day, continuation_polls::question, continuation_polls::incrment))
+            .select((
+                continuation_polls::id,
+                turninfo::season,
+                turninfo::day,
+                continuation_polls::question,
+                continuation_polls::incrment,
+            ))
             .load::<Poll>(conn)
     }
 }

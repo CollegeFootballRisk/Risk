@@ -100,7 +100,7 @@ pub struct TerritoryStats {
     pub territory_power: f64,
 }
 
-#[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
+#[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Eq, Clone)]
 #[table_name = "turninfo"]
 pub struct TurnInfo {
     pub id: i32,
@@ -240,7 +240,7 @@ impl Stats {
                 _ => i.starpower / f64::from(i.territorycount),
             };
             amended_stats.push(Stats {
-                turn_id: turn_id,
+                turn_id,
                 team: i.team,
                 rank: rankings,
                 territorycount: i.territorycount,
@@ -350,10 +350,7 @@ impl Default for TerritoryStats {
 }
 
 impl TerritoryOwners {
-    pub fn load(
-        turn_id: &i32,
-        conn: &PgConnection,
-    ) -> Result<Vec<TerritoryOwners>, Error> {
+    pub fn load(turn_id: &i32, conn: &PgConnection) -> Result<Vec<TerritoryOwners>, Error> {
         territory_ownership::table
             .filter(territory_ownership::turn_id.eq(turn_id))
             .load::<TerritoryOwners>(conn)
@@ -372,11 +369,8 @@ impl TerritoryOwnersInsert {
             owner_id: owner,
             turn_id: territory.turn_id + 1,
             previous_owner_id: territory.owner_id,
-            random_number: match random_number {
-                Some(rn) => rn,
-                None => 0_f64,
-            },
-            mvp: mvp,
+            random_number: random_number.unwrap_or(0_f64),
+            mvp,
         }
     }
 

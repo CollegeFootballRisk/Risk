@@ -8,7 +8,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  RUSTFLAGS: "-D warnings -W unreachable-pub -W rust-2021-compatibility"
+  RUSTFLAGS: "-D warnings -W unreachable-pub -W rust-2021-compatibility -A unreachable_pub"
   RUSTDOCFLAGS: -Dwarnings
   RUSTUP_MAX_RETRIES: 10
   RUST_BACKTRACE: full
@@ -40,7 +40,7 @@ jobs:
     - name: Install Clippy
       run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
     - name: Clippy
-      run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
+      run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha -- -A unreachable_pub
     - name: Generate release tag
       id: tag
       run: |
