@@ -112,6 +112,8 @@ pub struct TurnInfo {
     pub chaosweight: Option<i32>,
     pub rollendtime: Option<NaiveDateTime>,
     pub rollstarttime: Option<NaiveDateTime>,
+    pub allornothingenabled: Option<bool>,
+    pub map: Option<String>,
 }
 
 #[derive(Clone)]
@@ -394,6 +396,8 @@ impl TurnInfo {
                 turninfo::active.eq(newturninfo.active),
                 turninfo::rollstarttime.eq(newturninfo.rollstarttime),
                 turninfo::rollendtime.eq(newturninfo.rollendtime),
+                turninfo::map.eq(&newturninfo.map),
+                turninfo::allornothingenabled.eq(newturninfo.allornothingenabled),
             ))
             .execute(conn)
     }
@@ -403,6 +407,8 @@ impl TurnInfo {
         day: i32,
         active: bool,
         finale: bool,
+        map: Option<String>,
+        allornothingenabled: bool,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;
@@ -413,6 +419,8 @@ impl TurnInfo {
                 turninfo::complete.eq(&Some(false)),
                 turninfo::active.eq(&Some(active)),
                 turninfo::finale.eq(&Some(finale)),
+                turninfo::map.eq(&map.clone()),
+                turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
             ))
             .on_conflict((turninfo::season, turninfo::day))
             .do_update()
@@ -420,6 +428,8 @@ impl TurnInfo {
                 turninfo::active.eq(&Some(active)),
                 turninfo::complete.eq(&Some(false)),
                 turninfo::finale.eq(&Some(finale)),
+                turninfo::map.eq(&map.clone()),
+                turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
             ))
             .execute(conn)
     }
@@ -436,6 +446,8 @@ impl TurnInfo {
                 turninfo::chaosweight,
                 turninfo::rollendtime,
                 turninfo::rollstarttime,
+                turninfo::allornothingenabled,
+                turninfo::map,
             ))
             .filter(turninfo::active.eq(true))
             .order((turninfo::season.desc(), turninfo::day.desc()))

@@ -95,6 +95,8 @@ table! {
         chaosweight -> Nullable<Int4>,
         rollendtime -> Nullable<Timestamp>,
         rollstarttime -> Nullable<Timestamp>,
+        map -> Nullable<Text>,
+        allornothingenabled -> Nullable<Bool>,
     }
 }
 
@@ -325,6 +327,26 @@ table! {
     }
 }
 
+table! {
+    award_info (id){
+        id -> Int4,
+        name -> Text,
+        info -> Text,
+    }
+}
+
+table! {
+    awards (id){
+        id -> Int4,
+        award_id -> Int4,
+        user_id -> Int4,
+    }
+}
+
+allow_tables_to_appear_in_same_query!(users, awards, award_info);
+joinable!(awards -> users (user_id));
+joinable!(awards -> award_info (award_id));
+
 allow_tables_to_appear_in_same_query!(
     past_turns,
     teams,
@@ -332,7 +354,7 @@ allow_tables_to_appear_in_same_query!(
     territory_ownership,
     territory_adjacency,
     territories,
-    turninfo
+    turninfo,
 );
 
 allow_tables_to_appear_in_same_query!(new_turns, territories);

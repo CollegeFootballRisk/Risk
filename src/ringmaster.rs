@@ -22,6 +22,8 @@ use rand_chacha::ChaCha12Rng;
 use std::collections::HashMap;
 
 const ALT_CUTOFF: i32 = 75;
+const AON_END: i32 = 48;
+const AON_START: i32 = 3;
 
 use structs::{
     Bar, PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
@@ -514,11 +516,21 @@ fn runtime() -> Result<(), diesel::result::Error> {
             println!("Error updating turninfo.")
         }
     }
+    let aone = if (turninfoblock.allornothingenabled == Some(true)
+        || (turninfoblock.day + 1) >= AON_START)
+        && (turninfoblock.day + 1) < AON_END
+    {
+        true
+    } else {
+        false
+    };
     match TurnInfo::insert_new(
         turninfoblock.season,
         turninfoblock.day + 1,
         true,
         false,
+        turninfoblock.map,
+        aone,
         &conn,
     ) {
         Ok(_ok) => {

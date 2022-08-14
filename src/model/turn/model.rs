@@ -44,6 +44,8 @@ pub(crate) struct TurnInfo {
     pub(crate) active: Option<bool>,
     pub(crate) finale: Option<bool>,
     pub(crate) rollTime: Option<crate::catchers::NaiveDateTime>,
+    pub(crate) allOrNothingEnabled: Option<bool>,
+    pub(crate) map: Option<String>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
@@ -74,6 +76,8 @@ impl TurnInfo {
                 turninfo::active,
                 turninfo::finale,
                 turninfo::rollstarttime,
+                turninfo::allornothingenabled,
+                turninfo::map,
             ))
             .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
             .order_by(turninfo::id)
@@ -91,6 +95,8 @@ impl TurnInfo {
                 turninfo::active,
                 turninfo::finale,
                 turninfo::rollstarttime,
+                turninfo::allornothingenabled,
+                turninfo::map,
             ))
             .order_by(turninfo::id)
             .load::<TurnInfo>(conn)
