@@ -4,11 +4,19 @@
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn};
-use crate::schema::{moves, past_turns, team_player_moves, teams, territories, turninfo, users};
+use crate::schema::{
+    award_info, awards, moves, past_turns, team_player_moves, teams, territories, turninfo, users,
+};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
+
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct Award {
+    name: String,
+    info: String,
+}
 
 #[derive(Serialize)]
 pub(crate) struct Player {
@@ -80,6 +88,7 @@ pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
+    pub(crate) awards: Vec<Award>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
@@ -115,6 +124,13 @@ impl PlayerWithTurnsAndAdditionalTeam {
                 };
                 let ciName: Vec<CiString> =
                     name.iter().map(|x| CiString::from(x.clone())).collect();
+                let awards: Vec<Award> = awards::table
+                    .left_join(award_info::table)
+                    .left_join(users::table)
+                    .filter(users::uname.eq(&me[0].name))
+                    .select((award_info::name, award_info::info))
+                    .load(conn)
+                    .unwrap_or(vec![]);
                 let results = users::table
                     .filter(users::uname.eq_any(ciName))
                     .filter(not(users::current_team.eq(status_code)))
@@ -140,6 +156,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: me[0].ratings.clone(),
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
+                        awards,
                     }),
                     Err(_e) => Some(PlayerWithTurnsAndAdditionalTeam {
                         name: me[0].name.clone(),
@@ -149,6 +166,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: me[0].ratings.clone(),
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
+                        awards,
                     }),
                 }
             }
