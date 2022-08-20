@@ -33,7 +33,7 @@ pub(crate) struct TeamInfo {
     pub(crate) seasons: Vec<i32>,
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct TeamInTurns {
     pub(crate) team: CiString,
     pub(crate) color: String,

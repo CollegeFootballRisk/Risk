@@ -428,7 +428,8 @@ fn chaos_update(
         territory_id: i32,
         adjacent_id: i32,
         note: &'a str,
-        turn_id: Option<i32>,
+        min_turn: i32,
+        max_turn: i32,
     }
     dbg!(num);
     for _ in 0..num {
@@ -438,14 +439,16 @@ fn chaos_update(
             territory_id: chaos_territory_id,
             adjacent_id: territory,
             note: "chaos_auto_managed",
-            turn_id: Some(turn_id_n),
+            min_turn: turn_id_n - 1,
+            max_turn: turn_id_n,
         });
         if chaos_bridges_twoway {
             new_stuff.push(TerritoryAdjacent {
                 territory_id: territory,
                 adjacent_id: chaos_territory_id,
                 note: "chaos_auto_managed",
-                turn_id: Some(turn_id_n),
+                min_turn: turn_id_n - 1,
+                max_turn: turn_id_n,
             });
         }
     }

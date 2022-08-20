@@ -240,7 +240,8 @@ table! {
         territory_id -> Int4,
         adjacent_id -> Int4,
         note -> Text,
-        turn_id -> Nullable<Int4>,
+        min_turn -> Int4,
+        max_turn -> Int4,
     }
 }
 

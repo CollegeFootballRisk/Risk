@@ -68,7 +68,7 @@ pub(crate) struct PlayerWithTurns {
     pub(crate) turns: Vec<PastTurn>,
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct PlayerInTurns {
     pub(crate) team: Option<CiString>,
     pub(crate) player: Option<CiString>,
@@ -130,7 +130,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                     .filter(users::uname.eq(&me[0].name))
                     .select((award_info::name, award_info::info))
                     .load(conn)
-                    .unwrap_or(vec![]);
+                    .unwrap_or_default();
                 let results = users::table
                     .filter(users::uname.eq_any(ciName))
                     .filter(not(users::current_team.eq(status_code)))

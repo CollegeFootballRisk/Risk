@@ -477,6 +477,8 @@ pub(crate) fn get_adjacent_territory_owners(
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
         .filter(territory_adjacency::adjacent_id.eq(target))
+        .filter(territory_adjacency::min_turn.lt(latest.id))
+        .filter(territory_adjacency::max_turn.ge(latest.id))
         .filter(territory_ownership::turn_id.eq(latest.id))
         .inner_join(
             territory_ownership::table

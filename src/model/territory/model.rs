@@ -38,7 +38,7 @@ pub(crate) struct TerritoryHistory {
     pub(crate) owner: String,
 }
 
-#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
+#[derive(Serialize, Queryable, Deserialize, JsonSchema, Debug)]
 pub(crate) struct TerritoryTurn {
     pub(crate) occupier: String,
     pub(crate) winner: String,
