@@ -13,7 +13,7 @@ pub mod optional;
 pub mod schema;
 pub mod structs;
 
-use chrono::{Duration, NaiveTime,DateTime,Utc,Datelike,Timelike, NaiveDateTime};
+use chrono::{DateTime, Datelike, Duration, NaiveDateTime, NaiveTime, Timelike, Utc};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::sql_query;
@@ -471,23 +471,32 @@ fn do_playoffs() {
 
 fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
     // Calculate new starttime
-    let next_time = settings
-        .extract_inner("risk.time")
-        .unwrap_or("04:00:00");
+    let next_time = settings.extract_inner("risk.time").unwrap_or("04:00:00");
     let naive_time = NaiveTime::parse_from_str(next_time, "%H:%M:%S").unwrap();
-    let next_days = settings.extract_inner("risk.days").unwrap_or([1,2,3,4,5,6,7]);
+    let next_days = settings
+        .extract_inner("risk.days")
+        .unwrap_or([1, 2, 3, 4, 5, 6, 7]);
     return next_day_in_seq(&next_days, &naive_time, &Utc::now());
 }
 
 // Function assumes that we're after today's roll
-fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime{
+fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime {
     let curr_day: i64 = now.weekday().number_from_monday() as i64;
-    let index: i64 = if next_days.len() == 0 && curr_day < 7 {(curr_day + 1) as i64}
-    else if next_days.len() == 0 {1 as i64}
-    else {
-        if let Some(next) = next_days.iter().find(|&x| *x > curr_day) {*next as i64} else {next_days[0] as i64}
+    let index: i64 = if next_days.len() == 0 && curr_day < 7 {
+        (curr_day + 1) as i64
+    } else if next_days.len() == 0 {
+        1 as i64
+    } else {
+        if let Some(next) = next_days.iter().find(|&x| *x > curr_day) {
+            *next as i64
+        } else {
+            next_days[0] as i64
+        }
     };
-    return (*now + Duration::days(index)).date().and_hms(next_time.hour(), next_time.minute(), next_time.second()).naive_utc()
+    return (*now + Duration::days(index))
+        .date()
+        .and_hms(next_time.hour(), next_time.minute(), next_time.second())
+        .naive_utc();
 }
 
 fn runtime() -> Result<(), diesel::result::Error> {
@@ -598,53 +607,65 @@ fn main() {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use chrono::{NaiveDate,NaiveTime};
+    use chrono::{NaiveDate, NaiveTime};
 
     #[test]
     fn test_next_day_in_seq() {
-    let next_time = String::from("04:00:00");
-    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
-    let mut next_days = [1,2,3,4,5,6,7];
-    next_days.sort();
-     
-    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-    let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 00, 00);
-    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+        let next_time = String::from("04:00:00");
+        let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+        let mut next_days = [1, 2, 3, 4, 5, 6, 7];
+        next_days.sort();
+
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+        let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 00, 00);
+        assert_eq!(
+            next,
+            next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
+        );
     }
 
     #[test]
     fn test_next_day_in_seq_skip() {
-    let next_time = String::from("04:00:00");
-    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
-    let mut next_days = [2,3,4,5,6,7];
-    next_days.sort();
-     
-    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-    let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 00, 00);
-    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+        let next_time = String::from("04:00:00");
+        let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+        let mut next_days = [2, 3, 4, 5, 6, 7];
+        next_days.sort();
+
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 00, 00);
+        assert_eq!(
+            next,
+            next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
+        );
     }
 
     #[test]
     fn test_next_day_in_seq_skip_2() {
-    let next_time = String::from("04:00:00");
-    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
-    let mut next_days = [3,4,5,6,7];
-    next_days.sort();
-     
-    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-    let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 00, 00);
-    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+        let next_time = String::from("04:00:00");
+        let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+        let mut next_days = [3, 4, 5, 6, 7];
+        next_days.sort();
+
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+        let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 00, 00);
+        assert_eq!(
+            next,
+            next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
+        );
     }
 
     #[test]
     fn test_next_day_in_seq_skip_time() {
-    let next_time = String::from("05:30:00");
-    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
-    let mut next_days = [2,3,4,5,6,7];
-    next_days.sort();
-     
-    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-    let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(5, 30, 00);
-    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+        let next_time = String::from("05:30:00");
+        let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+        let mut next_days = [2, 3, 4, 5, 6, 7];
+        next_days.sort();
+
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(5, 30, 00);
+        assert_eq!(
+            next,
+            next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
+        );
     }
 }

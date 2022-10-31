@@ -409,7 +409,7 @@ impl TurnInfo {
         finale: bool,
         map: Option<String>,
         allornothingenabled: bool,
-        start_time:NaiveDateTime,
+        start_time: NaiveDateTime,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;

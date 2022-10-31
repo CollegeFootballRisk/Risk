@@ -80,7 +80,7 @@ impl TurnInfo {
                 turninfo::map,
             ))
             .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
-            .order_by(turninfo::id)
+            .order_by(turninfo::id.desc()) // always desc so downstream know how to parse this consistently
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }
