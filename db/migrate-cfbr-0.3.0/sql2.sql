@@ -24,6 +24,7 @@ CREATE VIEW public.territory_ownership_with_neighbors AS
     turninfo.day,
     turninfo.season,
     territories.name,
+    territories.region,
     teams.tname,
     territory_neighbor_history.neighbors
    FROM (((public.territory_ownership

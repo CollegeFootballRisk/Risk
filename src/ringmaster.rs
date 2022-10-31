@@ -13,7 +13,7 @@ pub mod optional;
 pub mod schema;
 pub mod structs;
 
-use chrono::Utc;
+use chrono::{Duration, NaiveTime,DateTime,Utc,Datelike,Timelike, NaiveDateTime};
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::sql_query;
@@ -375,6 +375,7 @@ fn user_update(
 fn chaos_update(
     territories: &[TerritoryOwnersInsert],
     turn_id_n: i32,
+    settings: &rocket::figment::Figment,
     conn: &PgConnection,
 ) -> Result<(), diesel::result::Error> {
     use crate::schema::territory_adjacency;
@@ -391,8 +392,6 @@ fn chaos_update(
         .unwrap_or(-2);
     // Decide how many bridges to add
     // First, read config for Max/Min:
-    let rocket = rocket::build();
-    let settings = rocket.figment();
     let max_bridges: u32 = settings
         .extract_inner("risk.max_chaos_bridges")
         .unwrap_or(5);
@@ -470,7 +469,30 @@ fn do_playoffs() {
     // Because we're not technically carrying out a new day, we don't add anything to any player account.
 }
 
+fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
+    // Calculate new starttime
+    let next_time = settings
+        .extract_inner("risk.time")
+        .unwrap_or("04:00:00");
+    let naive_time = NaiveTime::parse_from_str(next_time, "%H:%M:%S").unwrap();
+    let next_days = settings.extract_inner("risk.days").unwrap_or([1,2,3,4,5,6,7]);
+    return next_day_in_seq(&next_days, &naive_time, &Utc::now());
+}
+
+// Function assumes that we're after today's roll
+fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime{
+    let curr_day: i64 = now.weekday().number_from_monday() as i64;
+    let index: i64 = if next_days.len() == 0 && curr_day < 7 {(curr_day + 1) as i64}
+    else if next_days.len() == 0 {1 as i64}
+    else {
+        if let Some(next) = next_days.iter().find(|&x| *x > curr_day) {*next as i64} else {next_days[0] as i64}
+    };
+    return (*now + Duration::days(index)).date().and_hms(next_time.hour(), next_time.minute(), next_time.second()).naive_utc()
+}
+
 fn runtime() -> Result<(), diesel::result::Error> {
+    let rocket = rocket::build();
+    let settings = rocket.figment();
     // Connect to the Postgres DB
     let conn: PgConnection = establish_connection();
     // Get the active turn
@@ -519,14 +541,9 @@ fn runtime() -> Result<(), diesel::result::Error> {
             println!("Error updating turninfo.")
         }
     }
-    let aone = if (turninfoblock.allornothingenabled == Some(true)
+    let aone = (turninfoblock.allornothingenabled == Some(true)
         || (turninfoblock.day + 1) >= AON_START)
-        && (turninfoblock.day + 1) < AON_END
-    {
-        true
-    } else {
-        false
-    };
+        && (turninfoblock.day + 1) < AON_END;
     match TurnInfo::insert_new(
         turninfoblock.season,
         turninfoblock.day + 1,
@@ -534,6 +551,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
         false,
         turninfoblock.map,
         aone,
+        next_roll(&settings),
         &conn,
     ) {
         Ok(_ok) => {
@@ -547,7 +565,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
 
     #[cfg(feature = "chaos")]
     {
-        match chaos_update(&owners, turninfoblock.id + 1, &conn) {
+        match chaos_update(&owners, turninfoblock.id + 1, &settings, &conn) {
             Ok(_) => println!("Chaos bridges updated."),
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }
@@ -574,4 +592,59 @@ fn main() {
             1
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+    use chrono::{NaiveDate,NaiveTime};
+
+    #[test]
+    fn test_next_day_in_seq() {
+    let next_time = String::from("04:00:00");
+    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+    let mut next_days = [1,2,3,4,5,6,7];
+    next_days.sort();
+     
+    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+    let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 00, 00);
+    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+    }
+
+    #[test]
+    fn test_next_day_in_seq_skip() {
+    let next_time = String::from("04:00:00");
+    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+    let mut next_days = [2,3,4,5,6,7];
+    next_days.sort();
+     
+    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+    let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 00, 00);
+    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+    }
+
+    #[test]
+    fn test_next_day_in_seq_skip_2() {
+    let next_time = String::from("04:00:00");
+    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+    let mut next_days = [3,4,5,6,7];
+    next_days.sort();
+     
+    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+    let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 00, 00);
+    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+    }
+
+    #[test]
+    fn test_next_day_in_seq_skip_time() {
+    let next_time = String::from("05:30:00");
+    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+    let mut next_days = [2,3,4,5,6,7];
+    next_days.sort();
+     
+    let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
+    let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(5, 30, 00);
+    assert_eq!(next, next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc)));
+    }
 }

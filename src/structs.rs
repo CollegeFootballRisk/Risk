@@ -409,6 +409,7 @@ impl TurnInfo {
         finale: bool,
         map: Option<String>,
         allornothingenabled: bool,
+        start_time:NaiveDateTime,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;
@@ -419,7 +420,8 @@ impl TurnInfo {
                 turninfo::complete.eq(&Some(false)),
                 turninfo::active.eq(&Some(active)),
                 turninfo::finale.eq(&Some(finale)),
-                turninfo::map.eq(&map.clone()),
+                turninfo::map.eq(&map),
+                turninfo::rollstarttime.eq(&Some(start_time)),
                 turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
             ))
             .on_conflict((turninfo::season, turninfo::day))
@@ -428,7 +430,8 @@ impl TurnInfo {
                 turninfo::active.eq(&Some(active)),
                 turninfo::complete.eq(&Some(false)),
                 turninfo::finale.eq(&Some(finale)),
-                turninfo::map.eq(&map.clone()),
+                turninfo::map.eq(&map),
+                turninfo::rollstarttime.eq(&start_time),
                 turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
             ))
             .execute(conn)
