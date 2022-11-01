@@ -38,7 +38,7 @@ pub fn establish_connection() -> PgConnection {
         .extract_inner("databases.postgres_global.url")
         .expect("Database not set in configuration.");
     PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+        .unwrap_or_else(|_| panic!("Error connecting to {database_url}"))
 }
 
 fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
@@ -189,7 +189,7 @@ fn process_territories(
                         territory: territory.territory_id,
                         territory_power: territory_players
                             .iter()
-                            .map(|mover| mover.power as f64)
+                            .map(|mover| mover.power)
                             .sum::<f64>(),
                         chance: 0.00,
                         ..TerritoryStats::default()
@@ -220,13 +220,13 @@ fn process_territories(
                         .count() as i32,
                     teampower: territory_players
                         .iter()
-                        .map(|mover| mover.power as f64)
+                        .map(|mover| mover.power)
                         .sum::<f64>(),
                     chance: 1.00,
                     territory: territory.territory_id,
                     territory_power: territory_players
                         .iter()
-                        .map(|mover| mover.power as f64)
+                        .map(|mover| mover.power)
                         .sum::<f64>(),
                 });
                 continue;
@@ -309,7 +309,7 @@ fn process_territories(
 
                 let total_power = territory_players
                     .iter()
-                    .map(|mover| mover.power as f64)
+                    .map(|mover| mover.power)
                     .sum::<f64>();
                 handle_team_stats(&mut stats, territory_players);
                 for (key, val) in &map {
@@ -351,7 +351,7 @@ fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Pla
             .entry(i.team)
             .or_insert_with(|| Stats::new(i.turn_id + 1, i.team))
             .starpower(i.power / i.multiplier)
-            .effectivepower(i.power.round() as f64)
+            .effectivepower(i.power.round())
             .add_player_or_merc(i.merc)
             .stars(i.stars);
     }
@@ -476,27 +476,25 @@ fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
     let next_days = settings
         .extract_inner("risk.days")
         .unwrap_or([1, 2, 3, 4, 5, 6, 7]);
-    return next_day_in_seq(&next_days, &naive_time, &Utc::now());
+    next_day_in_seq(&next_days, &naive_time, &Utc::now())
 }
 
 // Function assumes that we're after today's roll
 fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime {
     let curr_day: i64 = now.weekday().number_from_monday() as i64;
-    let index: i64 = if next_days.len() == 0 && curr_day < 7 {
-        (curr_day + 1) as i64
-    } else if next_days.len() == 0 {
-        1 as i64
+    let index: i64 = if next_days.is_empty() && curr_day < 7 {
+        curr_day + 1
+    } else if next_days.is_empty() {
+        1_i64
+    } else if let Some(next) = next_days.iter().find(|&x| *x > curr_day) {
+        *next
     } else {
-        if let Some(next) = next_days.iter().find(|&x| *x > curr_day) {
-            *next as i64
-        } else {
-            next_days[0] as i64
-        }
+        next_days[0]
     };
-    return (*now + Duration::days(index))
+    (*now + Duration::days(index))
         .date()
         .and_hms(next_time.hour(), next_time.minute(), next_time.second())
-        .naive_utc();
+        .naive_utc()
 }
 
 fn runtime() -> Result<(), diesel::result::Error> {
@@ -537,7 +535,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     let userupdate = user_update(&turninfoblock, &conn);
     match userupdate {
         Ok(ok) => println!("Users updated successfully {}", ok[0].do_user_update),
-        Err(e) => println!("Failed to update users: {:?}", e),
+        Err(e) => println!("Failed to update users: {e:?}"),
     }
     turninfoblock.rollendtime = Some(Utc::now().naive_utc());
     turninfoblock.complete = Some(true);
@@ -560,13 +558,13 @@ fn runtime() -> Result<(), diesel::result::Error> {
         false,
         turninfoblock.map,
         aone,
-        next_roll(&settings),
+        next_roll(settings),
         &conn,
     ) {
         Ok(_ok) => {
             println!("Create new turn succeeded")
         }
-        Err(e) => println!("Failed to make new turn {:?}", e),
+        Err(e) => println!("Failed to make new turn {e:?}"),
     }
 
     #[cfg(feature = "risk_image")]
@@ -591,13 +589,13 @@ fn main() {
     let state = runtime();
     let elapsed = now.elapsed();
     let end = Instant::now();
-    println!("Elapsed: {:.2?}", elapsed);
-    println!("Start Time: {:.2?}", now);
-    println!("End Time: {:.2?}", end);
+    println!("Elapsed: {elapsed:.2?}");
+    println!("Start Time: {now:.2?}");
+    println!("End Time: {end:.2?}");
     std::process::exit(match state {
         Ok(_) => 0,
         Err(err) => {
-            eprintln!("error: {:?}", err);
+            eprintln!("error: {err:?}");
             1
         }
     });
@@ -616,8 +614,8 @@ mod tests {
         let mut next_days = [1, 2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-        let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 00, 00);
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
+        let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 0, 0);
         assert_eq!(
             next,
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
@@ -631,8 +629,8 @@ mod tests {
         let mut next_days = [2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 00, 00);
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
+        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 0, 0);
         assert_eq!(
             next,
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
@@ -646,8 +644,8 @@ mod tests {
         let mut next_days = [3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-        let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 00, 00);
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
+        let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 0, 0);
         assert_eq!(
             next,
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
@@ -661,8 +659,8 @@ mod tests {
         let mut next_days = [2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 01, 01).into();
-        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(5, 30, 00);
+        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
+        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(5, 30, 0);
         assert_eq!(
             next,
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))

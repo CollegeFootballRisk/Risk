@@ -52,18 +52,18 @@ pub(crate) async fn join_team(
         .territories
         > 0;
     // If user has no team (and thus no active_team), then allow them to join anything
-    if let Some(_) = users.active_team.unwrap_or_default().name {
+    if users.active_team.unwrap_or_default().name.is_some() {
         return std::result::Result::Err(crate::Error::BadRequest {});
     }
 
     // If user just needs new active team, we can do this
-    if let Some(_) = users.team.unwrap_or_default().name {
+    if users.team.unwrap_or_default().name.is_some() {
         if has_territories {
             conn.run(move |cn| update_user(true, c.0.id, team, cn))
                 .await?; //playing_for
-            return std::result::Result::Ok(Json(String::from("Okay")));
+            std::result::Result::Ok(Json(String::from("Okay")))
         } else {
-            return std::result::Result::Err(crate::Error::BadRequest {});
+            std::result::Result::Err(crate::Error::BadRequest {})
         }
     } else {
         // User needs BOTH team and active team. IF
@@ -162,7 +162,7 @@ pub(crate) async fn make_move(
                 5 => 5.0,
                 _ => 1.0,
             };
-            let user_power: f64 = multiplier * user_weight as f64;
+            let user_power: f64 = multiplier * user_weight;
             let mut merc: bool = false;
             if user.0 != user.7 {
                 merc = true;

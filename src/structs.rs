@@ -402,6 +402,7 @@ impl TurnInfo {
             .execute(conn)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_new(
         season: i32,
         day: i32,
