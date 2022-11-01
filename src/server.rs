@@ -61,8 +61,9 @@ fn rocket() -> _ {
     ];
 
     // The paths on the /api endpoint. Defined up here for cleanliness
-    let api_paths = routes_with_openapi![
+    let api_paths = openapi_get_routes![
         player::route::player,
+        player::route::search,
         player::route::player_full,
         player::route::me,
         player::route::mercs,

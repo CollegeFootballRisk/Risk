@@ -4,7 +4,7 @@
 use crate::db::DbConn;
 use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
-    PollResponse, Ratings, Stats, TeamInfo, TeamWithColors, UpdateUser,
+    PollResponse, Ratings, Stats, UpdateUser,
 };
 use crate::schema::{
     cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users,
@@ -38,68 +38,46 @@ pub(crate) async fn join_team(
         .await
         .ok_or(crate::Error::Unauthorized {})?;
 
-    // Check that DB and cookie correspond
-    if users.name.to_lowercase() == c.0.user.to_lowercase() {
-        //see if user needs a new team, or a team in general
-        match users.active_team.unwrap_or_else(TeamWithColors::blank).name {
-            None => {
-                //check team exists
-                match conn
-                    .run(move |connection| TeamInfo::load(connection).iter().any(|e| e.id == team))
-                    .await
-                {
-                    true => {
-                        // check that team has territories
-                        match conn
-                            .run(move |connection| CurrentStrength::load_id(team, connection))
-                            .await
-                        {
-                            Ok(strength) => {
-                                if strength.territories > 0 {
-                                    match users.team.unwrap_or_else(TeamWithColors::blank).name {
-                                        Some(_e) => {
-                                            //merc!
-                                            match conn
-                                                .run(move |cn| update_user(false, c.0.id, team, cn))
-                                                .await
-                                            {
-                                                Ok(_e) => std::result::Result::Ok(Json(
-                                                    String::from("Okay"),
-                                                )),
-                                                Err(_e) => std::result::Result::Err(
-                                                    crate::Error::InternalServerError {},
-                                                ),
-                                            }
-                                        }
-                                        None => {
-                                            //new kid on the block
-                                            match conn
-                                                .run(move |cn| update_user(true, c.0.id, team, cn))
-                                                .await
-                                            {
-                                                Ok(_e) => std::result::Result::Ok(Json(
-                                                    String::from("Okay"),
-                                                )),
-                                                Err(_e) => std::result::Result::Err(
-                                                    crate::Error::InternalServerError {},
-                                                ),
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    std::result::Result::Err(crate::Error::BadRequest {})
-                                }
-                            }
-                            Err(_e) => std::result::Result::Err(crate::Error::BadRequest {}),
-                        }
-                    }
-                    false => std::result::Result::Err(crate::Error::BadRequest {}),
-                }
-            }
-            Some(_e) => std::result::Result::Err(crate::Error::InternalServerError {}),
+    // Check that DB and cookie correspond, if not, yeet!
+    if users.name.to_lowercase() != c.0.user.to_lowercase() {
+        return std::result::Result::Err(crate::Error::Unauthorized {});
+    }
+
+    // Does the team they want to join have territories?
+    // check that team has territories
+    let has_territories: bool = conn
+        .run(move |connection| CurrentStrength::load_id(team, connection))
+        .await
+        .map_err(|_| crate::Error::BadRequest {})?
+        .territories
+        > 0;
+    // If user has no team (and thus no active_team), then allow them to join anything
+    if let Some(_) = users.active_team.unwrap_or_default().name {
+        return std::result::Result::Err(crate::Error::BadRequest {});
+    }
+
+    // If user just needs new active team, we can do this
+    if let Some(_) = users.team.unwrap_or_default().name {
+        if has_territories {
+            conn.run(move |cn| update_user(true, c.0.id, team, cn))
+                .await?; //playing_for
+            return std::result::Result::Ok(Json(String::from("Okay")));
+        } else {
+            return std::result::Result::Err(crate::Error::BadRequest {});
         }
     } else {
-        std::result::Result::Err(crate::Error::Unauthorized {})
+        // User needs BOTH team and active team. IF
+        if has_territories {
+            conn.run(move |cn| update_user(false, c.0.id, team, cn))
+                .await?; //playing_for
+            conn.run(move |cn| update_user(true, c.0.id, team, cn))
+                .await?; //current_team
+            std::result::Result::Ok(Json(String::from("Okay")))
+        } else {
+            conn.run(move |cn| update_user(false, c.0.id, team, cn))
+                .await?; //current_team
+            std::result::Result::Ok(Json(String::from("Partial")))
+        }
     }
 }
 
@@ -576,11 +554,11 @@ pub(crate) fn update_user(
     conn: &PgConnection,
 ) -> QueryResult<usize> {
     match new {
-        true => diesel::update(users::table)
-            .filter(users::id.eq(user))
-            .set((users::current_team.eq(team), users::playing_for.eq(team)))
-            .execute(conn),
         false => diesel::update(users::table)
+            .filter(users::id.eq(user))
+            .set(users::current_team.eq(team))
+            .execute(conn),
+        true => diesel::update(users::table)
             .filter(users::id.eq(user))
             .set(users::playing_for.eq(team))
             .execute(conn),

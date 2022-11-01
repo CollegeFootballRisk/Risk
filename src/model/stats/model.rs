@@ -28,7 +28,7 @@ pub(crate) struct StatLeaderboard {
     pub(crate) efficiency: f64, //starpower/territoryCount
 }
 
-#[derive(Serialize, Deserialize, JsonSchema, Queryable)]
+#[derive(Serialize, Deserialize, JsonSchema, Queryable, Debug)]
 pub(crate) struct CurrentStrength {
     pub(crate) team: String,
     pub(crate) players: i32,
@@ -140,8 +140,7 @@ impl CurrentStrength {
                 statistics::territorycount,
             ))
             .filter(statistics::tname.eq(CiString::from(team)))
-            .order(statistics::season.desc())
-            .order(statistics::day.desc())
+            .order(statistics::turn_id.desc())
             .first::<CurrentStrength>(conn)
     }
 
@@ -155,10 +154,23 @@ impl CurrentStrength {
                 statistics::territorycount,
             ))
             .filter(statistics::team.eq(team))
-            .order(statistics::season.desc())
-            .order(statistics::day.desc())
+            .order(statistics::turn_id.desc())
             .first::<CurrentStrength>(conn)
     }
+    /*        statistics::table
+            .select((
+                statistics::tname,
+                statistics::playercount,
+                statistics::merccount,
+                statistics::starpower,
+                statistics::territorycount,
+            ))
+            .inner_join(turninfo::table.on(turninfo::id.eq(statistics::turn_id)))
+            .filter(statistics::tname.eq(CiString::from(team)))
+            .filter(turninfo::complete.eq(true))
+            .order(statistics::turn_id.desc())
+            .first::<CurrentStrength>(conn)
+    }*/
 }
 
 impl StatLeaderboard {

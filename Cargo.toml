@@ -24,8 +24,8 @@ rocket = {version = "0.5.0-rc.1", features = ["secrets", "json"] }
 #rocket-governor-cloudflare = {package ="rocket-governor", git = "https://github.com/CollegeFootballRisk/rocket-governor", rev = "db2787f", features = ["limit_info", "cloudflare"], optional = true}
 rocket_sync_db_pools = {version = "0.1.0-rc.1", features=["diesel_postgres_pool"]}
 rocket_oauth2 = {version = "0.5.0-rc.1", features = ["hyper_rustls_adapter"]}
-okapi = {version = "0.6.0-alpha-1" }
-rocket_okapi = { version = "0.7.0-alpha-1" }
+okapi = {package="okapi", git = "https://github.com/GREsau/okapi", rev = "b5b0a89b273f04342d1cb615fef0642beef33cef" }
+rocket_okapi = { git = "https://github.com/GREsau/okapi", rev = "b5b0a89b273f04342d1cb615fef0642beef33cef",features = ["swagger"] }
 schemars = { version = "0.8", features = ["preserve_order"] }
 serde = "1.0"
 serde_json = "1.0"

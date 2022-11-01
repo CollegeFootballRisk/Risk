@@ -8,9 +8,9 @@ use diesel_citext::types::CiString;
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
+use rocket::time::Duration;
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
-use time::Duration;
 
 #[get("/reddit")]
 pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {

@@ -8,7 +8,7 @@ use rocket::serde::json::Json;
 
 /// # Team Statistics
 /// Gives current team strength (from prior day's move).
-#[openapi(tag = "Stats")]
+#[openapi(tag = "Stats", ignore = "conn")]
 #[get("/stats/team?<team>")]
 pub(crate) async fn currentstrength(
     team: String,
@@ -23,7 +23,7 @@ pub(crate) async fn currentstrength(
 
 /// # Leaderboard
 /// Provides team ranks on a given season/day, or on the prior day if season/day not provided.
-#[openapi(tag = "Stats")]
+#[openapi(tag = "Stats", ignore = "conn")]
 #[get("/stats/leaderboard?<season>&<day>")]
 pub(crate) async fn leaderboard(
     season: Option<i32>,
@@ -61,7 +61,7 @@ pub(crate) async fn leaderboard(
 /// # Heat Map
 /// Information necessary to generate a heatmap of moves on a given day. Defaults to prior day if
 /// no season/day are specified.
-#[openapi(tag = "Stats")]
+#[openapi(tag = "Stats", ignore = "conn")]
 #[get("/heat?<season>&<day>")]
 pub(crate) async fn heat(
     season: Option<i32>,
@@ -91,7 +91,7 @@ pub(crate) async fn heat(
 
 /// # Team History
 /// Gives historical team statistics for a given team.
-#[openapi(tag = "Stats")]
+#[openapi(tag = "Stats", ignore = "conn")]
 #[get("/stats/team/history?<team>")]
 pub(crate) async fn stathistory(
     team: String,
@@ -107,7 +107,7 @@ pub(crate) async fn stathistory(
 
 /// # Team Odds
 /// Gives odds for a team on a given day
-#[openapi(tag = "Teams")]
+#[openapi(tag = "Teams", ignore = "conn")]
 #[get("/team/odds?<season>&<day>&<team>")]
 pub(crate) async fn odds(
     season: i32,

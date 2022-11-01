@@ -73,8 +73,8 @@ impl TeamInfo {
     }
 }
 
-impl TeamWithColors {
-    pub(crate) fn blank() -> TeamWithColors {
+impl Default for TeamWithColors {
+    fn default() -> TeamWithColors {
         TeamWithColors {
             name: None,
             colors: Colors {

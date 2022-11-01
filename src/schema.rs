@@ -347,6 +347,7 @@ table! {
 allow_tables_to_appear_in_same_query!(users, awards, award_info);
 joinable!(awards -> users (user_id));
 joinable!(awards -> award_info (award_id));
+joinable!(statistics -> turninfo (turn_id));
 
 allow_tables_to_appear_in_same_query!(
     past_turns,
@@ -365,3 +366,4 @@ allow_tables_to_appear_in_same_query!(regions, territories);
 
 allow_tables_to_appear_in_same_query!(new_turns, turninfo);
 allow_tables_to_appear_in_same_query!(continuation_polls, turninfo);
+allow_tables_to_appear_in_same_query!(statistics, turninfo);

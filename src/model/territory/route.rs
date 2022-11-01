@@ -9,7 +9,7 @@ use rocket::serde::json::Json;
 
 /// # Territory Ownership
 /// Gives territory ownership information
-#[openapi(tag = "Territories")]
+#[openapi(tag = "Territories", ignore = "conn")]
 #[get("/territories?<day>&<season>")]
 pub(crate) async fn territories(
     season: Option<i32>,
@@ -39,7 +39,7 @@ pub(crate) async fn territories(
 
 /// # Territory Owners
 /// Gives a list of all owners of a territory in a given season.
-#[openapi(tag = "Territories")]
+#[openapi(tag = "Territories", ignore = "conn")]
 #[get("/territory/history?<territory>&<season>")]
 pub(crate) async fn territoryhistory(
     territory: String,
@@ -58,7 +58,7 @@ pub(crate) async fn territoryhistory(
 
 /// # Territory Moves
 /// Gives a list of all moves given on a particular day.
-#[openapi(tag = "Territories")]
+#[openapi(tag = "Territories", ignore = "conn")]
 #[get("/territory/turn?<territory>&<season>&<day>")]
 pub(crate) async fn territory_turn(
     territory: String,

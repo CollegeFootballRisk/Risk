@@ -9,7 +9,7 @@ use rocket::serde::json::Json;
 
 /// # Territory Ownership
 /// Gives territory ownership information
-#[openapi(tag = "Regions")]
+#[openapi(tag = "Regions", ignore = "conn")]
 #[get("/regions")]
 pub(crate) async fn regions(conn: DbConn) -> Result<Json<Vec<Region>>, Error> {
     Ok(Json(conn.run(move |c| Region::load(c)).await?))

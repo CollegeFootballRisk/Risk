@@ -8,7 +8,7 @@ use crate::model::{Roll, TurnInfo};
 use rocket::serde::json::Json;
 /// # List of Turns
 /// Returns information about all past and present. Eventually will allow filtering by season.
-#[openapi(tag = "Turns")]
+#[openapi(tag = "Turns", ignore = "conn")]
 #[get("/turns")]
 pub(crate) async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
     let turns = conn.run(|c| TurnInfo::load(c)).await;
@@ -21,7 +21,7 @@ pub(crate) async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
 
 /// # List of Turns
 /// Returns information about all past, present, and upcoming turns.
-#[openapi(tag = "Turns")]
+#[openapi(tag = "Turns", ignore = "conn")]
 #[get("/turns/all")]
 pub(crate) async fn all_turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
     let turns = conn.run(|c| TurnInfo::loadall(c)).await;
@@ -35,7 +35,7 @@ pub(crate) async fn all_turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Statu
 /// # Audit Log
 /// List of random numbers used to determine victors on a given day. Returns 502 error if no day
 /// specified.
-#[openapi(tag = "Turns")]
+#[openapi(tag = "Turns", ignore = "conn")]
 #[get("/roll/log?<season>&<day>")]
 pub(crate) async fn rolllog(season: i32, day: i32, conn: DbConn) -> Result<Json<Roll>, Status> {
     let roll = conn.run(move |c| Roll::load(season, day, c)).await;

@@ -9,10 +9,11 @@ use crate::schema::{
 };
 use diesel::prelude::*;
 use diesel::result::Error;
+use diesel_citext::prelude::CitextExpressionMethods;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct Award {
     name: String,
     info: String,
@@ -58,7 +59,7 @@ pub struct User {
     //pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct PlayerWithTurns {
     pub(crate) name: CiString,
     pub(crate) team: Option<TeamWithColors>,
@@ -79,7 +80,7 @@ pub(crate) struct PlayerInTurns {
     pub(crate) power: f64,
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
     pub(crate) name: CiString,
     pub(crate) team: Option<TeamWithColors>,
@@ -350,5 +351,13 @@ impl User {
                 //users::awards,
             ))
             .first::<User>(conn)
+    }
+
+    pub fn search(s: String, limit: i32, conn: &PgConnection) -> Result<Vec<String>, Error> {
+        users::table
+            .filter(users::uname.like(CiString::from(s)))
+            .select(users::uname)
+            .limit(limit.into())
+            .load::<String>(conn)
     }
 }

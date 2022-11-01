@@ -5,6 +5,7 @@ use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{
     Claims, PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
+    User,
 };
 use crate::sys::SysInfo;
 use crate::Error;
@@ -14,7 +15,7 @@ use rocket::State;
 
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
-#[openapi(tag = "Players")]
+#[openapi(tag = "Players", ignore = "conn")]
 #[get("/players?<team>")]
 pub(crate) async fn players(
     team: Option<String>,
@@ -42,7 +43,7 @@ pub(crate) async fn players(
 
 /// # Team Mercenary Roster
 /// Get all of the mercenary players on a team (returns all players on all teams if no team is provided).
-#[openapi(tag = "Players")]
+#[openapi(tag = "Players", ignore = "conn")]
 #[get("/mercs?<team>")]
 pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMerc>>, crate::Error> {
     let team_name: String = urlencoding::decode(&team)?.into_owned();
@@ -82,7 +83,7 @@ pub(crate) async fn me(
 /// # Player List
 /// Returns all players, but provides simplified data structure for smaller payload size. Unlike
 /// other methods, this one will return before a player has been part of a roll.
-#[openapi(tag = "Players")]
+#[openapi(tag = "Players", ignore = "conn")]
 #[get("/players/full")]
 pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>, Error> {
     Ok(Json(conn.run(move |c| PlayerSummary::load(c)).await?))
@@ -90,7 +91,7 @@ pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>
 
 /// # Player Batching
 /// Batch retrieval of players
-#[openapi(tag = "Players")]
+#[openapi(tag = "Players", ignore = "conn")]
 #[get("/players/batch?<players>")]
 pub(crate) async fn player_multifetch(
     players: Option<String>,
@@ -114,9 +115,36 @@ pub(crate) async fn player_multifetch(
     }
 }
 
+/// # Player Search
+/// Search for players by name
+#[openapi(tag = "Players", ignore = "conn")]
+#[get("/players/search?<s>&<limit>")]
+pub(crate) async fn search(
+    mut s: String,
+    limit: Option<i32>,
+    conn: DbConn,
+) -> Result<Json<Vec<String>>, crate::Error> {
+    let count = match limit {
+        Some(x) => {
+            if x <= 50 {
+                x
+            } else {
+                10
+            }
+        }
+        None => 10,
+    };
+    s.push('%');
+    Ok(conn
+        .run(move |c| User::search(s, count, c))
+        .await
+        .map_err(|_| crate::Error::NotFound {})?
+        .into())
+}
+
 /// # Player Information
 /// Retrieve information about individual player
-#[openapi(tag = "Players")]
+#[openapi(tag = "Players", ignore = "conn")]
 #[get("/player?<player>")]
 pub(crate) async fn player(
     player: String,
