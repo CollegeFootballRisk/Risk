@@ -33,7 +33,7 @@ pub use error::Error;
 mod security;
 use crate::db::DbConn;
 //use crate::limits::RateLimitGuard;
-use crate::model::{auth, player, region, stats, sys, team, territory, turn};
+use crate::model::{auth, event, player, region, stats, sys, team, territory, turn};
 use rocket::fs::{relative, FileServer};
 //use rocket_governor::rocket_governor_catcher;
 use rocket_oauth2::OAuth2;
@@ -62,6 +62,8 @@ fn rocket() -> _ {
 
     // The paths on the /api endpoint. Defined up here for cleanliness
     let api_paths = openapi_get_routes![
+        event::route::transfers,
+        event::route::notifications,
         player::route::player,
         player::route::search,
         player::route::player_full,

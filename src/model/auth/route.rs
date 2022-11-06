@@ -56,11 +56,21 @@ pub(crate) async fn join_team(
         return std::result::Result::Err(crate::Error::BadRequest {});
     }
 
+    // We will probably insert so let's create now
+    let b_event = crate::model::Event {
+        id: uuid::Uuid::new_v4(),
+        flavor: crate::schema::Flavor::ChangeTeam,
+        time: chrono::Utc::now().naive_utc(),
+        payload: serde_json::json!({"user": c.0.user, "from_team": users.team, "to_team": team}),
+    };
+
     // If user just needs new active team, we can do this
     if users.team.unwrap_or_default().name.is_some() {
         if has_territories {
             conn.run(move |cn| update_user(true, c.0.id, team, cn))
                 .await?; //playing_for
+            conn.run(move |cn| crate::model::Event::insert(&b_event, cn))
+                .await?;
             std::result::Result::Ok(Json(String::from("Okay")))
         } else {
             std::result::Result::Err(crate::Error::BadRequest {})
@@ -72,6 +82,8 @@ pub(crate) async fn join_team(
                 .await?; //playing_for
             conn.run(move |cn| update_user(true, c.0.id, team, cn))
                 .await?; //current_team
+            conn.run(move |cn| crate::model::Event::insert(&b_event, cn))
+                .await?;
             std::result::Result::Ok(Json(String::from("Okay")))
         } else {
             conn.run(move |cn| update_user(false, c.0.id, team, cn))

@@ -4,6 +4,7 @@
 
 pub(crate) mod auth;
 pub(crate) mod discord;
+pub(crate) mod event;
 pub(crate) mod player;
 pub(crate) mod ratings;
 pub(crate) mod reddit;
@@ -15,11 +16,11 @@ pub(crate) mod territory;
 pub(crate) mod turn;
 pub(crate) mod user;
 pub(crate) use auth::*;
+pub(crate) use event::*;
 pub(crate) use player::*;
 pub(crate) use ratings::*;
-pub(crate) use stats::*;
-
 pub(crate) use region::*;
+pub(crate) use stats::*;
 pub(crate) use team::*;
 pub(crate) use territory::*;
 pub(crate) use turn::*;

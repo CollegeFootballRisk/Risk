@@ -1,6 +1,15 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+use diesel_derive_enum::DbEnum;
+use rocket_okapi::JsonSchema;
+use serde::{Deserialize, Serialize};
+
+#[derive(DbEnum, Debug, Serialize, Deserialize, JsonSchema)]
+pub enum Flavor {
+    Notification,
+    ChangeTeam,
+}
 
 table! {
     past_turns (id) {
@@ -341,6 +350,15 @@ table! {
         id -> Int4,
         award_id -> Int4,
         user_id -> Int4,
+    }
+}
+
+table! {
+    event (id) {
+        id -> Uuid,
+        flavor -> crate::schema::FlavorMapping,
+        time -> Timestamp,
+        payload -> Json,
     }
 }
 
