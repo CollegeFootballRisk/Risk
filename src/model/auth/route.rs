@@ -4,7 +4,7 @@
 use crate::db::DbConn;
 use crate::model::{
     Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
-    PollResponse, Ratings, Stats, UpdateUser,
+    PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
 };
 use crate::schema::{
     cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users,
@@ -27,6 +27,10 @@ pub(crate) async fn join_team(
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Json<String>, crate::Error> {
+    // Do not allow joining Unjonable Placeholder
+    if team <= 0 {
+        return Err(crate::Error::BadRequest{})
+    }
     // Get user information from cookies
     let c = Claims::from_private_cookie(cookies, config)?;
     //see if user already has team, and if user has current_team
@@ -115,7 +119,7 @@ pub(crate) async fn make_move(
 ) -> Result<Json<String>, crate::Error> {
     // Get latest turn
     let latest = conn
-        .run(move |c| Latest::latest(c))
+        .run(move |c| TurnInfo::latest(c))
         .await
         .map_err(|_| crate::Error::InternalServerError {})?;
     // Get user information from cookies
@@ -126,16 +130,12 @@ pub(crate) async fn make_move(
         ip: remote_addr.to_string(),
     };
     // id, name Json(c.0.user)
+    let tmplatest = latest.clone();
     //get user's team information, and whether they can make that move
     let temp_pfix = c.0.clone();
-    let temp_ltst = Latest {
-        season: latest.season,
-        day: latest.day,
-        id: latest.id,
-    };
     match conn
         .run(move |connection| {
-            handle_territory_info(&temp_pfix, target, temp_ltst, connection, aon)
+            handle_territory_info(&temp_pfix, target, &tmplatest, connection, aon)
         })
         .await
     {
@@ -314,7 +314,7 @@ pub(crate) async fn view_response(
 }
 
 pub(crate) fn handleregionalownership(
-    latest: &Latest,
+    latest: &TurnInfo,
     team: i32,
     conn: &PgConnection,
 ) -> QueryResult<i64> {
@@ -331,7 +331,7 @@ pub(crate) fn handleregionalownership(
 pub(crate) fn handle_territory_info(
     c: &Claims,
     target: i32,
-    latest: Latest,
+    latest: &TurnInfo,
     conn: &PgConnection,
     aon: Option<bool>,
 ) -> Result<
@@ -380,7 +380,7 @@ pub(crate) fn handle_territory_info(
             bool,
         )>(conn)
     {
-        Ok(team_id) => match get_adjacent_territory_owners(target, &latest, conn) {
+        Ok(team_id) => match get_adjacent_territory_owners(target, latest, conn) {
             Ok(adjacent_territory_owners) => {
                 match adjacent_territory_owners
                     .iter()
@@ -398,11 +398,11 @@ pub(crate) fn handle_territory_info(
                             Some(_npos) => {
                                 if team_id.0 != 0 {
                                     let mut regional_multiplier =
-                                        handleregionalownership(&latest, team_id.0, conn)
+                                        handleregionalownership(latest, team_id.0, conn)
                                             .unwrap_or(0);
                                     // If we're doing chaos stuff, then we want to keep
                                     // Chaos from getting additional point
-                                    if team_id.0 == 47 && cfg!(feature = "chaos") {
+                                    if team_id.0 == 131 && cfg!(feature = "chaos") {
                                         regional_multiplier -= 1;
                                     }
                                     regional_multiplier *= 2;
@@ -412,6 +412,7 @@ pub(crate) fn handle_territory_info(
                                     let mut aon_multiplier: i32 = 1;
                                     if aon == Some(true)
                                         && get_territory_number(team_id.0, &latest, conn) == 1
+                                        && latest.allOrNothingEnabled == Some(true)
                                     {
                                         let mut rng = thread_rng();
                                         // Triple or nothing
@@ -450,7 +451,7 @@ pub(crate) fn handle_territory_info(
 
 pub(crate) fn get_adjacent_territory_owners(
     target: i32,
-    latest: &Latest,
+    latest: &TurnInfo,
     conn: &PgConnection,
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
@@ -469,7 +470,7 @@ pub(crate) fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub(crate) fn get_territory_number(team: i32, latest: &Latest, conn: &PgConnection) -> i32 {
+pub(crate) fn get_territory_number(team: i32, latest: &TurnInfo, conn: &PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
         .filter(territory_ownership::turn_id.eq(latest.id))
@@ -510,7 +511,7 @@ pub(crate) fn insert_turn(
         bool,
     ),
     user_ratings: Ratings,
-    latest: &Latest,
+    latest: &TurnInfo,
     target: i32,
     multiplier: f64,
     user_weight: f64,

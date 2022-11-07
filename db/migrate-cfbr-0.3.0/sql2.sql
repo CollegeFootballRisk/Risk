@@ -30,9 +30,9 @@ CREATE VIEW public.territory_ownership_with_neighbors AS
    FROM (((public.territory_ownership
      JOIN public.teams ON ((teams.id = territory_ownership.owner_id)))
      JOIN public.territories ON ((territory_ownership.territory_id = territories.id)))
-     JOIN public.territory_neighbor_history ON ((territory_ownership.territory_id = territory_neighbor_history.id))
-     JOIN public.turninfo ON ((territory_ownership.turn_id = turninfo.id)))
-  WHERE ((turninfo.id = territory_neighbor_history.turn_id));
+     JOIN public.turninfo ON ((territory_ownership.turn_id = turninfo.id))
+     left JOIN public.territory_neighbor_history ON ((territory_ownership.territory_id = territory_neighbor_history.id and territory_neighbor_history.turn_id = turninfo.id)))
+  WHERE ((turninfo.id = territory_neighbor_history.turn_id or territory_neighbor_history.neighbors is null));
 
 
 ALTER TABLE public.territory_ownership_with_neighbors OWNER TO risk;

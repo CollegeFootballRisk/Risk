@@ -27,7 +27,7 @@ pub(crate) struct TerritoryWithNeighbors {
     pub(crate) owner: String,
     pub(crate) region: i32,
     pub(crate) region_name: String,
-    pub(crate) neighbors: Value,
+    pub(crate) neighbors: Option<Value>,
 }
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]

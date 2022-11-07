@@ -35,7 +35,7 @@ pub(crate) struct PastTurn {
     pub(crate) team: String,      //should be string
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
 pub(crate) struct TurnInfo {
     pub(crate) id: i32,
     pub(crate) season: i32,
@@ -101,6 +101,24 @@ impl TurnInfo {
             .order_by(turninfo::id)
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
+    }
+
+    pub(crate) fn latest(conn: &PgConnection) -> Result<TurnInfo, diesel::result::Error> {
+        turninfo::table
+        .select((
+            turninfo::id,
+            turninfo::season,
+            turninfo::day,
+            turninfo::complete,
+            turninfo::active,
+            turninfo::finale,
+            turninfo::rollstarttime,
+            turninfo::allornothingenabled,
+            turninfo::map,
+        ))
+        .filter(turninfo::active.eq(Some(true)))
+        .order_by(turninfo::id.desc())
+        .first::<TurnInfo>(conn)
     }
 }
 

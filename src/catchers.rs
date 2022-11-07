@@ -30,8 +30,8 @@ pub(crate) fn internal_error() -> Json<Httperror> {
     Json(Httperror { status: 500 })
 }
 
-#[derive(Serialize, Deserialize)]
-pub(crate) struct NaiveDateTime(chrono::NaiveDateTime);
+#[derive(Serialize, Deserialize, Clone)]
+pub struct NaiveDateTime(chrono::NaiveDateTime);
 
 impl Queryable<diesel::sql_types::Timestamp, Pg> for NaiveDateTime {
     type Row = chrono::NaiveDateTime;
