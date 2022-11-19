@@ -105,20 +105,20 @@ impl TurnInfo {
 
     pub(crate) fn latest(conn: &PgConnection) -> Result<TurnInfo, diesel::result::Error> {
         turninfo::table
-        .select((
-            turninfo::id,
-            turninfo::season,
-            turninfo::day,
-            turninfo::complete,
-            turninfo::active,
-            turninfo::finale,
-            turninfo::rollstarttime,
-            turninfo::allornothingenabled,
-            turninfo::map,
-        ))
-        .filter(turninfo::active.eq(Some(true)))
-        .order_by(turninfo::id.desc())
-        .first::<TurnInfo>(conn)
+            .select((
+                turninfo::id,
+                turninfo::season,
+                turninfo::day,
+                turninfo::complete,
+                turninfo::active,
+                turninfo::finale,
+                turninfo::rollstarttime,
+                turninfo::allornothingenabled,
+                turninfo::map,
+            ))
+            .filter(turninfo::active.eq(Some(true)))
+            .order_by(turninfo::id.desc())
+            .first::<TurnInfo>(conn)
     }
 }
 

@@ -3,6 +3,5 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 #[derive(Deserialize, Debug)]
 pub(crate) struct RedditUserInfo {
-    #[serde(default)]
-    pub(crate) name: String,
+    //#[serde(default)]
 }

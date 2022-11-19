@@ -34,85 +34,95 @@ pub(crate) async fn callback(
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Redirect, Status> {
-    let userinfo: Result<RedditUserInfo, _> = match reqwest::Client::builder().build() {
-        Ok(rclient) => {
-            match rclient
-                .get("https://oauth.reddit.com/api/v1/me")
-                .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
-                .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
-                .send()
-                .await
-            {
-                Ok(text) => text.json().await,
-                Err(_) => {
-                    return std::result::Result::Err(Status::BadRequest);
-                }
-            }
-        }
-        Err(_) => {
-            return std::result::Result::Err(Status::BadRequest);
-        }
+    // Get user's information from Reddit
+    let user_info: serde_json::Value = reqwest::Client::builder()
+        .build()
+        .map_err(|_| Status::BadRequest)?
+        .get("https://oauth.reddit.com/api/v1/me")
+        .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
+        .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
+        .send()
+        .await
+        .map_err(|_| Status::InternalServerError)?
+        .json()
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+    // This is a rather gross way of extracting the user's name
+    let uname: String = String::from(
+        user_info
+            .get("name")
+            .ok_or(Status::BadRequest)?
+            .as_str()
+            .ok_or(Status::InternalServerError)?,
+    );
+
+    // Build the `UpsertableUser` for querying the DB
+    let new_user = UpsertableUser {
+        uname: CiString::from(uname.clone()),
+        platform: CiString::from("reddit"),
     };
-    dbg!(&userinfo);
-    match userinfo {
-        Ok(user_info) => {
-            let new_user = UpsertableUser {
-                uname: CiString::from(user_info.name.clone()),
-                platform: CiString::from("reddit"),
-            };
-            match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
-                Ok(_n) => {
-                    let name = user_info.name.clone();
-                    match conn
-                        .run(move |c| User::load(name, "reddit".to_string(), c))
-                        .await
-                    {
-                        Ok(user) => {
-                            let datetime = Utc::now();
-                            let timestamp: usize = 2_592_000 + datetime.timestamp() as usize;
-                            //dbg!(&token);
-                            let new_claims = Claims {
-                                id: user.id,
-                                user: user.uname.to_string(),
-                                token: Some(token.refresh_token().unwrap().to_string()),
-                                refresh_token: Some(token.access_token().to_string()),
-                                exp: timestamp,
-                            };
-                            cookies.add_private(
-                                Cookie::build("username", user_info.name)
-                                    .same_site(SameSite::Lax)
-                                    .domain(config.settings.base_url.clone())
-                                    .path("/")
-                                    .max_age(Duration::hours(720))
-                                    .finish(),
-                            );
-                            match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
-                                Ok(s) => {
-                                    cookies.add_private(
-                                        Cookie::build("jwt", s)
-                                            .same_site(SameSite::Lax)
-                                            .domain(config.settings.base_url.clone())
-                                            .path("/")
-                                            .max_age(Duration::hours(720))
-                                            .finish(),
-                                    );
-                                    std::result::Result::Ok(Redirect::to("/"))
-                                }
-                                _ => std::result::Result::Err(Status::NotAcceptable),
-                            }
-                        }
-                        Err(_e) => {
-                            dbg!(_e);
-                            std::result::Result::Err(Status::BadRequest)
-                        }
-                    }
-                }
-                Err(_ex) => {
-                    dbg!(_ex);
-                    std::result::Result::Err(Status::BadRequest)
-                }
-            }
+
+    // Upsert the user
+    conn.run(move |c| UpsertableUser::upsert(new_user, c))
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+    let uname_int = uname.clone();
+
+    // We now retrieve the user from the database for `Cookie` creation
+    // TODO: This query can in theory be removed.
+    let user = conn
+        .run(move |c| User::load(uname_int, "reddit".to_string(), c))
+        .await
+        .map_err(|_| Status::InternalServerError)?;
+
+    // Allow security to inform us whether the login should go through
+    // i.e. is the user banned from the platform?
+    #[cfg(feature = "risk_security")]
+    {
+        crate::security::check_login(&user, &user_info, &conn).await?;
+    }
+
+    // Cookie is valid for 30 Days
+    // TODO: Pull this from Rocket settings...
+
+    let datetime = Utc::now();
+    let timestamp: usize = 2_592_000 + datetime.timestamp() as usize;
+
+    let new_claims = Claims {
+        id: user.id,
+        user: user.uname.to_string(),
+        token: Some(token.refresh_token().unwrap().to_string()),
+        refresh_token: Some(token.access_token().to_string()),
+        exp: timestamp,
+    };
+
+    // Now we build a private `Cookie` to return to the user
+    // that contains the user's username (which is used in some low-sec processes)
+    cookies.add_private(
+        Cookie::build("username", uname)
+            .same_site(SameSite::Lax)
+            .domain(config.settings.base_url.clone())
+            .path("/")
+            .max_age(Duration::hours(720))
+            .finish(),
+    );
+
+    // Now we build the private JWT `Cookie` to return to the user
+    // that contains more information and is used in secure processes.
+    match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
+        Ok(s) => {
+            cookies.add_private(
+                Cookie::build("jwt", s)
+                    .same_site(SameSite::Lax)
+                    .domain(config.settings.base_url.clone())
+                    .path("/")
+                    .max_age(Duration::hours(720))
+                    .finish(),
+            );
+            std::result::Result::Ok(Redirect::to("/"))
         }
-        _ => std::result::Result::Err(Status::Gone),
+        _ => std::result::Result::Err(Status::InternalServerError),
     }
 }

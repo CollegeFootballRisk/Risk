@@ -29,7 +29,7 @@ pub(crate) async fn join_team(
 ) -> Result<Json<String>, crate::Error> {
     // Do not allow joining Unjonable Placeholder
     if team <= 0 {
-        return Err(crate::Error::BadRequest{})
+        return Err(crate::Error::BadRequest {});
     }
     // Get user information from cookies
     let c = Claims::from_private_cookie(cookies, config)?;
@@ -411,7 +411,7 @@ pub(crate) fn handle_territory_info(
                                     }
                                     let mut aon_multiplier: i32 = 1;
                                     if aon == Some(true)
-                                        && get_territory_number(team_id.0, &latest, conn) == 1
+                                        && get_territory_number(team_id.0, latest, conn) == 1
                                         && latest.allOrNothingEnabled == Some(true)
                                     {
                                         let mut rng = thread_rng();
