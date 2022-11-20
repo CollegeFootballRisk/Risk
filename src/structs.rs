@@ -2,9 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::schema::{
-    turns, stats, teams, territory_ownership, territory_stats, turninfo,
-};
+use crate::schema::{stats, teams, territory_ownership, territory_stats, turninfo, turns};
 use crate::Utc;
 use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;

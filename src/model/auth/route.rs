@@ -7,7 +7,7 @@ use crate::model::{
     PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
 };
 use crate::schema::{
-    cfbr_stats, turns, region_ownership, territory_adjacency, territory_ownership, users,
+    cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,
 };
 use crate::sys::SysInfo;
 use diesel::prelude::*;

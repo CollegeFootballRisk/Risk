@@ -53,11 +53,17 @@ fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
 
 /// Based on random number `lottery`, return the ID of the MVP user
 fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
+    // This is the incrementing value that we will add each team's power to
     let mut victorsum = 0_f64;
+    // This will be what we return, the id of the victorious team.
     let mut victor = 0;
     for (key, val) in &map {
+        // Add to the sum
         victorsum += val.power;
+
+        // Is the sum greater than the random number?
         if lottery - victorsum < 0_f64 {
+            // If so, we have our winner! Go!
             victor = *key;
             break;
         }
@@ -65,16 +71,36 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
     victor
 }
 
-fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> PlayerMoves {
-    territory_players.retain(|x| x.alt_score >= ALT_CUTOFF);
+// Returns MVP by selecting at random from the team that won
+fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> Option<PlayerMoves> {
+    territory_players.retain(|x| x.alt_score >= ALT_CUTOFF && x.power > 0.0);
     let rng = match territory_players.len() {
+        // We eliminated everyone :(
+        0 => return None,
+        // In the case there's 1 player, they're it!
         1 => 0,
+        // Else, generate the #
         _ => rand::thread_rng().gen_range(0..territory_players.len()),
     };
-    territory_players.remove(rng)
+    // Return the MVP
+    Some(territory_players.remove(rng))
 }
 
 /// Go territory by territory and determine new owner, MVP, and statistics
+/// This is the portion of the code that determines who wins a territory and
+/// who will be MVP of that territory. You can consider it 'RNGESUS,' if you please.
+/// Mautamu has added lots of documentation here to understand what's going on.
+/// Inputs:
+/// - territories: Vec<TerritoryOwners>: These are the _current_ territory owner information
+///     e.g. territory id, owner id (current team who owns the territory), turn id (the current turn), and mvp (who won it)
+/// - players: Vec<PlayerMoves>: These are the Moves made by the players today that we need to process.
+///     e.g. user's id, turn id, territory id, whether they're mvp (it comes in as false but we later tell the DB to set it to true if they're the MVP)
+///     the power, multiplier, and weight of the user, by the relationship power = multiplier * weight where weight is a function of starcount (see /src/model/auth/route.rs).
+/// Outputs:
+/// - Vec<TerritoryOwnersInsert>: The new territory ownership for tomorrow.
+/// - Vec<PlayerMoves>: The moves, with MVPs populated
+/// - HashMap<i32, Stats>: the statistics of the turn for each team
+/// - Vec<TerritoryStats>: the statistics of the turn for each territory
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
@@ -84,29 +110,56 @@ fn process_territories(
     HashMap<i32, Stats>,
     Vec<TerritoryStats>,
 ) {
+    // We log this to STDOUT so we can debug problems
     dbg!("process_territories");
     dbg!(territories.len());
+
+    // We create empty arrays for the outputs
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
     let mut mvps: Vec<PlayerMoves> = Vec::new();
     let mut stats: HashMap<i32, Stats> = HashMap::new();
     let mut territory_stats: Vec<TerritoryStats> = Vec::new();
+
+    // Now we go over each territory that was owned previously.
+    // If a territory wasn't 'owned' yesterday, we won't see it.
+    // But given proper starting DB conditions that's not an issue.
     for territory in territories {
+        // Again, for debugging
         dbg!(&territory.territory_id);
+
+        // We collect all the players that placed a move on this territory
         let territory_players = players
             .drain_filter(|player| player.territory == territory.territory_id)
             .collect::<Vec<_>>();
+
+        // Again, for debugging
         dbg!(&territory_players.len());
+
+        // This function returns the teams that attacked/defended this territory
+        // It does so by collecting the team id from all players and then removing dupes.
         let teams = get_teams(territory_players.clone());
+
+        // Here we split into different logic depending on how many teams attacked a territory.
+        // If nobody made a move on the territory (e.g. it's surrounded by territories also owned by the same owner)
+        // then we keep it the same.
+        // If only one team made a move on the territory (and they put some power forth, i.e. no alts)
+        // then we assign that team the territory.
+        // If more than one team made a move on a territory (and they put some power forth, i.e. no alts)
+        // then we need to use the RNG to determine the winner.
         match teams.len() {
+            // This is the "no teams attacked" case, so keep the owner the same.
             0 => {
                 dbg!("Zero Team");
+
+                // Push the new territory owner.
                 new_owners.push(TerritoryOwnersInsert::new(
                     &territory,
                     territory.owner_id,
                     None,
                     None,
                 ));
-                // add team territory count to stats
+
+                // add team territory count to stats (but no MVPs as nobody made a move here)
                 stats
                     .entry(territory.owner_id)
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
@@ -117,17 +170,19 @@ fn process_territories(
                     territory: territory.territory_id,
                     ..TerritoryStats::default()
                 });
-                continue;
+                continue; // next territory
             }
+            // This is the case where only one team acted on a territory.
             1 => {
-                // Due to All-or-nothing, we don't get to just assume that this team gets it
+                // Due to All-or-nothing and alts, we don't get to just assume that this team gets it
+                // So let's check if there's any power available from the team.
                 if territory_players
                     .iter()
                     .map(|mover| mover.power)
                     .sum::<f64>()
                     == 0.0
                 {
-                    // Then this is the same case as if there is no teams, next
+                    // There is no power from this team, this is the same case as if there is no teams, next
                     dbg!("Team has no power");
                     new_owners.push(TerritoryOwnersInsert::new(
                         &territory,
@@ -147,41 +202,51 @@ fn process_territories(
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
-                    continue;
+                    continue; // next territory
                 }
+
+                // There was some power from the team! Let's give them the territory.
                 dbg!("One Team");
+
+                // We select an MVP
                 let mvp = get_mvp(territory_players.clone());
-                mvps.push(mvp.clone());
+
+                // We push the mvps onto the MVP docket from earlier.
+                let mvp_id = match mvp {
+                    None => None,
+                    Some(mvp_i) => {
+                        // Don't forget to record the MVP!
+                        mvps.push(mvp_i.clone());
+
+                        // Return ID
+                        Some(mvp_i.user_id)
+                    }
+                };
+
+                // We push the new territory owner into the owners docket.
                 new_owners.push(TerritoryOwnersInsert::new(
-                    &territory,
-                    teams[0],
-                    None,
-                    Some(mvp.user_id),
+                    &territory, teams[0], None, mvp_id,
                 ));
+
+                // And finally we alter the statistics for the team that won
                 stats
                     .entry(teams[0])
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, teams[0]))
                     .territorycount += 1;
+
+                // Imagine a team quit the game, we want to show their stats on the leaderboard.
+                // So we create a stats entry for them with 0 territories. OR they abandoned this
+                // territory so we'll just add 0 territories while we're at it.
                 stats
                     .entry(territory.owner_id)
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 0;
-                /*stats
-                .entry(teams[0])
-                .or_insert_with(|| {
-                    Stats::new(
-                        territory.season * 1000 + territory.season + 1,
-                        territory.season,
-                        territory.day,
-                        teams[0],
-                    )
-                })
-                .starpower +=
-                territory_players.iter().map(|mover| mover.power/mover.multiplier).sum::<f64>();
-                */
+
+                // You may have noticed we only updated the territory count previously.
+                // But team stats includes mvps and power, et al. We calculate that now.
                 // add team stats
                 handle_team_stats(&mut stats, territory_players.clone());
-                // This team might be dead, push to the odds table
+                // This team might be dead/abandoned this territory, so we push to the odds table
                 if teams[0] != territory.owner_id {
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
@@ -195,6 +260,8 @@ fn process_territories(
                         ..TerritoryStats::default()
                     });
                 }
+
+                // Finally we push the statistics for the territory
                 territory_stats.push(TerritoryStats {
                     team: teams[0],
                     turn_id: territory.turn_id,
@@ -229,89 +296,128 @@ fn process_territories(
                         .map(|mover| mover.power)
                         .sum::<f64>(),
                 });
-                continue;
+                continue; // The territory is processed, on to the next one (if there's only one team that is)!
             }
+            // In Rust, `_` is a catchall for everything not in the match already.
+            // In this case, it means ALL territories which have > 1 team.
             _ => {
+                // Again, for debugging.
                 dbg!(&teams);
-                // Due to All-or-nothing, we don't get to just assume that this team gets it
+
+                // Due to All-or-nothing and alts, we don't get to just assume that this team gets it
+                // So let's check if there's any power available from the team.
                 if territory_players
                     .iter()
                     .map(|mover| mover.power)
                     .sum::<f64>()
                     == 0.0
                 {
-                    // Then this is the same case as if there is no teams, next
-                    dbg!("Team has no power");
+                    // No team has power, this is the same case as if there is no teams, next
+                    dbg!("Teams have no power");
+
+                    // Push the same owner as previously
                     new_owners.push(TerritoryOwnersInsert::new(
                         &territory,
                         territory.owner_id,
                         None,
                         None,
                     ));
+
                     // add team territory count to stats
                     stats
                         .entry(territory.owner_id)
                         .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                         .territorycount += 1;
 
+                    // and finally push territory stats
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
                         turn_id: territory.turn_id,
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
-                    continue;
+                    continue; // next territory
                 }
 
+                // We create this empty HashMap for collecting team information
                 let mut map = HashMap::new();
+
+                // We create a stats entry for the owner of the territory, just in case they abandoned it
                 stats
                     .entry(territory.owner_id)
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 0;
+
+                // For each team, insert the team into the HashMap we made earlier
+                // in this case, Victor is a set of stats metrics (# by star, overall power)
                 for team in teams {
                     map.insert(team, Victor::default()); // stars, power, ones, twos, threes, fours, fives
                 }
 
+                // Now we populate the map with the power
                 for player in &territory_players {
                     //dbg!(player.id, player.team);
                     if player.alt_score >= ALT_CUTOFF {
                         continue;
                     }
+
+                    // The .power() and .stars() calls add the power to the team's pile
+                    // and adds +1 to the # of players with the current player's starcount (1,2,3,4,5)
                     map.get_mut(&player.team)
                         .unwrap()
                         .power(player.power)
                         .stars(player.stars);
                 }
 
+                // We now calculate the total power that was expended by ALL teams on the territory.
                 let totalpower: f64 = map.values().map(|x| (x.power)).sum();
-                //dbg!(totalpower);
+
+                // We now generate the random number from 0 to the total power on the territory.
                 let lottery = ChaCha12Rng::from_entropy().gen_range(0_f64..totalpower);
 
+                // We determine the victor, this function goes team by team until the sum of the power of teams
+                // it has reviewed is greater than `lottery` the random number we created earlier.
+                // It returns the id of the team that wins.
                 let victor = determine_victor(lottery, map.clone());
 
-                //dbg!("Victor: {}",victor);
+                // We collect the players that are on the winning team for MVPing.
                 let territory_victors = territory_players
                     .clone()
                     .drain_filter(|player| player.team == victor)
                     .collect::<Vec<_>>();
+
+                // We now determine the MVP from the players on the winning team.
                 let mvp = get_mvp(territory_victors);
+
+                let mvp_id = match mvp {
+                    None => None,
+                    Some(mvp_i) => {
+                        // Don't forget to record the MVP!
+                        mvps.push(mvp_i.clone());
+
+                        // Return ID
+                        Some(mvp_i.user_id)
+                    }
+                };
+
+                // We push the new owner
                 new_owners.push(TerritoryOwnersInsert::new(
                     &territory,
                     victor,
                     Some(lottery),
-                    Some(mvp.user_id),
+                    mvp_id,
                 ));
 
+                // We generate the team statistics for the victor
                 stats
                     .entry(victor)
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, victor))
                     .territorycount += 1;
 
-                let total_power = territory_players
-                    .iter()
-                    .map(|mover| mover.power)
-                    .sum::<f64>();
+                // We now calculate total power for the territory for territory statistics..
                 handle_team_stats(&mut stats, territory_players);
+
+                // And we then push the territory statistics.
                 for (key, val) in &map {
                     territory_stats.push(TerritoryStats {
                         team: *key,
@@ -322,19 +428,20 @@ fn process_territories(
                         fours: val.fours,
                         fives: val.fives,
                         teampower: val.power,
-                        chance: val.power / total_power,
+                        chance: val.power / totalpower,
                         territory: territory.territory_id,
-                        territory_power: total_power,
+                        territory_power: totalpower,
                     });
                 }
-                mvps.push(mvp);
-                // Also check if owning team needs spanked:
+
+                // And as a final check, if the previous owner isn't in the stats
+                // but did move on the territory, we update their statistics.
                 if !map.contains_key(&territory.owner_id) {
                     territory_stats.push(TerritoryStats {
                         team: territory.owner_id,
                         turn_id: territory.turn_id,
                         territory: territory.territory_id,
-                        territory_power: total_power,
+                        territory_power: totalpower,
                         chance: 0.00,
                         ..TerritoryStats::default()
                     });
@@ -342,6 +449,8 @@ fn process_territories(
             }
         }
     }
+
+    // Finally, we return everything we just calculated.
     (new_owners, mvps, stats, territory_stats)
 }
 
