@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 use crate::schema::{
-    new_turns, past_turns, stats, teams, territory_ownership, territory_stats, turninfo,
+    turns, stats, teams, territory_ownership, territory_stats, turninfo,
 };
 use crate::Utc;
 use chrono::NaiveDateTime;
@@ -20,7 +20,7 @@ pub struct Bar {
     pub do_user_update: bool,
 }
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[table_name = "new_turns"]
+#[table_name = "turns"]
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
@@ -166,37 +166,37 @@ impl Victor {
 
 impl PlayerMoves {
     pub fn load(turn_id: &i32, conn: &PgConnection) -> Result<Vec<PlayerMoves>, Error> {
-        new_turns::table
-            .filter(new_turns::turn_id.eq(turn_id))
-            .order_by(new_turns::territory.desc())
+        turns::table
+            .filter(turns::turn_id.eq(turn_id))
+            .order_by(turns::territory.desc())
             .load::<PlayerMoves>(conn)
     }
 
     pub fn mvps(mvps: Vec<PlayerMoves>, conn: &PgConnection) -> QueryResult<usize> {
         //first we flatten
         let mvp_array = mvps.iter().map(|x| x.id).collect::<Vec<i32>>();
-        update(new_turns::table.filter(new_turns::id.eq_any(mvp_array)))
-            .set(new_turns::mvp.eq(true))
+        update(turns::table.filter(turns::id.eq_any(mvp_array)))
+            .set(turns::mvp.eq(true))
             .execute(conn)
     }
 
-    pub fn mergemoves(min: i32, max: i32, conn: &PgConnection) -> QueryResult<usize> {
-        new_turns::table
+    /*pub fn mergemoves(min: i32, max: i32, conn: &PgConnection) -> QueryResult<usize> {
+        turns::table
             .select((
-                new_turns::user_id,
-                new_turns::turn_id,
-                new_turns::territory,
-                new_turns::mvp,
-                new_turns::power,
-                new_turns::multiplier,
-                new_turns::weight,
-                new_turns::stars,
-                new_turns::team,
-                new_turns::alt_score,
-                new_turns::merc,
+                turns::user_id,
+                turns::turn_id,
+                turns::territory,
+                turns::mvp,
+                turns::power,
+                turns::multiplier,
+                turns::weight,
+                turns::stars,
+                turns::team,
+                turns::alt_score,
+                turns::merc,
             ))
-            .filter(new_turns::id.le(max))
-            .filter(new_turns::id.ge(min))
+            .filter(turns::id.le(max))
+            .filter(turns::id.ge(min))
             .insert_into(past_turns::table)
             .into_columns((
                 past_turns::user_id,
@@ -212,7 +212,7 @@ impl PlayerMoves {
                 past_turns::merc,
             ))
             .execute(conn)
-    }
+    }*/
 }
 
 impl Stats {

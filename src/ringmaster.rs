@@ -516,9 +516,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     if players.is_empty() {
         return Ok(());
     }
-    let move_ids = players.iter().map(|x| x.id).collect::<Vec<i32>>();
-    let min_value = move_ids.iter().min();
-    let max_value = move_ids.iter().max();
+    //let move_ids = players.iter().map(|x| x.id).collect::<Vec<i32>>();
     let (owners, mvps, stats, territory_stats) = process_territories(territories, players);
     TerritoryStats::insert(territory_stats, &conn)?;
     Stats::insert(stats, turninfoblock.id, &conn)?;
@@ -526,9 +524,6 @@ fn runtime() -> Result<(), diesel::result::Error> {
     dbg!(territory_insert);
     let playermoves = PlayerMoves::mvps(mvps, &conn)?;
     dbg!(playermoves);
-    let mergemoves =
-        PlayerMoves::mergemoves(*min_value.unwrap_or(&0), *max_value.unwrap_or(&0), &conn)?;
-    dbg!(mergemoves);
 
     // This calls an SQL function that updates each user's statistics
     // Not ideal, TODO: we ought to implement this in Rust.

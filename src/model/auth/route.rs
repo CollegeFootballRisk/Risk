@@ -7,7 +7,7 @@ use crate::model::{
     PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
 };
 use crate::schema::{
-    cfbr_stats, new_turns, region_ownership, territory_adjacency, territory_ownership, users,
+    cfbr_stats, turns, region_ownership, territory_adjacency, territory_ownership, users,
 };
 use crate::sys::SysInfo;
 use diesel::prelude::*;
@@ -523,27 +523,27 @@ pub(crate) fn insert_turn(
         true => 175,
         false => 0,
     };
-    diesel::insert_into(new_turns::table)
+    diesel::insert_into(turns::table)
         .values((
-            new_turns::user_id.eq(user.1),
-            new_turns::turn_id.eq(latest.id),
-            new_turns::territory.eq(target),
-            new_turns::mvp.eq(false),
-            new_turns::power.eq(user_power),
-            new_turns::multiplier.eq(multiplier),
-            new_turns::weight.eq(user_weight),
-            new_turns::stars.eq(user_ratings.overall),
-            new_turns::team.eq(user.0),
-            new_turns::alt_score.eq(alt_score),
-            new_turns::merc.eq(merc),
+            turns::user_id.eq(user.1),
+            turns::turn_id.eq(latest.id),
+            turns::territory.eq(target),
+            turns::mvp.eq(false),
+            turns::power.eq(user_power),
+            turns::multiplier.eq(multiplier),
+            turns::weight.eq(user_weight),
+            turns::stars.eq(user_ratings.overall),
+            turns::team.eq(user.0),
+            turns::alt_score.eq(alt_score),
+            turns::merc.eq(merc),
         ))
-        .on_conflict((new_turns::user_id, new_turns::turn_id))
+        .on_conflict((turns::user_id, turns::turn_id))
         .do_update()
         .set((
-            new_turns::alt_score.eq(alt_score),
-            new_turns::territory.eq(target),
-            new_turns::power.eq(user_power),
-            new_turns::multiplier.eq(multiplier),
+            turns::alt_score.eq(alt_score),
+            turns::territory.eq(target),
+            turns::power.eq(user_power),
+            turns::multiplier.eq(multiplier),
         ))
         .execute(conn)
 }

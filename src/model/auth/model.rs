@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::schema::{continuation_polls, continuation_responses, new_turns, territories, turninfo};
+use crate::schema::{continuation_polls, continuation_responses, turns, territories, turninfo};
 use crate::sys::SysInfo;
 use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
@@ -88,12 +88,12 @@ impl Claims {
 
 impl MoveInfo {
     pub(crate) fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
-        let r = new_turns::table
-            .filter(new_turns::user_id.eq(user_id))
+        let r = turns::table
+            .filter(turns::user_id.eq(user_id))
             .filter(turninfo::season.eq(season))
             .filter(turninfo::day.eq(day))
-            .inner_join(turninfo::table.on(new_turns::turn_id.eq(turninfo::id)))
-            .inner_join(territories::table.on(new_turns::territory.eq(territories::id)))
+            .inner_join(turninfo::table.on(turns::turn_id.eq(turninfo::id)))
+            .inner_join(territories::table.on(turns::territory.eq(territories::id)))
             .select(territories::name)
             .first(conn);
         MoveInfo {

@@ -286,7 +286,7 @@ table! {
     }
 }
 table! {
-    new_turns (id) {
+    turns (id) {
         id -> Int4,
         user_id -> Int4,
         turn_id -> Int4,
@@ -359,11 +359,11 @@ allow_tables_to_appear_in_same_query!(
     turninfo,
 );
 
-allow_tables_to_appear_in_same_query!(new_turns, territories);
+allow_tables_to_appear_in_same_query!(turns, territories);
 
 allow_tables_to_appear_in_same_query!(regions, territory_ownership_with_neighbors);
 allow_tables_to_appear_in_same_query!(regions, territories);
 
-allow_tables_to_appear_in_same_query!(new_turns, turninfo);
+allow_tables_to_appear_in_same_query!(turns, turninfo);
 allow_tables_to_appear_in_same_query!(continuation_polls, turninfo);
 allow_tables_to_appear_in_same_query!(statistics, turninfo);
