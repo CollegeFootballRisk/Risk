@@ -405,7 +405,8 @@ pub(crate) fn handle_territory_info(
                                     if team_id.0 == 131 && cfg!(feature = "chaos") {
                                         regional_multiplier -= 1;
                                     }
-                                    regional_multiplier *= 2;
+                                    // The "Regional Multiplier factor"
+                                    regional_multiplier *= 1.25;
                                     if regional_multiplier == 0 {
                                         regional_multiplier = 1;
                                     }
