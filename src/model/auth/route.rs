@@ -397,18 +397,19 @@ pub(crate) fn handle_territory_info(
                         {
                             Some(_npos) => {
                                 if team_id.0 != 0 {
-                                    let mut regional_multiplier =
+                                    let mut regional_multiplier: f64 =
                                         handleregionalownership(latest, team_id.0, conn)
-                                            .unwrap_or(0);
+                                            .unwrap_or(0)
+                                            as f64;
                                     // If we're doing chaos stuff, then we want to keep
                                     // Chaos from getting additional point
                                     if team_id.0 == 131 && cfg!(feature = "chaos") {
-                                        regional_multiplier -= 1;
+                                        regional_multiplier -= 1.0;
                                     }
                                     // The "Regional Multiplier factor"
                                     regional_multiplier *= 1.25;
-                                    if regional_multiplier == 0 {
-                                        regional_multiplier = 1;
+                                    if regional_multiplier == 0.0 {
+                                        regional_multiplier = 1.0;
                                     }
                                     let mut aon_multiplier: i32 = 1;
                                     if aon == Some(true)
