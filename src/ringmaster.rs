@@ -615,6 +615,8 @@ fn runtime() -> Result<(), diesel::result::Error> {
     // start_time_now then sets the start time to the current time.
     let mut turninfoblock = TurnInfo::get_latest(&conn)?;
     turninfoblock.start_time_now();
+    // Prevent new moves from being submitted
+    turninfoblock.lock(&conn)?;
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
     let players = PlayerMoves::load(&turninfoblock.id, &conn)?;

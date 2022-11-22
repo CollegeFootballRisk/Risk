@@ -460,4 +460,10 @@ impl TurnInfo {
         self.rollstarttime = Some(Utc::now().naive_utc());
         self
     }
+
+    pub fn lock(&mut self, conn: &PgConnection) -> Result<usize, Error> {
+        update(turninfo::table.filter(turninfo::id.eq(self.id)))
+            .set(turninfo::active.eq(false))
+            .execute(conn)
+    }
 }
