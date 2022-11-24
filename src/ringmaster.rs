@@ -473,8 +473,8 @@ fn user_update(
 ) -> Result<Vec<Bar>, diesel::result::Error> {
     let query = format!(
         "SELECT do_user_update({},{})",
-        &turninfoblock.day.to_string(),
-        &turninfoblock.season.to_string()
+        &turninfoblock.id.to_string(),
+        &turninfoblock.season.to_string(),
     );
     sql_query(query).load(conn)
 }
