@@ -73,7 +73,7 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
 
 // Returns MVP by selecting at random from the team that won
 fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> Option<PlayerMoves> {
-    territory_players.retain(|x| x.alt_score >= ALT_CUTOFF && x.power > 0.0);
+    territory_players.retain(|x| x.alt_score < ALT_CUTOFF && x.power > 0.0);
     let rng = match territory_players.len() {
         // We eliminated everyone :(
         0 => return None,
@@ -210,7 +210,6 @@ fn process_territories(
 
                 // We select an MVP
                 let mvp = get_mvp(territory_players.clone());
-
                 // We push the mvps onto the MVP docket from earlier.
                 let mvp_id = match mvp {
                     None => None,
@@ -388,7 +387,6 @@ fn process_territories(
 
                 // We now determine the MVP from the players on the winning team.
                 let mvp = get_mvp(territory_victors);
-
                 let mvp_id = match mvp {
                     None => None,
                     Some(mvp_i) => {

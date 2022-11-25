@@ -423,14 +423,12 @@ pub(crate) fn handle_territory_info(
                                     if adjacent_territory_owners[pos.unwrap()].0 == team_id.0 {
                                         Ok((
                                             team_id,
-                                            1.5 * regional_multiplier as f64
-                                                * f64::from(aon_multiplier),
+                                            1.5 * regional_multiplier * f64::from(aon_multiplier),
                                         ))
                                     } else {
                                         Ok((
                                             team_id,
-                                            1.0 * regional_multiplier as f64
-                                                * f64::from(aon_multiplier),
+                                            1.0 * regional_multiplier * f64::from(aon_multiplier),
                                         ))
                                     }
                                 } else {
