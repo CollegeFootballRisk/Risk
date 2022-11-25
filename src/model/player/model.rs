@@ -74,7 +74,7 @@ pub(crate) struct PlayerInTurns {
     pub(crate) team: Option<CiString>,
     pub(crate) player: Option<CiString>,
     pub(crate) stars: Option<i32>,
-    pub(crate) weight: i32,
+    pub(crate) weight: f64,
     pub(crate) multiplier: f64,
     pub(crate) mvp: Option<bool>,
     pub(crate) power: f64,

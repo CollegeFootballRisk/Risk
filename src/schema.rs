@@ -111,7 +111,7 @@ table! {
         mvp -> Nullable<Bool>,
         territory -> Nullable<diesel_citext::sql_types::Citext>,
         regularteam -> Nullable<diesel_citext::sql_types::Citext>,
-        weight -> Int4,
+        weight -> Double,
         power -> Double,
         multiplier -> Double,
     }
