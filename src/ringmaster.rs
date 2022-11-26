@@ -591,22 +591,13 @@ fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>
     let curr_day: i64 = now.weekday().number_from_monday() as i64;
     dbg!(&curr_day);
     let index: i64 = if next_days.is_empty() && curr_day < 7 {
-        dbg!("IS EMPTY LT 7");
-        //curr_day + 1
         1
-    }
-    /*else if next_days.is_empty() {
-        dbg!("IS EMPTY EQ 7");
-        1_i64
-    }*/
-    else if let Some(next) = next_days.iter().filter(|&x| *x > curr_day).min() {
-        dbg!("NEXT DAY", *next);
+    } else if let Some(next) = next_days.iter().filter(|&x| *x > curr_day).min() {
         *next - curr_day
     } else {
         let min = next_days.iter().min().unwrap_or(&0);
         7 - (min - curr_day).abs()
     };
-    dbg!(index);
     (*now + Duration::days(index))
         .date()
         .and_hms(next_time.hour(), next_time.minute(), next_time.second())
@@ -685,7 +676,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
 
     #[cfg(feature = "chaos")]
     {
-        match chaos_update(&owners, turninfoblock.id + 1, &settings, &conn) {
+        match chaos_update(&owners, turninfoblock.id + 1, settings, &conn) {
             Ok(_) => println!("Chaos bridges updated."),
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }
@@ -820,218 +811,222 @@ mod tests {
 
     #[test]
     fn test_get_mvp_empty() {
-            let playermoves: Vec<PlayerMoves> = Vec::new();
-            assert_eq!(
-                None,
-                get_mvp(playermoves)
-            );
+        let playermoves: Vec<PlayerMoves> = Vec::new();
+        assert_eq!(None, get_mvp(playermoves));
     }
 
     #[test]
     fn test_get_mvp_alt() {
-            let playermoves: Vec<PlayerMoves> = vec![PlayerMoves{
-                id: 32,
-                user_id: 32,
-                turn_id: 32,
-                territory: 32,
-                mvp: false,
-                power: 2.0,
-                multiplier: 2.0,
-                weight: 1.0,
-                stars: 2,
-                team: 20,
-                alt_score: ALT_CUTOFF+1,
-                merc: false,
-            }];
-            assert_eq!(
-                None,
-                get_mvp(playermoves)
-            );
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 32,
+            user_id: 32,
+            turn_id: 32,
+            territory: 32,
+            mvp: false,
+            power: 2.0,
+            multiplier: 2.0,
+            weight: 1.0,
+            stars: 2,
+            team: 20,
+            alt_score: ALT_CUTOFF + 1,
+            merc: false,
+        }];
+        assert_eq!(None, get_mvp(playermoves));
     }
 
     #[test]
     fn test_get_mvp_power() {
-            let playermoves: Vec<PlayerMoves> = vec![PlayerMoves{
-                id: 32,
-                user_id: 32,
-                turn_id: 32,
-                territory: 32,
-                mvp: false,
-                power: 0.0,
-                multiplier: 0.0,
-                weight: 1.0,
-                stars: 2,
-                team: 20,
-                alt_score: 0,
-                merc: false,
-            }];
-            assert_eq!(
-                None,
-                get_mvp(playermoves)
-            );
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 32,
+            user_id: 32,
+            turn_id: 32,
+            territory: 32,
+            mvp: false,
+            power: 0.0,
+            multiplier: 0.0,
+            weight: 1.0,
+            stars: 2,
+            team: 20,
+            alt_score: 0,
+            merc: false,
+        }];
+        assert_eq!(None, get_mvp(playermoves));
     }
 
     #[test]
     fn test_get_mvp_one() {
-            let playermoves: Vec<PlayerMoves> = vec![PlayerMoves{
-                id: 32,
-                user_id: 32,
-                turn_id: 32,
-                territory: 32,
-                mvp: false,
-                power: 10.0,
-                multiplier: 10.0,
-                weight: 1.0,
-                stars: 2,
-                team: 20,
-                alt_score: 0,
-                merc: false,
-            }];
-            assert_eq!(
-                Some(playermoves[0].clone()),
-                get_mvp(playermoves)
-            );
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 32,
+            user_id: 32,
+            turn_id: 32,
+            territory: 32,
+            mvp: false,
+            power: 10.0,
+            multiplier: 10.0,
+            weight: 1.0,
+            stars: 2,
+            team: 20,
+            alt_score: 0,
+            merc: false,
+        }];
+        assert_eq!(Some(playermoves[0].clone()), get_mvp(playermoves));
     }
-
 
     #[test]
     fn test_process_territories_zero() {
-           let territories = vec![
-            TerritoryOwners {
-                id: 1,
-                territory_id: 2,
-                owner_id: 3,
-                turn_id: 4,
-                previous_owner_id: 5,
-                random_number: 0.0,
-                mvp: None,
-            }
-           ];
-           
-            let playermoves: Vec<PlayerMoves> = Vec::new();
-            let new_owners = vec![TerritoryOwnersInsert::new(&territories[0],3,Some(0.0),None)];
-            let mvps: Vec<PlayerMoves> = Vec::new();
-            let mut stats: HashMap<i32, Stats> = HashMap::new();
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).territorycount = 1;
-            let territory_stats: Vec<TerritoryStats> = vec![
-                TerritoryStats {
-                    team: 3,
-                    turn_id: 4,
-                    territory: 2,
-                    ..TerritoryStats::default()
-                }
-            ];
-        
-            assert_eq!(
-                (new_owners, mvps, stats, territory_stats),
-                process_territories(territories, playermoves)
-            );
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 3,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: None,
+        }];
+
+        let playermoves: Vec<PlayerMoves> = Vec::new();
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            3,
+            Some(0.0),
+            None,
+        )];
+        let mvps: Vec<PlayerMoves> = Vec::new();
+        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![TerritoryStats {
+            team: 3,
+            turn_id: 4,
+            territory: 2,
+            ..TerritoryStats::default()
+        }];
+
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(territories, playermoves)
+        );
     }
 
     #[test]
     fn test_process_territories_one_same() {
-           let territories = vec![
-            TerritoryOwners {
-                id: 1,
-                territory_id: 2,
-                owner_id: 3,
-                turn_id: 4,
-                previous_owner_id: 5,
-                random_number: 0.0,
-                mvp: None,
-            }
-           ];
-           
-            let playermoves: Vec<PlayerMoves> = vec![
-                PlayerMoves{
-                    id: 45,
-                    user_id: 6,
-                    turn_id: 4,
-                    territory: 2,
-                    mvp: false,
-                    power: 12.0,
-                    multiplier: 1.0,
-                    weight: 12.0,
-                    stars: 5,
-                    team: 3,
-                    alt_score: 0,
-                    merc: false,
-                }
-            ];
-            let new_owners = vec![TerritoryOwnersInsert::new(&territories[0],3,Some(0.0),Some(6))];
-            let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
-            let mut stats: HashMap<i32, Stats> = HashMap::new();
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).territorycount = 1;
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).playercount = 1;
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 12.0;
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).efficiency = 0.0;
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).effectivepower = 12.0;
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
-            let territory_stats: Vec<TerritoryStats> = vec![
-                TerritoryStats {
-                    team: 3,
-                    turn_id: 4,
-                    territory: 2,
-                    territory_power: 12.0,
-                    chance: 1.0,
-                    teampower: 12.0,
-                    fives: 1,
-                    ..TerritoryStats::default()
-                }
-            ];
-        
-            assert_eq!(
-                (new_owners, mvps, stats, territory_stats),
-                process_territories(territories, playermoves)
-            );
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 3,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: None,
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 45,
+            user_id: 6,
+            turn_id: 4,
+            territory: 2,
+            mvp: false,
+            power: 12.0,
+            multiplier: 1.0,
+            weight: 12.0,
+            stars: 5,
+            team: 3,
+            alt_score: 0,
+            merc: false,
+        }];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            3,
+            Some(0.0),
+            Some(6),
+        )];
+        let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
+        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 1;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .playercount = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 12.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .efficiency = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .effectivepower = 12.0;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![TerritoryStats {
+            team: 3,
+            turn_id: 4,
+            territory: 2,
+            territory_power: 12.0,
+            chance: 1.0,
+            teampower: 12.0,
+            fives: 1,
+            ..TerritoryStats::default()
+        }];
+
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(territories, playermoves)
+        );
     }
 
     #[test]
     fn test_process_territories_one_same_powerless() {
-        let territories = vec![
-            TerritoryOwners {
-                id: 1,
-                territory_id: 2,
-                owner_id: 3,
-                turn_id: 4,
-                previous_owner_id: 5,
-                random_number: 0.0,
-                mvp: None,
-            }
-           ];
-           
-           let playermoves: Vec<PlayerMoves> = vec![
-            PlayerMoves{
-                id: 45,
-                user_id: 6,
-                turn_id: 4,
-                territory: 2,
-                mvp: false,
-                power: 0.0,
-                multiplier: 1.0,
-                weight: 12.0,
-                stars: 5,
-                team: 3,
-                alt_score: 80,
-                merc: false,
-            }
-        ];
-            let new_owners = vec![TerritoryOwnersInsert::new(&territories[0],3,Some(0.0),None)];
-            let mvps: Vec<PlayerMoves> = Vec::new();
-            let mut stats: HashMap<i32, Stats> = HashMap::new();
-            stats.entry(3).or_insert_with(|| Stats::new(5, 3)).territorycount = 1;
-            let territory_stats: Vec<TerritoryStats> = vec![
-                TerritoryStats {
-                    team: 3,
-                    turn_id: 4,
-                    territory: 2,
-                    ..TerritoryStats::default()
-                }
-            ];
-        
-            assert_eq!(
-                (new_owners, mvps, stats, territory_stats),
-                process_territories(territories, playermoves)
-            );
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 3,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: None,
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 45,
+            user_id: 6,
+            turn_id: 4,
+            territory: 2,
+            mvp: false,
+            power: 0.0,
+            multiplier: 1.0,
+            weight: 12.0,
+            stars: 5,
+            team: 3,
+            alt_score: 80,
+            merc: false,
+        }];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            3,
+            Some(0.0),
+            None,
+        )];
+        let mvps: Vec<PlayerMoves> = Vec::new();
+        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![TerritoryStats {
+            team: 3,
+            turn_id: 4,
+            territory: 2,
+            ..TerritoryStats::default()
+        }];
+
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(territories, playermoves)
+        );
     }
 }
