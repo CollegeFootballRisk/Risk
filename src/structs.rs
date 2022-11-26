@@ -71,7 +71,7 @@ pub struct TerritoryOwners {
     pub mvp: Option<i32>,
 }
 
-#[derive(Deserialize, Insertable, Queryable, Debug)]
+#[derive(Deserialize, Insertable, Queryable, Debug, PartialEq)]
 #[table_name = "territory_ownership"]
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
