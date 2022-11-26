@@ -23,7 +23,7 @@ use std::collections::HashMap;
 
 const ALT_CUTOFF: i32 = 75;
 const AON_END: i32 = 48;
-const AON_START: i32 = 3;
+const AON_START: i32 = 4;
 
 use structs::{
     Bar, PlayerMoves, Stats, TerritoryOwners, TerritoryOwnersInsert, TerritoryStats, TurnInfo,
