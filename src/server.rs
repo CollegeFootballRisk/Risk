@@ -65,7 +65,6 @@ fn rocket() -> _ {
         player::route::player,
         player::route::search,
         player::route::player_full,
-        player::route::me,
         player::route::mercs,
         player::route::players,
         player::route::player_multifetch,
@@ -94,6 +93,7 @@ fn rocket() -> _ {
         auth::route::view_response,
         auth::route::submit_poll,
         auth::route::get_polls,
+        auth::route::me,
     ];
 
     /*

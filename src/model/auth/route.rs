@@ -20,6 +20,31 @@ use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
 
+/// # Me
+/// Retrieves all information about currently logged-in user. Should not be accessed by any
+/// scraping programs.
+#[openapi(skip)]
+#[get("/me")]
+pub(crate) async fn me(
+    cookies: &CookieJar<'_>,
+    conn: DbConn,
+    config: &State<SysInfo>,
+) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
+    let c = Claims::from_private_cookie(cookies, config)?;
+    let username = c.0.user.clone();
+    let user = conn
+        .run(move |connection| {
+            PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
+        })
+        .await
+        .ok_or(crate::Error::NotFound {})?;
+    if user.name.to_lowercase() == c.0.user.to_lowercase() {
+        std::result::Result::Ok(Json(user))
+    } else {
+        std::result::Result::Err(crate::Error::NotFound {})
+    }
+}
+
 #[get("/join?<team>", rank = 1)]
 pub(crate) async fn join_team(
     team: i32,
@@ -183,7 +208,10 @@ pub(crate) async fn make_move(
                 })
                 .await
             {
-                Ok(_ok) => {
+                Ok(ok) => {
+                    if ok.len() != 1 || ok[0] != target {
+                        return std::result::Result::Err(crate::Error::InternalServerError {})
+                    }
                     //now we go update the user
                     match conn
                         .run(move |connection| {
@@ -518,7 +546,7 @@ pub(crate) fn insert_turn(
     user_power: f64,
     merc: bool,
     conn: &PgConnection,
-) -> QueryResult<usize> {
+) -> QueryResult<Vec<i32>> {
     let alt_score: i32 = match user.8 {
         true => 175,
         false => 0,
@@ -545,7 +573,8 @@ pub(crate) fn insert_turn(
             turns::power.eq(user_power),
             turns::multiplier.eq(multiplier),
         ))
-        .execute(conn)
+        .returning(turns::territory)
+        .get_results(conn)
 }
 
 pub(crate) fn update_user(

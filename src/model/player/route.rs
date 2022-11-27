@@ -4,14 +4,11 @@
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{
-    Claims, PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
+    PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
     User,
 };
-use crate::sys::SysInfo;
 use crate::Error;
-use rocket::http::CookieJar;
 use rocket::serde::json::Json;
-use rocket::State;
 
 /// # Team Roster
 /// Get all of the players on a team (returns all players on all teams if no team is provided).
@@ -52,31 +49,6 @@ pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMer
         std::result::Result::Ok(Json(users))
     } else {
         std::result::Result::Err(crate::Error::NotFound {})
-    }
-}
-
-/// # Me
-/// Retrieves all information about currently logged-in user. Should not be accessed by any
-/// scraping programs.
-#[openapi(skip)]
-#[get("/me")]
-pub(crate) async fn me(
-    cookies: &CookieJar<'_>,
-    conn: DbConn,
-    config: &State<SysInfo>,
-) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
-    let c = Claims::from_private_cookie(cookies, config)?;
-    let username = c.0.user.clone();
-    let user = conn
-        .run(move |connection| {
-            PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
-        })
-        .await
-        .ok_or(Error::NotFound {})?;
-    if user.name.to_lowercase() == c.0.user.to_lowercase() {
-        std::result::Result::Ok(Json(user))
-    } else {
-        std::result::Result::Err(Error::NotFound {})
     }
 }
 
