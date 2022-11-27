@@ -83,6 +83,7 @@ fn rocket() -> _ {
         stats::route::currentstrength,
         stats::route::leaderboard,
         stats::route::odds,
+        sys::route::sysinfo,
     ];
 
     // The paths on the /auth endpoint. Defined up here for cleanliness

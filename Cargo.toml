@@ -8,6 +8,7 @@ edition = "2021"
 base64 = {version = "0.13.0", optional=true}
 captcha = {version = "0.0.8", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
+git-version = "0.3.4"
 time = "0.2.27"
 diesel = { version = "1.4.8", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
 diesel-citext = {git = "https://github.com/mautamu/diesel-citext"}
