@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::db::DbConn;
 use crate::model::{
-    Claims, ClientInfo, CurrentStrength, Latest, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
+    Claims, CurrentStrength, Latest, Log, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
     PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
 };
 use crate::schema::{
@@ -14,7 +14,6 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use rocket::http::{CookieJar, Status};
 use rocket::State;
-use std::net::SocketAddr;
 extern crate rand;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
@@ -139,112 +138,119 @@ pub(crate) async fn make_move(
     aon: Option<bool>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
-    remote_addr: SocketAddr,
     config: &State<SysInfo>,
 ) -> Result<Json<String>, crate::Error> {
+    let mut log = Log::begin(String::from("move"), target.to_string());
+
     // Get latest turn
-    let latest = conn
-        .run(move |c| TurnInfo::latest(c))
-        .await
-        .map_err(|_| crate::Error::InternalServerError {})?;
+    let latest = conn.run(move |c| TurnInfo::latest(c)).await.map_err(|_| {
+        dbg!("Failed at point 1");
+        crate::Error::InternalServerError {}
+    })?;
+
+    log.payload.push_str(&format!("Latest: {}\n", latest.id));
+
     // Get user information from cookies
     let c = Claims::from_private_cookie(cookies, config)?;
 
-    let _cinfo = ClientInfo {
-        claims: c.0.clone(),
-        ip: remote_addr.to_string(),
-    };
-    // id, name Json(c.0.user)
+    log.payload.push_str(&format!("Claims: {:?}\n", c.0));
+
     let tmplatest = latest.clone();
+
     //get user's team information, and whether they can make that move
     let temp_pfix = c.0.clone();
-    match conn
+    let (user, multiplier) = conn
         .run(move |connection| {
             handle_territory_info(&temp_pfix, target, &tmplatest, connection, aon)
         })
         .await
-    {
-        Ok((user, multiplier)) => {
-            //get user's current award information from CFBRisk
-            let _tmp_usname = c.0.user.clone();
-            //let awards: i32 = 5;
-            //get user's current information from Reddit to ensure they still exist
-            //c.0.user.push_str(&awards.to_string());
-            //at this point we know the user is authorized to make the action, so let's go ahead and make it
-            let user_stats = Stats {
-                totalTurns: user.3.unwrap_or(0),
-                gameTurns: user.4.unwrap_or(0),
-                mvps: user.5.unwrap_or(0),
-                streak: user.6.unwrap_or(0),
-                //  awards: awards as i32,
-            };
-            let user_ratings = Ratings::load(&user_stats);
-            let user_weight: f64 = match user_ratings.overall {
-                1 => 1.0,
-                2 => 2.0,
-                3 => 3.0,
-                4 => 4.0,
-                5 => 5.0,
-                _ => 1.0,
-            };
-            let user_power: f64 = multiplier * user_weight;
-            let mut merc: bool = false;
-            if user.0 != user.7 {
-                merc = true;
-            }
-            match conn
-                .run(move |connection| {
-                    insert_turn(
-                        &user,
-                        user_ratings,
-                        &latest,
-                        target,
-                        multiplier,
-                        user_weight,
-                        user_power,
-                        merc,
-                        connection,
-                    )
-                })
-                .await
-            {
-                Ok(ok) => {
-                    if ok.len() != 1 || ok[0] != target {
-                        return std::result::Result::Err(crate::Error::InternalServerError {})
-                    }
-                    //now we go update the user
-                    match conn
-                        .run(move |connection| {
-                            UpdateUser::do_update(
-                                UpdateUser {
-                                    id: user.1,
-                                    overall: user_weight as i32,
-                                    turns: user_stats.totalTurns,
-                                    game_turns: user_stats.gameTurns,
-                                    mvps: user_stats.mvps,
-                                    streak: user_stats.streak,
-                                    // awards: user_stats.awards,
-                                },
-                                connection,
-                            )
-                        })
-                        .await
-                    {
-                        Ok(_oka) => std::result::Result::Ok(Json(String::from("Okay"))),
-                        Err(_e) => std::result::Result::Err(crate::Error::InternalServerError {}),
-                    }
-                }
-                Err(_e) => {
-                    dbg!(_e);
-                    std::result::Result::Err(crate::Error::Teapot)
-                }
-            }
-        }
-        Err(_e) => {
-            dbg!(_e);
-            std::result::Result::Err(crate::Error::Teapot)
-        }
+        .map_err(|_| {
+            dbg!("Failed at point 3");
+            crate::Error::BadRequest {}
+        })?;
+
+    log.payload.push_str(&format!("User: {:?}\n", user));
+
+    //at this point we know the user is authorized to make the action, so let's go ahead and make it
+    let user_stats = Stats {
+        totalTurns: user.3.unwrap_or(0),
+        gameTurns: user.4.unwrap_or(0),
+        mvps: user.5.unwrap_or(0),
+        streak: user.6.unwrap_or(0),
+    };
+
+    let user_ratings = Ratings::load(&user_stats);
+
+    let user_weight: f64 = match user_ratings.overall {
+        1 => 1.0,
+        2 => 2.0,
+        3 => 3.0,
+        4 => 4.0,
+        5 => 5.0,
+        _ => 1.0,
+    };
+    let user_power: f64 = multiplier * user_weight;
+    let mut merc: bool = false;
+
+    if user.0 != user.7 {
+        merc = true;
     }
+
+    let insert_turn = conn
+        .run(move |connection| {
+            insert_turn(
+                &user,
+                user_ratings,
+                &latest,
+                target,
+                multiplier,
+                user_weight,
+                user_power,
+                merc,
+                connection,
+            )
+        })
+        .await
+        .map_err(|_| {
+            dbg!("Failed at point 4");
+            crate::Error::BadRequest {}
+        })?;
+
+    if insert_turn.len() != 1 || insert_turn[0] != target {
+        dbg!("Failed at point 5");
+        return std::result::Result::Err(crate::Error::InternalServerError {});
+    }
+
+    log.payload
+        .push_str(&format!("New Turn: {:?}\n", insert_turn[0]));
+
+    //now we go update the user
+    conn.run(move |connection| {
+        UpdateUser::do_update(
+            UpdateUser {
+                id: user.1,
+                overall: user_weight as i32,
+                turns: user_stats.totalTurns,
+                game_turns: user_stats.gameTurns,
+                mvps: user_stats.mvps,
+                streak: user_stats.streak,
+                // awards: user_stats.awards,
+            },
+            connection,
+        )
+    })
+    .await
+    .map_err(|_| {
+        dbg!("Failed at point 2");
+        crate::Error::BadRequest {}
+    })?;
+
+    log.payload.push_str("User updated");
+
+    conn.run(move |c| log.insert(c)).await?;
+
+    // We got to the end!
+    std::result::Result::Ok(Json(String::from("Okay")))
 }
 
 #[get("/polls", rank = 1)]

@@ -1,7 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::schema::{continuation_polls, continuation_responses, territories, turninfo, turns};
+use crate::schema::{
+    continuation_polls, continuation_responses, logs, territories, turninfo, turns,
+};
 use crate::sys::SysInfo;
 use diesel::prelude::*;
 use jsonwebtoken::errors::Error;
@@ -35,6 +37,13 @@ pub(crate) struct Move {
 #[derive(Serialize, Deserialize)]
 pub(crate) struct MoveInfo {
     pub(crate) territory: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) struct Log {
+    pub(crate) route: String,
+    pub(crate) query: String,
+    pub(crate) payload: String,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]
@@ -83,6 +92,40 @@ impl Claims {
             cookie.value().to_string(),
         )
         .map_err(|_| crate::Error::BadRequest {})
+    }
+}
+
+impl Log {
+    pub(crate) fn begin(r: String, q: String) -> Log {
+        Log {
+            route: r,
+            query: q,
+            payload: String::new(),
+        }
+    }
+
+    pub(crate) fn insert(&self, conn: &PgConnection) -> Result<(), crate::Error> {
+        let route = self.route.clone();
+        let query = self.query.clone();
+        let payload = self.payload.clone();
+        let err = diesel::insert_into(logs::table)
+            .values((
+                logs::route.eq(&route),
+                logs::query.eq(&query),
+                logs::payload.eq(&payload),
+            ))
+            .execute(conn);
+        if let Ok(e) = err {
+            if e > 0 {
+                return Ok(());
+            } else {
+                dbg!(&self);
+                return Err(crate::Error::InternalServerError {});
+            }
+        } else {
+            dbg!(&self);
+            return Err(crate::Error::InternalServerError {});
+        }
     }
 }
 

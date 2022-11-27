@@ -4,8 +4,7 @@
 use crate::catchers::Status;
 use crate::db::DbConn;
 use crate::model::{
-    PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer,
-    User,
+    PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer, User,
 };
 use crate::Error;
 use rocket::serde::json::Json;

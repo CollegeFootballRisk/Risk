@@ -329,6 +329,15 @@ table! {
 }
 
 table! {
+    logs (id){
+        id -> Int4,
+        route -> Text,
+        query -> Text,
+        payload -> Text,
+    }
+}
+
+table! {
     award_info (id){
         id -> Int4,
         name -> Text,
