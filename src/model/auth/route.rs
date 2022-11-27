@@ -153,7 +153,7 @@ pub(crate) async fn make_move(
     // Get user information from cookies
     let c = Claims::from_private_cookie(cookies, config)?;
 
-    log.payload.push_str(&format!("Claims: {:?}\n", c.0));
+    log.payload.push_str(&format!("Claims: {:?}\n", c.0.id));
 
     let tmplatest = latest.clone();
 

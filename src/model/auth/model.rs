@@ -117,14 +117,14 @@ impl Log {
             .execute(conn);
         if let Ok(e) = err {
             if e > 0 {
-                return Ok(());
+                 Ok(())
             } else {
                 dbg!(&self);
-                return Err(crate::Error::InternalServerError {});
+                Err(crate::Error::InternalServerError {})
             }
         } else {
             dbg!(&self);
-            return Err(crate::Error::InternalServerError {});
+            Err(crate::Error::InternalServerError {})
         }
     }
 }
