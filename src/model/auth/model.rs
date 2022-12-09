@@ -46,6 +46,12 @@ pub(crate) struct Log {
     pub(crate) payload: String,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct MoveSub {
+    pub target: i32,
+    pub aon: Option<bool>,
+}
+
 #[derive(Serialize, Deserialize, Queryable)]
 pub(crate) struct Poll {
     pub(crate) id: i32,
@@ -117,7 +123,7 @@ impl Log {
             .execute(conn);
         if let Ok(e) = err {
             if e > 0 {
-                 Ok(())
+                Ok(())
             } else {
                 dbg!(&self);
                 Err(crate::Error::InternalServerError {})

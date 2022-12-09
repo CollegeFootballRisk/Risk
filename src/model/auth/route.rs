@@ -3,8 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::db::DbConn;
 use crate::model::{
-    Claims, CurrentStrength, Latest, Log, MoveInfo, PlayerWithTurnsAndAdditionalTeam, Poll,
-    PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
+    Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
+    Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
 };
 use crate::schema::{
     cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,
@@ -109,7 +109,7 @@ pub(crate) async fn join_team(
     }
 }
 
-#[get("/my_move", rank = 1)]
+#[post("/my_move", rank = 1)]
 //#[cfg(feature = "risk_security")]
 pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
@@ -132,14 +132,14 @@ pub(crate) async fn my_move(
     ))
 }
 
-#[get("/move?<target>&<aon>", rank = 1)]
+#[post("/move", rank = 1, format = "application/json", data = "<movesub>")]
 pub(crate) async fn make_move(
-    target: i32,
-    aon: Option<bool>,
+    movesub: Json<MoveSub>,
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<String>, crate::Error> {
+) -> Result<Json<i32>, crate::Error> {
+    let target = movesub.target;
     let mut log = Log::begin(String::from("move"), target.to_string());
 
     // Get latest turn
@@ -161,7 +161,7 @@ pub(crate) async fn make_move(
     let temp_pfix = c.0.clone();
     let (user, multiplier) = conn
         .run(move |connection| {
-            handle_territory_info(&temp_pfix, target, &tmplatest, connection, aon)
+            handle_territory_info(&temp_pfix, target, &tmplatest, connection, movesub.aon)
         })
         .await
         .map_err(|_| {
@@ -250,7 +250,7 @@ pub(crate) async fn make_move(
     conn.run(move |c| log.insert(c)).await?;
 
     // We got to the end!
-    std::result::Result::Ok(Json(String::from("Okay")))
+    std::result::Result::Ok(Json(insert_turn[0]))
 }
 
 #[get("/polls", rank = 1)]
