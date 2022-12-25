@@ -44,6 +44,7 @@ pub fn establish_connection() -> PgConnection {
 fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
     let mut teams = territory_players
         .iter()
+        .filter(|mover| mover.alt_score < ALT_CUTOFF)
         .map(|x| x.team)
         .collect::<Vec<i32>>();
     teams.sort_unstable();
@@ -129,7 +130,9 @@ fn process_territories(
 
         // We collect all the players that placed a move on this territory
         let territory_players = players
-            .drain_filter(|player| player.territory == territory.territory_id)
+            .drain_filter(|player| {
+                player.territory == territory.territory_id && player.alt_score < ALT_CUTOFF
+            })
             .collect::<Vec<_>>();
 
         // Again, for debugging
@@ -178,6 +181,7 @@ fn process_territories(
                 // So let's check if there's any power available from the team.
                 if territory_players
                     .iter()
+                    .filter(|mover| mover.alt_score < ALT_CUTOFF)
                     .map(|mover| mover.power)
                     .sum::<f64>()
                     == 0.0
@@ -253,6 +257,7 @@ fn process_territories(
                         territory: territory.territory_id,
                         territory_power: territory_players
                             .iter()
+                            .filter(|mover| mover.alt_score < ALT_CUTOFF)
                             .map(|mover| mover.power)
                             .sum::<f64>(),
                         chance: 0.00,
@@ -266,32 +271,34 @@ fn process_territories(
                     turn_id: territory.turn_id,
                     ones: territory_players
                         .iter()
-                        .filter(|player| player.stars == 1)
+                        .filter(|player| player.stars == 1 && player.alt_score < ALT_CUTOFF)
                         .count() as i32,
                     twos: territory_players
                         .iter()
-                        .filter(|player| player.stars == 2)
+                        .filter(|player| player.stars == 2 && player.alt_score < ALT_CUTOFF)
                         .count() as i32,
                     threes: territory_players
                         .iter()
-                        .filter(|player| player.stars == 3)
+                        .filter(|player| player.stars == 3 && player.alt_score < ALT_CUTOFF)
                         .count() as i32,
                     fours: territory_players
                         .iter()
-                        .filter(|player| player.stars == 4)
+                        .filter(|player| player.stars == 4 && player.alt_score < ALT_CUTOFF)
                         .count() as i32,
                     fives: territory_players
                         .iter()
-                        .filter(|player| player.stars == 5)
+                        .filter(|player| player.stars == 5 && player.alt_score < ALT_CUTOFF)
                         .count() as i32,
                     teampower: territory_players
                         .iter()
+                        .filter(|player| player.alt_score < ALT_CUTOFF)
                         .map(|mover| mover.power)
                         .sum::<f64>(),
                     chance: 1.00,
                     territory: territory.territory_id,
                     territory_power: territory_players
                         .iter()
+                        .filter(|player| player.alt_score < ALT_CUTOFF)
                         .map(|mover| mover.power)
                         .sum::<f64>(),
                 });
@@ -307,6 +314,7 @@ fn process_territories(
                 // So let's check if there's any power available from the team.
                 if territory_players
                     .iter()
+                    .filter(|player| player.alt_score < ALT_CUTOFF)
                     .map(|mover| mover.power)
                     .sum::<f64>()
                     == 0.0
@@ -382,7 +390,7 @@ fn process_territories(
                 // We collect the players that are on the winning team for MVPing.
                 let territory_victors = territory_players
                     .clone()
-                    .drain_filter(|player| player.team == victor)
+                    .drain_filter(|player| player.team == victor && player.alt_score < ALT_CUTOFF)
                     .collect::<Vec<_>>();
 
                 // We now determine the MVP from the players on the winning team.
@@ -454,6 +462,9 @@ fn process_territories(
 
 fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<PlayerMoves>) {
     for i in territory_players {
+        if i.alt_score >= ALT_CUTOFF {
+            continue;
+        }
         stats
             .entry(i.team)
             .or_insert_with(|| Stats::new(i.turn_id + 1, i.team))
@@ -578,8 +589,10 @@ fn do_playoffs() {
 
 fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
     // Calculate new starttime
-    let next_time = settings.extract_inner("risk.time").unwrap_or("04:00:00");
-    let naive_time = NaiveTime::parse_from_str(next_time, "%H:%M:%S").unwrap();
+    let next_time = settings
+        .extract_inner::<String>("risk.time")
+        .unwrap_or(String::from("04:00:00"));
+    let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
     let next_days = settings
         .extract_inner("risk.days")
         .unwrap_or([1, 2, 3, 4, 5, 6, 7]);
@@ -589,7 +602,6 @@ fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
 // Function assumes that we're after today's roll
 fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime {
     let curr_day: i64 = now.weekday().number_from_monday() as i64;
-    dbg!(&curr_day);
     let index: i64 = if next_days.is_empty() && curr_day < 7 {
         1
     } else if let Some(next) = next_days.iter().filter(|&x| *x > curr_day).min() {
@@ -681,7 +693,6 @@ fn runtime() -> Result<(), diesel::result::Error> {
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }
     }
-
     Ok(())
 }
 
