@@ -265,30 +265,17 @@ fn process_territories(
                     });
                 }
 
+                let team_star_breakdown = get_team_star_breakdown(&territory_players);
+
                 // Finally we push the statistics for the territory
                 territory_stats.push(TerritoryStats {
                     team: teams[0],
                     turn_id: territory.turn_id,
-                    ones: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 1 && player.alt_score < ALT_CUTOFF)
-                        .count() as i32,
-                    twos: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 2 && player.alt_score < ALT_CUTOFF)
-                        .count() as i32,
-                    threes: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 3 && player.alt_score < ALT_CUTOFF)
-                        .count() as i32,
-                    fours: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 4 && player.alt_score < ALT_CUTOFF)
-                        .count() as i32,
-                    fives: territory_players
-                        .iter()
-                        .filter(|player| player.stars == 5 && player.alt_score < ALT_CUTOFF)
-                        .count() as i32,
+                    ones: team_star_breakdown[0],
+                    twos: team_star_breakdown[1],
+                    threes: team_star_breakdown[2],
+                    fours: team_star_breakdown[3],
+                    fives: team_star_breakdown[4],
                     teampower: territory_players
                         .iter()
                         .filter(|player| player.alt_score < ALT_CUTOFF)
@@ -473,6 +460,27 @@ fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<Pla
             .add_player_or_merc(i.merc)
             .stars(i.stars);
     }
+}
+
+fn get_team_star_breakdown(territory_player: &Vec<PlayerMoves>) -> [i32; 5] {
+    let mut output = [0, 0, 0, 0, 0];
+
+    for pm in territory_player {
+        if pm.alt_score >= ALT_CUTOFF {
+            continue;
+        }
+        output[0] += 1;
+        match pm.stars {
+            1 => output[0] += 1,
+            2 => output[1] += 1,
+            3 => output[2] += 1,
+            4 => output[3] += 1,
+            5 => output[4] += 1,
+            _ => output[0] += 1,
+        }
+    }
+
+    output
 }
 
 /// Updates the statistics for all users after the roll
