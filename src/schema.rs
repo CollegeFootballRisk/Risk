@@ -100,6 +100,8 @@ table! {
     }
 }
 
+//TODO: Get rid of this.
+// ^^^ Blocked by not being on diesel 2.0
 table! {
     team_player_moves (id) {
         id -> Int4,

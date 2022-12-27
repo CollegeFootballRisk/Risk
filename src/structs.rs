@@ -177,40 +177,6 @@ impl PlayerMoves {
             .set(turns::mvp.eq(true))
             .execute(conn)
     }
-
-    /*pub fn mergemoves(min: i32, max: i32, conn: &PgConnection) -> QueryResult<usize> {
-        turns::table
-            .select((
-                turns::user_id,
-                turns::turn_id,
-                turns::territory,
-                turns::mvp,
-                turns::power,
-                turns::multiplier,
-                turns::weight,
-                turns::stars,
-                turns::team,
-                turns::alt_score,
-                turns::merc,
-            ))
-            .filter(turns::id.le(max))
-            .filter(turns::id.ge(min))
-            .insert_into(past_turns::table)
-            .into_columns((
-                past_turns::user_id,
-                past_turns::turn_id,
-                past_turns::territory,
-                past_turns::mvp,
-                past_turns::power,
-                past_turns::multiplier,
-                past_turns::weight,
-                past_turns::stars,
-                past_turns::team,
-                past_turns::alt_score,
-                past_turns::merc,
-            ))
-            .execute(conn)
-    }*/
 }
 
 impl Stats {
