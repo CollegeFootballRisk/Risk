@@ -19,7 +19,7 @@ use diesel::prelude::*;
 use diesel::sql_query;
 use rand::prelude::*;
 use rand_chacha::ChaCha12Rng;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 const ALT_CUTOFF: i32 = 75;
 const AON_END: i32 = 48;
@@ -53,7 +53,7 @@ fn get_teams(territory_players: Vec<PlayerMoves>) -> Vec<i32> {
 }
 
 /// Based on random number `lottery`, return the ID of the MVP user
-fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
+fn determine_victor(lottery: f64, map: BTreeMap<i32, Victor>) -> i32 {
     // This is the incrementing value that we will add each team's power to
     let mut victorsum = 0_f64;
     // This will be what we return, the id of the victorious team.
@@ -73,15 +73,20 @@ fn determine_victor(lottery: f64, map: HashMap<i32, Victor>) -> i32 {
 }
 
 // Returns MVP by selecting at random from the team that won
-fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> Option<PlayerMoves> {
+fn get_mvp(mut territory_players: Vec<PlayerMoves>, test: bool) -> Option<PlayerMoves> {
     territory_players.retain(|x| x.alt_score < ALT_CUTOFF && x.power > 0.0);
+    let mut seed = if test {
+        ChaCha12Rng::seed_from_u64(55)
+    } else {
+        ChaCha12Rng::from_entropy()
+    };
     let rng = match territory_players.len() {
         // We eliminated everyone :(
         0 => return None,
         // In the case there's 1 player, they're it!
         1 => 0,
         // Else, generate the #
-        _ => rand::thread_rng().gen_range(0..territory_players.len()),
+        _ => seed.gen_range(0..territory_players.len()),
     };
     // Return the MVP
     Some(territory_players.remove(rng))
@@ -100,15 +105,17 @@ fn get_mvp(mut territory_players: Vec<PlayerMoves>) -> Option<PlayerMoves> {
 /// Outputs:
 /// - Vec<TerritoryOwnersInsert>: The new territory ownership for tomorrow.
 /// - Vec<PlayerMoves>: The moves, with MVPs populated
-/// - HashMap<i32, Stats>: the statistics of the turn for each team
+/// - BTreeMap<i32, Stats>: the statistics of the turn for each team
 /// - Vec<TerritoryStats>: the statistics of the turn for each territory
 fn process_territories(
     territories: Vec<TerritoryOwners>,
     mut players: Vec<PlayerMoves>,
+    seed: &mut ChaCha12Rng,
+    test: bool,
 ) -> (
     Vec<TerritoryOwnersInsert>,
     Vec<PlayerMoves>,
-    HashMap<i32, Stats>,
+    BTreeMap<i32, Stats>,
     Vec<TerritoryStats>,
 ) {
     // We log this to STDOUT so we can debug problems
@@ -118,7 +125,7 @@ fn process_territories(
     // We create empty arrays for the outputs
     let mut new_owners: Vec<TerritoryOwnersInsert> = Vec::new();
     let mut mvps: Vec<PlayerMoves> = Vec::new();
-    let mut stats: HashMap<i32, Stats> = HashMap::new();
+    let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
     let mut territory_stats: Vec<TerritoryStats> = Vec::new();
 
     // Now we go over each territory that was owned previously.
@@ -206,6 +213,25 @@ fn process_territories(
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
+
+                    let team_star_breakdown = get_team_star_breakdown(&territory_players);
+                    if team_star_breakdown.iter().sum::<i32>() > 0 {
+                        territory_stats.push(TerritoryStats {
+                            team: territory_players[0].team,
+                            turn_id: territory.turn_id,
+                            ones: team_star_breakdown[0],
+                            twos: team_star_breakdown[1],
+                            threes: team_star_breakdown[2],
+                            fours: team_star_breakdown[3],
+                            fives: team_star_breakdown[4],
+                            teampower: 0.0,
+                            chance: 0.0,
+                            territory: territory.territory_id,
+                            territory_power: 0.0,
+                        });
+                    }
+                    // We don't know if it was an alt or not so this helps us out
+                    handle_team_stats(&mut stats, territory_players);
                     continue; // next territory
                 }
 
@@ -213,7 +239,7 @@ fn process_territories(
                 dbg!("One Team");
 
                 // We select an MVP
-                let mvp = get_mvp(territory_players.clone());
+                let mvp = get_mvp(territory_players.clone(), test);
                 // We push the mvps onto the MVP docket from earlier.
                 let mvp_id = match mvp {
                     None => None,
@@ -330,11 +356,48 @@ fn process_territories(
                         territory: territory.territory_id,
                         ..TerritoryStats::default()
                     });
+
+                    // Now we do the same for the other teams in case they might have non-alts.
+
+                    for team in teams {
+                        let team_star_breakdown = get_team_star_breakdown(
+                            &territory_players
+                                .iter()
+                                .filter(|p| p.team == team)
+                                .cloned()
+                                .collect(),
+                        );
+                        if team_star_breakdown.iter().sum::<i32>() > 0 {
+                            territory_stats.push(TerritoryStats {
+                                team,
+                                turn_id: territory.turn_id,
+                                ones: team_star_breakdown[0],
+                                twos: team_star_breakdown[1],
+                                threes: team_star_breakdown[2],
+                                fours: team_star_breakdown[3],
+                                fives: team_star_breakdown[4],
+                                teampower: 0.0,
+                                chance: 0.0,
+                                territory: territory.territory_id,
+                                territory_power: 0.0,
+                            });
+                        }
+                        // We don't know if it was an alt or not so this helps us out
+                        handle_team_stats(
+                            &mut stats,
+                            territory_players
+                                .iter()
+                                .filter(|p| p.team == team)
+                                .cloned()
+                                .collect(),
+                        );
+                    }
+
                     continue; // next territory
                 }
 
-                // We create this empty HashMap for collecting team information
-                let mut map = HashMap::new();
+                // We create this empty BTreeMap for collecting team information
+                let mut map = BTreeMap::new();
 
                 // We create a stats entry for the owner of the territory, just in case they abandoned it
                 stats
@@ -342,7 +405,7 @@ fn process_territories(
                     .or_insert_with(|| Stats::new(territory.turn_id + 1, territory.owner_id))
                     .territorycount += 0;
 
-                // For each team, insert the team into the HashMap we made earlier
+                // For each team, insert the team into the BTreeMap we made earlier
                 // in this case, Victor is a set of stats metrics (# by star, overall power)
                 for team in teams {
                     map.insert(team, Victor::default()); // stars, power, ones, twos, threes, fours, fives
@@ -367,7 +430,8 @@ fn process_territories(
                 let totalpower: f64 = map.values().map(|x| (x.power)).sum();
 
                 // We now generate the random number from 0 to the total power on the territory.
-                let lottery = ChaCha12Rng::from_entropy().gen_range(0_f64..totalpower);
+                // We pass this in so we can run tests
+                let lottery = seed.gen_range(0_f64..totalpower);
 
                 // We determine the victor, this function goes team by team until the sum of the power of teams
                 // it has reviewed is greater than `lottery` the random number we created earlier.
@@ -381,7 +445,7 @@ fn process_territories(
                     .collect::<Vec<_>>();
 
                 // We now determine the MVP from the players on the winning team.
-                let mvp = get_mvp(territory_victors);
+                let mvp = get_mvp(territory_victors, test);
                 let mvp_id = match mvp {
                     None => None,
                     Some(mvp_i) => {
@@ -443,19 +507,31 @@ fn process_territories(
         }
     }
 
+    // Sort if this is a test
+    if test {
+        new_owners.sort_by_key(|p| p.territory_id);
+        mvps.sort_by_key(|p| p.user_id);
+        territory_stats.sort_by_key(|p| p.team);
+    }
+
     // Finally, we return everything we just calculated.
     (new_owners, mvps, stats, territory_stats)
 }
 
-fn handle_team_stats(stats: &mut HashMap<i32, Stats>, territory_players: Vec<PlayerMoves>) {
+fn handle_team_stats(stats: &mut BTreeMap<i32, Stats>, territory_players: Vec<PlayerMoves>) {
     for i in territory_players {
         if i.alt_score >= ALT_CUTOFF {
             continue;
         }
+        let starpower = if i.power == 0.0 {
+            0.0
+        } else {
+            i.power / i.multiplier
+        };
         stats
             .entry(i.team)
             .or_insert_with(|| Stats::new(i.turn_id + 1, i.team))
-            .starpower(i.power / i.multiplier)
+            .starpower(starpower)
             .effectivepower(i.power.round())
             .add_player_or_merc(i.merc)
             .stars(i.stars);
@@ -594,11 +670,11 @@ fn do_playoffs() {
     // Because we're not technically carrying out a new day, we don't add anything to any player account.
 }
 
-fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
+fn next_roll(settings: &rocket::figment::Figment) -> Option<NaiveDateTime> {
     // Calculate new starttime
     let next_time = settings
         .extract_inner::<String>("risk.time")
-        .unwrap_or(String::from("04:00:00"));
+        .unwrap_or_else(|_| String::from("04:00:00"));
     let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
     let next_days = settings
         .extract_inner("risk.days")
@@ -607,20 +683,25 @@ fn next_roll(settings: &rocket::figment::Figment) -> NaiveDateTime {
 }
 
 // Function assumes that we're after today's roll
-fn next_day_in_seq(next_days: &[i64], next_time: &NaiveTime, now: &DateTime<Utc>) -> NaiveDateTime {
+fn next_day_in_seq(
+    next_days: &[i64],
+    next_time: &NaiveTime,
+    now: &DateTime<Utc>,
+) -> Option<NaiveDateTime> {
     let curr_day: i64 = now.weekday().number_from_monday() as i64;
-    let index: i64 = if next_days.is_empty() && curr_day < 7 {
-        1
+    let index: i64 = if next_days.is_empty() {
+        return None;
     } else if let Some(next) = next_days.iter().filter(|&x| *x > curr_day).min() {
         *next - curr_day
     } else {
         let min = next_days.iter().min().unwrap_or(&0);
         7 - (min - curr_day).abs()
     };
-    (*now + Duration::days(index))
-        .date()
-        .and_hms(next_time.hour(), next_time.minute(), next_time.second())
-        .naive_utc()
+    (*now + Duration::days(index)).date_naive().and_hms_opt(
+        next_time.hour(),
+        next_time.minute(),
+        next_time.second(),
+    )
 }
 
 fn runtime() -> Result<(), diesel::result::Error> {
@@ -645,7 +726,13 @@ fn runtime() -> Result<(), diesel::result::Error> {
         return Ok(());
     }
     //let move_ids = players.iter().map(|x| x.id).collect::<Vec<i32>>();
-    let (owners, mvps, stats, territory_stats) = process_territories(territories, players);
+    // We pass in an entropy-driven randomy number, since we're not testing
+    let (owners, mvps, stats, territory_stats) = process_territories(
+        territories,
+        players,
+        &mut ChaCha12Rng::from_entropy(),
+        false,
+    );
     TerritoryStats::insert(territory_stats, &conn)?;
     Stats::insert(stats, turninfoblock.id, &conn)?;
     let territory_insert = TerritoryOwnersInsert::insert(&owners, &conn)?;
@@ -736,10 +823,33 @@ mod tests {
         let mut next_days = [1, 2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
-        let next = NaiveDate::from_ymd(2022, 10, 31).and_hms(4, 0, 0);
+        let now = NaiveDate::from_ymd_opt(2022, 10, 30)
+            .unwrap()
+            .and_hms_opt(4, 1, 1)
+            .unwrap();
+        let next = NaiveDate::from_ymd_opt(2022, 10, 31)
+            .unwrap()
+            .and_hms_opt(4, 0, 0)
+            .unwrap();
         assert_eq!(
-            next,
+            Some(next),
+            next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
+        );
+    }
+
+    #[test]
+    fn test_next_day_in_seq_empty() {
+        let next_time = String::from("04:00:00");
+        let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
+        let mut next_days = [];
+        next_days.sort();
+
+        let now = NaiveDate::from_ymd_opt(2022, 10, 30)
+            .unwrap()
+            .and_hms_opt(4, 1, 1)
+            .unwrap();
+        assert_eq!(
+            None,
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
         );
     }
@@ -751,10 +861,16 @@ mod tests {
         let mut next_days = [2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
-        let next = NaiveDate::from_ymd(2022, 11, 1).and_hms(4, 0, 0);
+        let now = NaiveDate::from_ymd_opt(2022, 10, 30)
+            .unwrap()
+            .and_hms_opt(4, 1, 1)
+            .unwrap();
+        let next = NaiveDate::from_ymd_opt(2022, 11, 1)
+            .unwrap()
+            .and_hms_opt(4, 0, 0)
+            .unwrap();
         assert_eq!(
-            next,
+            Some(next),
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
         );
     }
@@ -766,10 +882,16 @@ mod tests {
         let mut next_days = [3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 10, 30).and_hms(4, 1, 1);
-        let next = NaiveDate::from_ymd(2022, 11, 2).and_hms(4, 0, 0);
+        let now = NaiveDate::from_ymd_opt(2022, 10, 30)
+            .unwrap()
+            .and_hms_opt(4, 1, 1)
+            .unwrap();
+        let next = NaiveDate::from_ymd_opt(2022, 11, 2)
+            .unwrap()
+            .and_hms_opt(4, 0, 0)
+            .unwrap();
         assert_eq!(
-            next,
+            Some(next),
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
         );
     }
@@ -781,10 +903,16 @@ mod tests {
         let mut next_days = [2, 3, 4, 5, 6, 7];
         next_days.sort();
 
-        let now = NaiveDate::from_ymd(2022, 11, 26).and_hms(3, 30, 1);
-        let next = NaiveDate::from_ymd(2022, 11, 27).and_hms(3, 30, 0);
+        let now = NaiveDate::from_ymd_opt(2022, 11, 26)
+            .unwrap()
+            .and_hms_opt(3, 30, 1)
+            .unwrap();
+        let next = NaiveDate::from_ymd_opt(2022, 11, 27)
+            .unwrap()
+            .and_hms_opt(3, 30, 0)
+            .unwrap();
         assert_eq!(
-            next,
+            Some(next),
             next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
         );
     }
@@ -797,10 +925,16 @@ mod tests {
             let mut next_days = [1, 2, 3, 4, 5, 6, 7];
             next_days.sort();
 
-            let now = NaiveDate::from_ymd(2022, 11, 20 + i).and_hms(3, 30, 1);
-            let next = NaiveDate::from_ymd(2022, 11, 21 + i).and_hms(3, 30, 0);
+            let now = NaiveDate::from_ymd_opt(2022, 11, 20 + i)
+                .unwrap()
+                .and_hms_opt(3, 30, 1)
+                .unwrap();
+            let next = NaiveDate::from_ymd_opt(2022, 11, 21 + i)
+                .unwrap()
+                .and_hms_opt(3, 30, 0)
+                .unwrap();
             assert_eq!(
-                next,
+                Some(next),
                 next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
             );
         }
@@ -814,14 +948,23 @@ mod tests {
             let mut next_days = [2, 3, 4, 5, 6, 7];
             next_days.sort();
 
-            let now = NaiveDate::from_ymd(2022, 11, 20 + i).and_hms(3, 30, 1);
+            let now = NaiveDate::from_ymd_opt(2022, 11, 20 + i)
+                .unwrap()
+                .and_hms_opt(3, 30, 1)
+                .unwrap();
             let next = if i % 7 == 0 {
-                NaiveDate::from_ymd(2022, 11, 21 + i + 1).and_hms(3, 30, 0)
+                NaiveDate::from_ymd_opt(2022, 11, 21 + i + 1)
+                    .unwrap()
+                    .and_hms_opt(3, 30, 0)
+                    .unwrap()
             } else {
-                NaiveDate::from_ymd(2022, 11, 21 + i).and_hms(3, 30, 0)
+                NaiveDate::from_ymd_opt(2022, 11, 21 + i)
+                    .unwrap()
+                    .and_hms_opt(3, 30, 0)
+                    .unwrap()
             };
             assert_eq!(
-                next,
+                Some(next),
                 next_day_in_seq(&next_days, &naive_time, &DateTime::from_utc(now, Utc))
             );
         }
@@ -830,7 +973,7 @@ mod tests {
     #[test]
     fn test_get_mvp_empty() {
         let playermoves: Vec<PlayerMoves> = Vec::new();
-        assert_eq!(None, get_mvp(playermoves));
+        assert_eq!(None, get_mvp(playermoves, false));
     }
 
     #[test]
@@ -849,7 +992,7 @@ mod tests {
             alt_score: ALT_CUTOFF + 1,
             merc: false,
         }];
-        assert_eq!(None, get_mvp(playermoves));
+        assert_eq!(None, get_mvp(playermoves, false));
     }
 
     #[test]
@@ -868,7 +1011,7 @@ mod tests {
             alt_score: 0,
             merc: false,
         }];
-        assert_eq!(None, get_mvp(playermoves));
+        assert_eq!(None, get_mvp(playermoves, false));
     }
 
     #[test]
@@ -887,7 +1030,42 @@ mod tests {
             alt_score: 0,
             merc: false,
         }];
-        assert_eq!(Some(playermoves[0].clone()), get_mvp(playermoves));
+        assert_eq!(Some(playermoves[0].clone()), get_mvp(playermoves, false));
+    }
+
+    #[test]
+    fn test_get_mvp_two() {
+        let playermoves: Vec<PlayerMoves> = vec![
+            PlayerMoves {
+                id: 32,
+                user_id: 32,
+                turn_id: 32,
+                territory: 32,
+                mvp: false,
+                power: 10.0,
+                multiplier: 10.0,
+                weight: 1.0,
+                stars: 2,
+                team: 20,
+                alt_score: 0,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 34,
+                user_id: 34,
+                turn_id: 32,
+                territory: 32,
+                mvp: false,
+                power: 15.0,
+                multiplier: 15.0,
+                weight: 1.0,
+                stars: 2,
+                team: 20,
+                alt_score: 0,
+                merc: false,
+            },
+        ];
+        assert_eq!(Some(playermoves[1].clone()), get_mvp(playermoves, true));
     }
 
     #[test]
@@ -910,7 +1088,7 @@ mod tests {
             None,
         )];
         let mvps: Vec<PlayerMoves> = Vec::new();
-        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
         stats
             .entry(3)
             .or_insert_with(|| Stats::new(5, 3))
@@ -922,9 +1100,16 @@ mod tests {
             ..TerritoryStats::default()
         }];
 
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
         assert_eq!(
             (new_owners, mvps, stats, territory_stats),
-            process_territories(territories, playermoves)
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
         );
     }
 
@@ -961,7 +1146,7 @@ mod tests {
             Some(6),
         )];
         let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
-        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
         stats
             .entry(3)
             .or_insert_with(|| Stats::new(5, 3))
@@ -991,14 +1176,204 @@ mod tests {
             ..TerritoryStats::default()
         }];
 
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
         assert_eq!(
             (new_owners, mvps, stats, territory_stats),
-            process_territories(territories, playermoves)
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
         );
     }
 
     #[test]
-    fn test_process_territories_one_same_powerless() {
+    fn test_process_territories_one_diff() {
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 6,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: None,
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 45,
+            user_id: 6,
+            turn_id: 4,
+            territory: 2,
+            mvp: false,
+            power: 12.0,
+            multiplier: 1.0,
+            weight: 12.0,
+            stars: 5,
+            team: 3,
+            alt_score: 0,
+            merc: false,
+        }];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            3,
+            Some(0.0),
+            Some(6),
+        )];
+        let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
+        stats
+            .entry(6)
+            .or_insert_with(|| Stats::new(5, 6))
+            .territorycount = 0;
+
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 1;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .playercount = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 12.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .efficiency = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .effectivepower = 12.0;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![
+            TerritoryStats {
+                team: 3,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 12.0,
+                chance: 1.0,
+                teampower: 12.0,
+                fives: 1,
+                ..TerritoryStats::default()
+            },
+            TerritoryStats {
+                team: 6,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 12.0,
+                chance: 0.0,
+                teampower: 0.0,
+                ..TerritoryStats::default()
+            },
+        ];
+
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
+        );
+    }
+
+    #[test]
+    fn test_process_territories_one_diff_powerless() {
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 6,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: None,
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
+            id: 45,
+            user_id: 6,
+            turn_id: 4,
+            territory: 2,
+            mvp: false,
+            power: 0.0,
+            multiplier: 0.0,
+            weight: 12.0,
+            stars: 5,
+            team: 3,
+            alt_score: 0,
+            merc: false,
+        }];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            6,
+            Some(0.0),
+            None,
+        )];
+        let mvps: Vec<PlayerMoves> = vec![];
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .playercount = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .efficiency = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .effectivepower = 0.0;
+        stats
+            .entry(6)
+            .or_insert_with(|| Stats::new(5, 6))
+            .territorycount = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![
+            TerritoryStats {
+                team: 3,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 0.0,
+                chance: 0.0,
+                teampower: 0.0,
+                fives: 1,
+                ..TerritoryStats::default()
+            },
+            TerritoryStats {
+                team: 6,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 0.0,
+                chance: 1.0,
+                teampower: 0.0,
+                ..TerritoryStats::default()
+            },
+        ];
+
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
+        );
+    }
+
+    #[test]
+    fn test_process_territories_one_same_alt() {
         let territories = vec![TerritoryOwners {
             id: 1,
             territory_id: 2,
@@ -1030,7 +1405,7 @@ mod tests {
             None,
         )];
         let mvps: Vec<PlayerMoves> = Vec::new();
-        let mut stats: HashMap<i32, Stats> = HashMap::new();
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
         stats
             .entry(3)
             .or_insert_with(|| Stats::new(5, 3))
@@ -1042,9 +1417,306 @@ mod tests {
             ..TerritoryStats::default()
         }];
 
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
         assert_eq!(
             (new_owners, mvps, stats, territory_stats),
-            process_territories(territories, playermoves)
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
+        );
+    }
+
+    #[test]
+    fn test_process_territories_two() {
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 3,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: Some(12),
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![
+            PlayerMoves {
+                id: 45,
+                user_id: 6,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 12.0,
+                multiplier: 1.0,
+                weight: 12.0,
+                stars: 5,
+                team: 3,
+                alt_score: 0,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 7,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 5.0,
+                multiplier: 1.0,
+                weight: 5.0,
+                stars: 4,
+                team: 2,
+                alt_score: 0,
+                merc: false,
+            },
+        ];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            3,
+            Some(5.254147072201107),
+            Some(6),
+        )];
+        let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
+        stats
+            .entry(2)
+            .or_insert_with(|| Stats::new(5, 2))
+            .territorycount = 0;
+        stats
+            .entry(2)
+            .or_insert_with(|| Stats::new(5, 2))
+            .playercount = 1;
+        stats.entry(2).or_insert_with(|| Stats::new(5, 2)).starpower = 5.0;
+        stats
+            .entry(2)
+            .or_insert_with(|| Stats::new(5, 2))
+            .efficiency = 0.0;
+        stats
+            .entry(2)
+            .or_insert_with(|| Stats::new(5, 2))
+            .effectivepower = 5.0;
+        stats.entry(2).or_insert_with(|| Stats::new(5, 3)).fours = 1;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .territorycount = 1;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .playercount = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 12.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .efficiency = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .effectivepower = 12.0;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
+        let territory_stats: Vec<TerritoryStats> = vec![
+            TerritoryStats {
+                team: 2,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 17.0,
+                chance: 0.29411764705882354,
+                teampower: 5.0,
+                fours: 1,
+                ..TerritoryStats::default()
+            },
+            TerritoryStats {
+                team: 3,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 17.0,
+                chance: 0.7058823529411765,
+                teampower: 12.0,
+                fives: 1,
+                ..TerritoryStats::default()
+            },
+        ];
+
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
+        );
+    }
+
+    #[test]
+    fn test_process_territories_two_powerless() {
+        let territories = vec![TerritoryOwners {
+            id: 1,
+            territory_id: 2,
+            owner_id: 6,
+            turn_id: 4,
+            previous_owner_id: 5,
+            random_number: 0.0,
+            mvp: Some(12),
+        }];
+
+        let playermoves: Vec<PlayerMoves> = vec![
+            PlayerMoves {
+                id: 45,
+                user_id: 6,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 12.0,
+                stars: 5,
+                team: 3,
+                alt_score: 0,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 7,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 5.0,
+                stars: 4,
+                team: 2,
+                alt_score: 170,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 17,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 5.0,
+                stars: 4,
+                team: 3,
+                alt_score: 175,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 18,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 5.0,
+                stars: 2,
+                team: 3,
+                alt_score: 5,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 198,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 5.0,
+                stars: 1,
+                team: 3,
+                alt_score: 5,
+                merc: false,
+            },
+            PlayerMoves {
+                id: 46,
+                user_id: 198,
+                turn_id: 4,
+                territory: 2,
+                mvp: false,
+                power: 0.0,
+                multiplier: 0.0,
+                weight: 5.0,
+                stars: 3,
+                team: 3,
+                alt_score: 5,
+                merc: false,
+            },
+        ];
+        let new_owners = vec![TerritoryOwnersInsert::new(
+            &territories[0],
+            6,
+            Some(0.0),
+            None,
+        )];
+        let mvps: Vec<PlayerMoves> = vec![];
+        let mut stats: BTreeMap<i32, Stats> = BTreeMap::new();
+        stats
+            .entry(6)
+            .or_insert_with(|| Stats::new(5, 6))
+            .territorycount = 1;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .playercount = 4;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).starpower = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .efficiency = 0.0;
+        stats
+            .entry(3)
+            .or_insert_with(|| Stats::new(5, 3))
+            .effectivepower = 0.0;
+        // Not an alt so should be listed, just with 0 power.
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).fives = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).twos = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).ones = 1;
+        stats.entry(3).or_insert_with(|| Stats::new(5, 3)).threes = 1;
+        // Team 2 is exlcuded as it did not have any non-alts.
+        // Team 3 is included because it tried.
+        let territory_stats: Vec<TerritoryStats> = vec![
+            TerritoryStats {
+                team: 3,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 0.0,
+                chance: 0.0,
+                teampower: 0.0,
+                fives: 1,
+                twos: 1,
+                ones: 1,
+                threes: 1,
+                ..TerritoryStats::default()
+            },
+            TerritoryStats {
+                team: 6,
+                turn_id: 4,
+                territory: 2,
+                territory_power: 0.0,
+                chance: 1.0,
+                teampower: 0.0,
+                ..TerritoryStats::default()
+            },
+        ];
+
+        // Because we are only testing functionality, not actually running ringmaster
+        // we pass a known seed for reproducible results.
+        assert_eq!(
+            (new_owners, mvps, stats, territory_stats),
+            process_territories(
+                territories,
+                playermoves,
+                &mut ChaCha12Rng::seed_from_u64(45),
+                true
+            )
         );
     }
 }

@@ -10,7 +10,7 @@ use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::sql_types::Bool;
 use diesel::{insert_into, update};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(QueryableByName)]
 pub struct Bar {
@@ -181,7 +181,7 @@ impl PlayerMoves {
 
 impl Stats {
     pub fn insert(
-        stats: HashMap<i32, Stats>,
+        stats: BTreeMap<i32, Stats>,
         turn_id: i32,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
@@ -378,7 +378,7 @@ impl TurnInfo {
         finale: bool,
         map: Option<String>,
         allornothingenabled: bool,
-        start_time: NaiveDateTime,
+        start_time: Option<NaiveDateTime>,
         conn: &PgConnection,
     ) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;
@@ -390,7 +390,7 @@ impl TurnInfo {
                 turninfo::active.eq(&Some(active)),
                 turninfo::finale.eq(&Some(finale)),
                 turninfo::map.eq(&map),
-                turninfo::rollstarttime.eq(&Some(start_time)),
+                turninfo::rollstarttime.eq(&start_time),
                 turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
             ))
             .on_conflict((turninfo::season, turninfo::day))
