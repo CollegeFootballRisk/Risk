@@ -469,7 +469,6 @@ fn get_team_star_breakdown(territory_player: &Vec<PlayerMoves>) -> [i32; 5] {
         if pm.alt_score >= ALT_CUTOFF {
             continue;
         }
-        output[0] += 1;
         match pm.stars {
             1 => output[0] += 1,
             2 => output[1] += 1,
