@@ -169,7 +169,7 @@ pub(crate) async fn make_move(
             crate::Error::BadRequest {}
         })?;
 
-    log.payload.push_str(&format!("User: {:?}\n", user));
+    log.payload.push_str(&format!("User: {user:?}\n"));
 
     //at this point we know the user is authorized to make the action, so let's go ahead and make it
     let user_stats = Stats {

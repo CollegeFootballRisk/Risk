@@ -107,6 +107,7 @@ impl TerritoryTurn {
         };
         let teams = TeamInTurns::load(&season, &day, &territory, conn);
         let players = PlayerInTurns::load(&season, &day, &territory, conn);
+        dbg!(&players);
         match teams {
             Ok(teams) => match players {
                 Ok(players) => Ok(TerritoryTurn {

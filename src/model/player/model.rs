@@ -318,6 +318,7 @@ impl PlayerInTurns {
         conn: &PgConnection,
     ) -> Result<Vec<PlayerInTurns>, Error> {
         let ciTerritory = CiString::from(territory.to_owned());
+        dbg!(&season, &day, &ciTerritory);
         team_player_moves::table
             .select((
                 team_player_moves::team,

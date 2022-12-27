@@ -228,6 +228,10 @@ impl Stats {
         let mut next_ranking: i32 = 1;
         let mut amended_stats: Vec<Stats> = Vec::new();
         for i in &insertable_stats {
+            // Do not count the 'NCAA' (placeholder for empty territories).
+            if i.team == 0 {
+                continue;
+            }
             // if there are more territories, then teams are not tied; increment +1
             if i.territorycount < territories {
                 rankings = next_ranking;
