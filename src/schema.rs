@@ -371,7 +371,6 @@ allow_tables_to_appear_in_same_query!(
 );
 
 allow_tables_to_appear_in_same_query!(turns, territories);
-
 allow_tables_to_appear_in_same_query!(regions, territory_ownership_with_neighbors);
 allow_tables_to_appear_in_same_query!(regions, territories);
 

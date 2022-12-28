@@ -61,6 +61,15 @@ pub(crate) async fn js_api_map(_data: Option<String>, _data2: Option<String>) ->
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
+#[get("/visited/<_data>/<_data2>", rank = 1)]
+pub(crate) async fn js_api_visited(
+    _data: Option<String>,
+    _data2: Option<String>,
+) -> NamedFile {
+    NamedFile::open("static/index.html").await.ok().unwrap()
+    // We are assuming index.html exists. If it does not, uh oh!
+}
+
 #[get("/odds/<_data>/<_data2>/<_data3>", rank = 1)]
 pub(crate) async fn js_api_odds(
     _data: Option<String>,

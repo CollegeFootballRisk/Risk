@@ -3,7 +3,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{PlayerInTurns, TeamInTurns};
 use crate::schema::{
-    regions, territory_ownership_with_neighbors, territory_ownership_without_neighbors,
+    regions, teams, territories, territory_ownership, territory_ownership_with_neighbors,
+    territory_ownership_without_neighbors, turninfo,
 };
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
@@ -47,7 +48,11 @@ pub(crate) struct TerritoryTurn {
 }
 
 impl TerritoryWithNeighbors {
-    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Vec<TerritoryWithNeighbors> {
+    pub(crate) fn load(
+        season: i32,
+        day: i32,
+        conn: &mut PgConnection,
+    ) -> Vec<TerritoryWithNeighbors> {
         territory_ownership_with_neighbors::table
             .filter(territory_ownership_with_neighbors::season.eq(season))
             .filter(territory_ownership_with_neighbors::day.eq(day))
@@ -67,8 +72,18 @@ impl TerritoryWithNeighbors {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, QueryableByName)]
+struct TemporaryInts {
+    #[sql_type = "diesel::sql_types::Integer"]
+    min: i32,
+}
+
 impl TerritoryHistory {
-    pub(crate) fn load(name: String, season: i32, conn: &PgConnection) -> Vec<TerritoryHistory> {
+    pub(crate) fn load(
+        name: String,
+        season: i32,
+        conn: &mut PgConnection,
+    ) -> Vec<TerritoryHistory> {
         territory_ownership_without_neighbors::table
             .filter(territory_ownership_without_neighbors::name.eq(CiString::from(name)))
             .filter(territory_ownership_without_neighbors::season.eq(season))
@@ -81,6 +96,40 @@ impl TerritoryHistory {
             .load::<TerritoryHistory>(conn)
             .expect("Error loading neighbor territory info")
     }
+
+    pub(crate) fn load_by_team_in_season(
+        team: String,
+        season: i32,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<TerritoryHistory>, diesel::result::Error> {
+        territory_ownership::table
+            .inner_join(teams::table.on(territory_ownership::owner_id.eq(teams::id)))
+            .inner_join(turninfo::table.on(territory_ownership::turn_id.eq(turninfo::id)))
+            .inner_join(
+                territories::table.on(territory_ownership::territory_id.eq(territories::id)),
+            )
+            .filter(turninfo::season.eq(season))
+            .filter(teams::tname.eq(CiString::from(team)))
+            .filter(
+                territory_ownership::id.eq_any(
+                    diesel::sql_query("select min(territory_ownership.id) 
+                        from territory_ownership 
+                        inner join turninfo 
+                        on turninfo.id = territory_ownership.turn_id 
+                        where season = $1 
+                        group by season, owner_id, territory_id")
+                        .bind::<diesel::sql_types::Integer, _>(season)
+                        .load::<TemporaryInts>(conn)?.iter().map(|v| v.min).collect::<Vec<i32>>()
+                ),
+            )
+            .select((
+                turninfo::season,
+                turninfo::day,
+                territories::name,
+                teams::tname,
+            ))
+            .load::<TerritoryHistory>(conn)
+    }
 }
 
 impl TerritoryTurn {
@@ -88,7 +137,7 @@ impl TerritoryTurn {
         season: i32,
         day: i32,
         territory: String,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<TerritoryTurn, String> {
         let result = territory_ownership_without_neighbors::table
             .select((

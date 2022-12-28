@@ -4,7 +4,7 @@
 
 use crate::catchers::Status;
 use crate::db::DbConn;
-use crate::model::{TeamInfo, TeamPlayerMoves};
+use crate::model::{TeamInfo, TeamPlayerMoves, TerritoryHistory};
 use rocket::serde::json::Json;
 
 /// # List of Teams
@@ -32,6 +32,25 @@ pub(crate) async fn teamplayersbymoves(
 ) -> Result<Json<Vec<TeamPlayerMoves>>, Status> {
     if let Ok(moves) = conn
         .run(move |c| TeamPlayerMoves::load(season, day, team, c))
+        .await
+    {
+        std::result::Result::Ok(Json(moves))
+    } else {
+        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+    }
+}
+
+/// # Season-Visited Map
+/// List of all territories visited by a team during a season.
+#[openapi(tag = "Teams", ignore = "conn")]
+#[get("/team/territories_visited?<season>&<team>")]
+pub(crate) async fn team_territories_visited_by_season(
+    season: i32,
+    team: String,
+    conn: DbConn,
+) -> Result<Json<Vec<TerritoryHistory>>, Status> {
+    if let Ok(moves) = conn
+        .run(move |c| TerritoryHistory::load_by_team_in_season(team, season, c))
         .await
     {
         std::result::Result::Ok(Json(moves))
