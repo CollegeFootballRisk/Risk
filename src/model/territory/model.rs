@@ -112,14 +112,19 @@ impl TerritoryHistory {
             .filter(teams::tname.eq(CiString::from(team)))
             .filter(
                 territory_ownership::id.eq_any(
-                    diesel::sql_query("select min(territory_ownership.id) 
+                    diesel::sql_query(
+                        "select min(territory_ownership.id) 
                         from territory_ownership 
                         inner join turninfo 
                         on turninfo.id = territory_ownership.turn_id 
                         where season = $1 
-                        group by season, owner_id, territory_id")
-                        .bind::<diesel::sql_types::Integer, _>(season)
-                        .load::<TemporaryInts>(conn)?.iter().map(|v| v.min).collect::<Vec<i32>>()
+                        group by season, owner_id, territory_id",
+                    )
+                    .bind::<diesel::sql_types::Integer, _>(season)
+                    .load::<TemporaryInts>(conn)?
+                    .iter()
+                    .map(|v| v.min)
+                    .collect::<Vec<i32>>(),
                 ),
             )
             .select((
