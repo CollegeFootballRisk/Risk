@@ -616,18 +616,24 @@ mod tests {
     #[test]
     fn test_get_regional_ncaa() {
         // Assumption: COUNT() never goes below 0.0
-        assert_eq!(get_regional_multiplier(1.0, 0), 1.0); // Neiter should NCAA
-        assert_eq!(get_regional_multiplier(2.0, 0), 1.0); // Neiter should NCAA
-        assert_eq!(get_regional_multiplier(100.0, 0), 1.0); // Neiter should NCAA
+        assert_eq!(get_regional_multiplier(1.0, 0), 1.0); // Neither should NCAA
+        assert_eq!(get_regional_multiplier(2.0, 0), 1.0); // Neither should NCAA
+        assert_eq!(get_regional_multiplier(100.0, 0), 1.0); // Neither should NCAA
         assert_eq!(get_regional_multiplier(0.0, 0), 1.0); // Never go < 1.0
     }
 
     #[test]
     fn test_get_regional_chaos() {
         // Assumption: COUNT() never goes below 0.0
-        assert_eq!(get_regional_multiplier(1.0, 131), 1.0); // Chaos should not get additional for regions
-        assert_eq!(get_regional_multiplier(2.0, 131), 1.5); // But Chaos should get some credit for > 1, unlike NCAA
-        assert_eq!(get_regional_multiplier(0.0, 131), 1.0); // Never go < 1.0
+        if cfg!(feature = "chaos") {
+            assert_eq!(get_regional_multiplier(1.0, 131), 1.0); // Chaos should not get additional for regions
+            assert_eq!(get_regional_multiplier(2.0, 131), 1.5); // But Chaos should get some credit for > 1, unlike NCAA
+            assert_eq!(get_regional_multiplier(0.0, 131), 1.0); // Never go < 1.0
+        } else {
+            assert_eq!(get_regional_multiplier(1.0, 131), 1.5); // Chaos behaves like a normal team
+            assert_eq!(get_regional_multiplier(2.0, 131), 2.0); // Chaos behaves like a normal team
+            assert_eq!(get_regional_multiplier(0.0, 131), 1.0); // Never go < 1.0
+        }
     }
 
     #[test]
