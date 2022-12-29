@@ -5,11 +5,11 @@ authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2021"
 
 [dependencies]
-base64 = {version = "0.13.0", optional=true}
-captcha = {version = "0.0.8", optional=true}
+base64 = {version = "0.20.0", optional=true}
+captcha = {version = "0.0.9", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
 git-version = "0.3.4"
-time = "0.2.27"
+time = "0.3"
 diesel = { version = "1.4.8", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
 diesel-citext = {git = "https://github.com/mautamu/diesel-citext", rev="0322fda06445136cc54fc3185f132ad7a21ae097"}
 hyper = { version = "0.14.16", features = ["full"] }
