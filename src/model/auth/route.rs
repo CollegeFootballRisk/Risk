@@ -347,6 +347,7 @@ pub(crate) async fn view_response(
     }
 }
 
+// Returns the # of regions owned by `team` on `latest` turn.
 pub(crate) fn handleregionalownership(
     latest: &TurnInfo,
     team: i32,
@@ -360,6 +361,20 @@ pub(crate) fn handleregionalownership(
         .filter(region_ownership::owners.contains(vec![team]))
         .select(count(region_ownership::owners))
         .first(conn)
+}
+
+pub(crate) fn get_regional_multiplier(mut territory_count: f64, team_id: i32) -> f64 {
+    if team_id == 0 {
+        return 1.0;
+    }
+
+    if team_id == 131 && cfg!(feature = "chaos") && territory_count >= 1.0 {
+        territory_count -= 1.0;
+    }
+
+    territory_count *= 0.5;
+
+    1.0 + territory_count
 }
 
 pub(crate) fn handle_territory_info(
@@ -431,20 +446,13 @@ pub(crate) fn handle_territory_info(
                         {
                             Some(_npos) => {
                                 if team_id.0 != 0 {
-                                    let mut regional_multiplier: f64 =
+                                    let regional_multiplier: f64 = get_regional_multiplier(
                                         handleregionalownership(latest, team_id.0, conn)
                                             .unwrap_or(0)
-                                            as f64;
-                                    // If we're doing chaos stuff, then we want to keep
-                                    // Chaos from getting additional point
-                                    if team_id.0 == 131 && cfg!(feature = "chaos") {
-                                        regional_multiplier -= 1.0;
-                                    }
-                                    // The "Regional Multiplier factor"
-                                    regional_multiplier *= 1.25;
-                                    if regional_multiplier == 0.0 {
-                                        regional_multiplier = 1.0;
-                                    }
+                                            as f64,
+                                        team_id.0,
+                                    );
+
                                     let mut aon_multiplier: i32 = 1;
                                     if aon == Some(true)
                                         && get_territory_number(team_id.0, latest, conn) == 1
@@ -598,5 +606,36 @@ pub(crate) fn update_user(
             .filter(users::id.eq(user))
             .set(users::playing_for.eq(team))
             .execute(conn),
+    }
+}
+#[cfg(test)]
+mod tests {
+    // Note this useful idiom: importing names from outer (for mod tests) scope.
+    use super::*;
+
+    #[test]
+    fn test_get_regional_ncaa() {
+        // Assumption: COUNT() never goes below 0.0
+        assert_eq!(get_regional_multiplier(1.0, 0), 1.0); // Neiter should NCAA
+        assert_eq!(get_regional_multiplier(2.0, 0), 1.0); // Neiter should NCAA
+        assert_eq!(get_regional_multiplier(100.0, 0), 1.0); // Neiter should NCAA
+        assert_eq!(get_regional_multiplier(0.0, 0), 1.0); // Never go < 1.0
+    }
+
+    #[test]
+    fn test_get_regional_chaos() {
+        // Assumption: COUNT() never goes below 0.0
+        assert_eq!(get_regional_multiplier(1.0, 131), 1.0); // Chaos should not get additional for regions
+        assert_eq!(get_regional_multiplier(2.0, 131), 1.5); // But Chaos should get some credit for > 1, unlike NCAA
+        assert_eq!(get_regional_multiplier(0.0, 131), 1.0); // Never go < 1.0
+    }
+
+    #[test]
+    fn test_get_regional_normal() {
+        // Assumption: COUNT() never goes below 0.0
+        assert_eq!(get_regional_multiplier(0.0, 11), 1.0); // Never go < 1.0
+        assert_eq!(get_regional_multiplier(1.0, 11), 1.5); // Test `normal` case
+        assert_eq!(get_regional_multiplier(2.0, 11), 2.0); // Test `normal` case
+        assert_eq!(get_regional_multiplier(3.0, 11), 2.5); // Test `normal` case
     }
 }
