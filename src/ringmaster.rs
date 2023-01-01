@@ -677,8 +677,8 @@ fn next_roll(settings: &rocket::figment::Figment) -> Option<NaiveDateTime> {
         .unwrap_or_else(|_| String::from("04:00:00"));
     let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
     let next_days = settings
-        .extract_inner("risk.days")
-        .unwrap_or([1, 2, 3, 4, 5, 6, 7]);
+        .extract_inner::<Vec<i64>>("risk.days")
+        .unwrap_or_else(|_| vec![1, 2, 3, 4, 5, 6, 7]);
     next_day_in_seq(&next_days, &naive_time, &Utc::now())
 }
 
