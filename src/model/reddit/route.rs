@@ -11,6 +11,7 @@ use rocket::response::{Flash, Redirect};
 use rocket::time::Duration;
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
+use serde_json::value::Value;
 
 #[get("/reddit")]
 pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> Redirect {
@@ -79,10 +80,7 @@ pub(crate) async fn callback(
 
     // Allow security to inform us whether the login should go through
     // i.e. is the user banned from the platform?
-    #[cfg(feature = "risk_security")]
-    {
-        crate::security::check_login(&user, &user_info, &conn).await?;
-    }
+    check_login(&user, &user_info, &conn).await?;
 
     // Cookie is valid for 30 Days
     // TODO: Pull this from Rocket settings...
@@ -124,5 +122,38 @@ pub(crate) async fn callback(
             std::result::Result::Ok(Redirect::to("/"))
         }
         _ => std::result::Result::Err(Status::InternalServerError),
+    }
+}
+
+use diesel::prelude::*;
+pub(crate) async fn check_login(
+    user_information: &User,
+    user_ext: &Value,
+    conn: &DbConn,
+) -> Result<(), Status> {
+    let user_id = user_information.id;
+    let user_int = user_ext.clone();
+    conn.run(move |connection| {
+        diesel::insert_into(audit_log::table)
+            .values((
+                audit_log::user_id.eq(user_id),
+                audit_log::event.eq(1),
+                audit_log::data.eq(user_int),
+            ))
+            .execute(connection)
+    })
+    .await
+    .map_err(|_| Status::InternalServerError)?;
+    // Return Ok() for now
+    Ok(())
+}
+
+table! {
+    audit_log (id) {
+        id -> Int4,
+        user_id -> Int4,
+        event -> Int4,
+        timestamp -> Timestamp,
+        data -> Nullable<Json>,
     }
 }

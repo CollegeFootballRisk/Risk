@@ -110,7 +110,6 @@ pub(crate) async fn join_team(
 }
 
 #[post("/my_move", rank = 1)]
-//#[cfg(feature = "risk_security")]
 pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
@@ -254,7 +253,6 @@ pub(crate) async fn make_move(
 }
 
 #[get("/polls", rank = 1)]
-//#[cfg(feature = "risk_security")]
 pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, crate::Error> {
     // Get latest turn
     let latest = conn

@@ -31,7 +31,6 @@ pub(crate) struct ClientInfo {
 pub(crate) struct Move {
     pub(crate) attack: Option<i32>,
     pub(crate) defend: Option<i32>,
-    /* = "risk_security")]  pub information: DebuggingInformation, */
 }
 
 #[derive(Serialize, Deserialize)]

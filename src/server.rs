@@ -27,14 +27,11 @@ mod hardcode;
 mod model;
 mod schema;
 
-pub use error::Error;
-#[cfg(feature = "risk_security")]
-#[rustfmt::skip]
-mod security;
 use crate::db::DbConn;
+pub use error::Error;
 //use crate::limits::RateLimitGuard;
 use crate::model::{auth, player, region, stats, sys, team, territory, turn};
-use rocket::fs::{FileServer};
+use rocket::fs::FileServer;
 //use rocket_governor::rocket_governor_catcher;
 use rocket_oauth2::OAuth2;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
@@ -157,12 +154,6 @@ fn rocket() -> _ {
     {
         use crate::model::captchasvc;
         saturn_v = saturn_v.mount("/auth", routes![captchasvc::route::captchaServe]);
-    }
-
-    // Attach Security routes
-    #[cfg(feature = "risk_security")]
-    {
-        saturn_v = saturn_v.mount("/", crate::security::route::routes());
     }
 
     saturn_v

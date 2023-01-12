@@ -39,7 +39,6 @@ risk_discord = []
 risk_groupme = []
 risk_image = ["image", "nsvg"]
 risk_reddit = []
-risk_security = []
 risk_captcha = ["captcha", "base64"]
 
 [[bin]]
