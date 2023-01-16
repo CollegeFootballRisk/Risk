@@ -7,6 +7,8 @@ use chrono::Utc;
 use diesel_citext::types::CiString;
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
+use rocket::outcome::Outcome;
+use rocket::request::{self, FromRequest, Request};
 use rocket::response::{Flash, Redirect};
 use rocket::time::Duration;
 use rocket::State;
@@ -32,6 +34,7 @@ pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
 pub(crate) async fn callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
+    cip: Cip,
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Redirect, Status> {
@@ -80,7 +83,7 @@ pub(crate) async fn callback(
 
     // Allow security to inform us whether the login should go through
     // i.e. is the user banned from the platform?
-    check_login(&user, &user_info, &conn).await?;
+    check_login(&user, &user_info, &cip.0, &conn).await?;
 
     // Cookie is valid for 30 Days
     // TODO: Pull this from Rocket settings...
@@ -129,16 +132,19 @@ use diesel::prelude::*;
 pub(crate) async fn check_login(
     user_information: &User,
     user_ext: &Value,
+    cip_ext: &Option<String>,
     conn: &DbConn,
 ) -> Result<(), Status> {
     let user_id = user_information.id;
     let user_int = user_ext.clone();
+    let cip_int: Option<String> = cip_ext.clone();
     conn.run(move |connection| {
         diesel::insert_into(audit_log::table)
             .values((
                 audit_log::user_id.eq(user_id),
                 audit_log::event.eq(1),
                 audit_log::data.eq(user_int),
+                audit_log::cip.eq(cip_int),
             ))
             .execute(connection)
     })
@@ -155,5 +161,22 @@ table! {
         event -> Int4,
         timestamp -> Timestamp,
         data -> Nullable<Json>,
+        cip -> Nullable<Text>,
+    }
+}
+
+pub(crate) struct Cip(Option<String>);
+
+#[rocket::async_trait]
+impl<'a> FromRequest<'a> for Cip {
+    type Error = ();
+
+    async fn from_request(request: &'a Request<'_>) -> request::Outcome<Self, Self::Error> {
+        Outcome::Success(Cip(Some(
+            request
+                .headers()
+                .get("CF-Connecting-IP")
+                .collect::<String>(),
+        )))
     }
 }
