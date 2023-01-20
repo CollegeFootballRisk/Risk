@@ -10,9 +10,9 @@
 
 ![Ringmaster Flamegraph](/documentation/screenshot.png)
 
-- [API](https://aggierisk.com/docs/index.html)
-- [How To Play](https://aggierisk.com/info/)
-- [Support/Development Server](https://discord.gg/aXcV7RZC5r)
+- [API](https://collegefootballrisk.com/docs/index.html)
+- [How To Play](https://collegefootballrisk.com/info)
+- [Support/Development Server](https://discord.gg/zJDswkFQcT)
 
 # Installation
 *See [/documentation/getting_started.md](/documentation/getting_started.md)*.
