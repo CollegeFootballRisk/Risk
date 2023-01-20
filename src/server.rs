@@ -108,7 +108,11 @@ fn rocket() -> _ {
         //        .attach(rocket_governor::LimitHeaderGen::default())
         .register(
             "/",
-            catchers![catchers::not_found, catchers::internal_error], // Add rocket_governer_catcher here
+            catchers![
+                catchers::not_found,
+                catchers::internal_error,
+                catchers::not_authorized
+            ], // Add rocket_governer_catcher here
         )
         .mount("/api", api_paths)
         .mount("/", FileServer::from(static_dir).rank(2))

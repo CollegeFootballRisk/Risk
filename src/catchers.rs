@@ -25,6 +25,11 @@ pub(crate) fn not_found() -> Json<Httperror> {
     Json(Httperror { status: 404 })
 }
 
+#[catch(401)]
+pub(crate) fn not_authorized() -> Json<Httperror> {
+    Json(Httperror { status: 401 })
+}
+
 #[catch(500)]
 pub(crate) fn internal_error() -> Json<Httperror> {
     Json(Httperror { status: 500 })
