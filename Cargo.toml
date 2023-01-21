@@ -21,7 +21,7 @@ rand_chacha="0.3"
 reqwest = { version = "0.11.8", default-features = false, features = ["json", "rustls-tls"] }
 rocket = {version = "0.5.0-rc.1", features = ["secrets", "json"] }
 rocket_sync_db_pools = {version = "0.1.0-rc.1", features=["diesel_postgres_pool"]}
-rocket_oauth2 = {version = "0.5.0-rc.1", features = ["hyper_rustls_adapter"]}
+rocket_oauth2 = {git = "https://github.com/mautamu/rocket_oauth2", branch="next", features = ["hyper_rustls_adapter"]}
 okapi = {package="okapi", git = "https://github.com/GREsau/okapi", rev = "b5b0a89b273f04342d1cb615fef0642beef33cef" }
 rocket_okapi = { git = "https://github.com/GREsau/okapi", rev = "b5b0a89b273f04342d1cb615fef0642beef33cef",features = ["swagger"] }
 schemars = { version = "0.8", features = ["preserve_order"] }

@@ -47,10 +47,16 @@ pub(crate) async fn callback(
         .header(USER_AGENT, "AggieRiskLocal - Dev Edition")
         .send()
         .await
-        .map_err(|_| Status::InternalServerError)?
+        .map_err(|e| {
+            dbg!(e);
+            Status::InternalServerError
+        })?
         .json()
         .await
-        .map_err(|_| Status::InternalServerError)?;
+        .map_err(|e| {
+            dbg!(e);
+            Status::InternalServerError
+        })?;
 
     // This is a rather gross way of extracting the user's name
     let uname: String = String::from(

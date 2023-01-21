@@ -1978,8 +1978,7 @@ dependencies = [
 [[package]]
 name = "rocket_oauth2"
 version = "0.5.0-rc.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "98532abbcce342aff149e977985aa98e29373263a92e70e9876bca39db61e706"
+source = "git+https://github.com/mautamu/rocket_oauth2?branch=next#38e18a9fbbeb625c366c705785892db451ed940f"
 dependencies = [
  "async-trait",
  "base64 0.13.1",
