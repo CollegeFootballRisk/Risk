@@ -54,7 +54,7 @@ pub struct User {
     pub(crate) game_turns: Option<i32>,
     pub(crate) mvps: Option<i32>,
     pub(crate) streak: Option<i32>,
-    //pub(crate) awards: Option<i32>, //    pub team: Option<String>
+    pub(crate) is_alt: bool, //pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
@@ -65,6 +65,7 @@ pub(crate) struct PlayerWithTurns {
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
+    pub(crate) is_alt: bool,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
@@ -88,6 +89,7 @@ pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
     pub(crate) awards: Vec<Award>,
+    pub(crate) is_alt: bool,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
@@ -156,6 +158,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
                         awards,
+                        is_alt: me[0].is_alt,
                     }),
                     Err(_e) => Some(PlayerWithTurnsAndAdditionalTeam {
                         name: me[0].name.clone(),
@@ -166,6 +169,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
                         awards,
+                        is_alt: me[0].is_alt,
                     }),
                 }
             }
@@ -199,6 +203,7 @@ impl PlayerWithTurns {
                     users::game_turns,
                     users::mvps,
                     users::streak,
+                    users::is_alt,
                     //users::awards,
                 ),
                 (
@@ -247,6 +252,7 @@ impl PlayerWithTurns {
                 ratings: Ratings::load(&stats),
                 stats,
                 turns: users_turns,
+                is_alt: user.0.is_alt,
             };
             out.push(uwp);
         }
@@ -351,7 +357,7 @@ impl User {
                 users::game_turns,
                 users::mvps,
                 users::streak,
-                //users::awards,
+                users::is_alt, //users::awards,
             ))
             .first::<User>(conn)
     }
