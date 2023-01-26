@@ -96,7 +96,7 @@ First, we'll create a new database and user named `risk` (if you're not familiar
 create database risk;
 create user risk with password '%password%';
 ```
-3. Now we will run `psql risk -f up.sql`. You will need to know to where you downloaded Rust-Risk, and navigate to it (on Command Prompt, `cd C:\Users\{{your user}}\Projects\Risk\db`, on POSIX Shell, `cd $HOME/Projects/Risk/db/`). Then `psql risk -f upp.sql` (it may require you login, in which case append `-U risk -p %password%` again substituting your password for %password%).
+3. Now we will run `psql risk -f new.sql`. You will need to know to where you downloaded Rust-Risk, and navigate to it (on Command Prompt, `cd C:\Users\{{your user}}\Projects\Risk\db`, on POSIX Shell, `cd $HOME/Projects/Risk/db/`). Then `psql risk -f new.sql` (it may require you login, in which case append `-U risk -p %password%` again substituting your password for %password%).
 4. The step above should complete without errors. If it argues about Citext or something else, feel free to contact me or look into it on your search engine of choice.
 
 ### Territories and Map Setup
