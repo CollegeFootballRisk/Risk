@@ -19,6 +19,20 @@ use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StatusUnauthed {
+    code: i32,
+    message: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
+pub enum EitherPorS {
+    PlayerWithTurnsAndAdditionalTeam(PlayerWithTurnsAndAdditionalTeam),
+    StatusUnauthed(StatusUnauthed),
+    String(std::string::String),
+}
+
 /// # Me
 /// Retrieves all information about currently logged-in user. Should not be accessed by any
 /// scraping programs.
@@ -28,8 +42,16 @@ pub(crate) async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<PlayerWithTurnsAndAdditionalTeam>, crate::Error> {
-    let c = Claims::from_private_cookie(cookies, config)?;
+) -> Result<Json<impl serde::ser::Serialize>, crate::Error> {
+    let c = match Claims::from_private_cookie(cookies, config) {
+        Ok(c) => c,
+        Err(_) => {
+            return Ok(Json(EitherPorS::StatusUnauthed(StatusUnauthed {
+                code: 4000,
+                message: "Unauthenticated".to_owned(),
+            })));
+        }
+    };
     let username = c.0.user.clone();
     let user = conn
         .run(move |connection| {
@@ -38,7 +60,7 @@ pub(crate) async fn me(
         .await
         .ok_or(crate::Error::NotFound {})?;
     if user.name.to_lowercase() == c.0.user.to_lowercase() {
-        std::result::Result::Ok(Json(user))
+        std::result::Result::Ok(Json(EitherPorS::PlayerWithTurnsAndAdditionalTeam(user)))
     } else {
         std::result::Result::Err(crate::Error::NotFound {})
     }
@@ -114,21 +136,29 @@ pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<String>, crate::Error> {
+) -> Result<Json<EitherPorS>, crate::Error> {
     // Get latest turn
     let latest = conn
         .run(move |c| Latest::latest(c))
         .await
         .map_err(|_| crate::Error::InternalServerError {})?;
     // Get user information from cookies
-    let c = Claims::from_private_cookie(cookies, config)?;
+    let c = match Claims::from_private_cookie(cookies, config) {
+        Ok(c) => c,
+        Err(_) => {
+            return Ok(Json(EitherPorS::StatusUnauthed(StatusUnauthed {
+                code: 4000,
+                message: "Unauthenticated".to_owned(),
+            })))
+        }
+    };
     // Return the territory the user has attacked
-    std::result::Result::Ok(Json(
+    std::result::Result::Ok(Json(EitherPorS::String(
         conn.run(move |connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection))
             .await
             .territory
             .unwrap_or_else(|| String::from("")),
-    ))
+    )))
 }
 
 #[post("/move", rank = 1, format = "application/json", data = "<movesub>")]

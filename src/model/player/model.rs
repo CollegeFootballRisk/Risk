@@ -12,7 +12,7 @@ use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
-pub(crate) struct Award {
+pub struct Award {
     name: String,
     info: String,
 }
@@ -80,16 +80,16 @@ pub(crate) struct PlayerInTurns {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
-pub(crate) struct PlayerWithTurnsAndAdditionalTeam {
-    pub(crate) name: CiString,
-    pub(crate) team: Option<TeamWithColors>,
-    pub(crate) active_team: Option<TeamWithColors>,
-    pub(crate) platform: CiString,
-    pub(crate) ratings: Ratings,
-    pub(crate) stats: Stats,
-    pub(crate) turns: Vec<PastTurn>,
-    pub(crate) awards: Vec<Award>,
-    pub(crate) is_alt: bool,
+pub struct PlayerWithTurnsAndAdditionalTeam {
+    pub name: CiString,
+    pub team: Option<TeamWithColors>,
+    pub active_team: Option<TeamWithColors>,
+    pub platform: CiString,
+    pub ratings: Ratings,
+    pub stats: Stats,
+    pub turns: Vec<PastTurn>,
+    pub awards: Vec<Award>,
+    pub is_alt: bool,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]

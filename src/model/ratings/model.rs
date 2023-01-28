@@ -4,12 +4,12 @@
 use crate::model::stats::Stats;
 use schemars::JsonSchema;
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct Ratings {
-    pub(crate) overall: i32,
-    pub(crate) totalTurns: i32,
-    pub(crate) gameTurns: i32,
-    pub(crate) mvps: i32,
-    pub(crate) streak: i32,
+pub struct Ratings {
+    pub overall: i32,
+    pub totalTurns: i32,
+    pub gameTurns: i32,
+    pub mvps: i32,
+    pub streak: i32,
     //pub(crate) awards: i32,
 }
 

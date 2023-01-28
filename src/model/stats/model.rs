@@ -8,11 +8,11 @@ use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct Stats {
-    pub(crate) totalTurns: i32,
-    pub(crate) gameTurns: i32,
-    pub(crate) mvps: i32,
-    pub(crate) streak: i32,
+pub struct Stats {
+    pub totalTurns: i32,
+    pub gameTurns: i32,
+    pub mvps: i32,
+    pub streak: i32,
     // pub(crate) awards: i32,
 }
 

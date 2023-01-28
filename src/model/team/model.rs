@@ -15,14 +15,14 @@ pub(crate) struct Team {
     pub(crate) color_2: Option<String>,
 }
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct TeamWithColors {
-    pub(crate) name: Option<String>,
-    pub(crate) colors: Colors,
+pub struct TeamWithColors {
+    pub name: Option<String>,
+    pub colors: Colors,
 }
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct Colors {
-    pub(crate) primary: String,
-    pub(crate) secondary: String,
+pub struct Colors {
+    pub primary: String,
+    pub secondary: String,
 }
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct TeamInfo {

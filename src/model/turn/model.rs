@@ -26,13 +26,13 @@ pub(crate) struct LastTurn {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
-pub(crate) struct PastTurn {
-    pub(crate) season: i32,
-    pub(crate) day: i32,
-    pub(crate) stars: i32,
-    pub(crate) mvp: bool,
-    pub(crate) territory: String, //should be string
-    pub(crate) team: String,      //should be string
+pub struct PastTurn {
+    pub season: i32,
+    pub day: i32,
+    pub stars: i32,
+    pub mvp: bool,
+    pub territory: String, //should be string
+    pub team: String,      //should be string
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
