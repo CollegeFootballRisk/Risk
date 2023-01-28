@@ -563,13 +563,17 @@ pub(crate) fn insert_turn(
         true => 175,
         false => 0,
     };
+    let power: f64 = match user.8 {
+        true => 0.0,
+        false => user_power,
+    };
     diesel::insert_into(turns::table)
         .values((
             turns::user_id.eq(user.1),
             turns::turn_id.eq(latest.id),
             turns::territory.eq(target),
             turns::mvp.eq(false),
-            turns::power.eq(user_power),
+            turns::power.eq(power),
             turns::multiplier.eq(multiplier),
             turns::weight.eq(user_weight),
             turns::stars.eq(user_ratings.overall),
@@ -582,7 +586,7 @@ pub(crate) fn insert_turn(
         .set((
             turns::alt_score.eq(alt_score),
             turns::territory.eq(target),
-            turns::power.eq(user_power),
+            turns::power.eq(power),
             turns::multiplier.eq(multiplier),
         ))
         .returning(turns::territory)
