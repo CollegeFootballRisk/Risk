@@ -35,7 +35,7 @@ pub(crate) struct StatLeaderboard {
     /// The starpower per territory
     pub(crate) efficiency: f64, //starpower/territoryCount
     /// Number of regions held by the team that turn
-    pub(crate) regions: i32,
+    pub(crate) regions: i64,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Queryable, Debug)]

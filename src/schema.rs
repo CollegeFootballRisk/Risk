@@ -214,7 +214,7 @@ table! {
         fives -> Int4,
         tname -> diesel_citext::sql_types::Citext,
         logo -> Text,
-        regions -> Int4,
+        regions -> Int8,
     }
 }
 
