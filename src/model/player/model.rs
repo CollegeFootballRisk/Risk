@@ -298,10 +298,14 @@ impl TeamMerc {
     ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
         let ciTname: Vec<CiString> = tname.iter().map(|x| CiString::from(x.clone())).collect();
         allow_tables_to_appear_in_same_query!(users, moves);
+        let teamIds = teams::table
+            .filter(teams::tname.eq_any(ciTname))
+            .select(teams::id)
+            .load::<i32>(conn)?;
         use diesel::dsl::not;
         users::table
             .inner_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .filter(teams::tname.eq_any(ciTname))
+            .filter(users::current_team.eq_any(teamIds))
             .filter(not(users::playing_for.eq(users::current_team)))
             .select((
                 teams::tname,

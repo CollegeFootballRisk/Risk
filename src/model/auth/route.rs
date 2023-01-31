@@ -28,7 +28,7 @@ pub struct StatusUnauthed {
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
 pub enum EitherPorS {
-    PlayerWithTurnsAndAdditionalTeam(PlayerWithTurnsAndAdditionalTeam),
+    PlayerWithTurnsAndAdditionalTeam(Box<PlayerWithTurnsAndAdditionalTeam>),
     StatusUnauthed(StatusUnauthed),
     String(std::string::String),
 }
@@ -60,7 +60,9 @@ pub(crate) async fn me(
         .await
         .ok_or(crate::Error::NotFound {})?;
     if user.name.to_lowercase() == c.0.user.to_lowercase() {
-        std::result::Result::Ok(Json(EitherPorS::PlayerWithTurnsAndAdditionalTeam(user)))
+        std::result::Result::Ok(Json(EitherPorS::PlayerWithTurnsAndAdditionalTeam(
+            Box::new(user),
+        )))
     } else {
         std::result::Result::Err(crate::Error::NotFound {})
     }
