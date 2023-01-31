@@ -304,8 +304,8 @@ impl TeamMerc {
             .load::<i32>(conn)?;
         use diesel::dsl::not;
         users::table
-            .inner_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .filter(users::current_team.eq_any(teamIds))
+            .inner_join(teams::table.on(teams::id.eq(users::current_team)))
+            .filter(users::playing_for.eq_any(teamIds))
             .filter(not(users::playing_for.eq(users::current_team)))
             .select((
                 teams::tname,
