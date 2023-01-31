@@ -18,14 +18,24 @@ pub struct Stats {
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct StatLeaderboard {
+    /// The overall rank of the team (with ties unbroken)
     pub(crate) rank: i32, //determined by number of territories desc
+    /// The name of the team
     pub(crate) name: CiString,
+    /// The logo of the team
     pub(crate) logo: String,
+    /// The number of territories won by the team that turn
     pub(crate) territoryCount: i32,
+    /// The number of players playing for the team that turn (excludes mercs)
     pub(crate) playerCount: i32,
+    /// The number of players from eliminated teams playing for the team that turn
     pub(crate) mercCount: i32,
+    /// The total amount of starpower put forth by the team that turn
     pub(crate) starPower: f64,
+    /// The starpower per territory
     pub(crate) efficiency: f64, //starpower/territoryCount
+    /// Number of regions held by the team that turn
+    pub(crate) regions: i32,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Queryable, Debug)]
@@ -189,6 +199,7 @@ impl StatLeaderboard {
                 statistics::merccount,
                 statistics::starpower,
                 statistics::efficiency,
+                statistics::regions,
             ))
             .filter(statistics::season.eq(season))
             .filter(statistics::day.eq(day))
