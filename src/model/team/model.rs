@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::model::StarBreakdown64;
+use crate::model::StarBreakdown;
 use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
@@ -41,7 +41,7 @@ pub(crate) struct TeamInTurns {
     pub(crate) players: i32,
     pub(crate) power: f64,
     pub(crate) chance: f64,
-    pub(crate) breakdown: StarBreakdown64,
+    pub(crate) breakdown: StarBreakdown,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]

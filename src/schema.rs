@@ -135,6 +135,7 @@ table! {
         name -> diesel_citext::sql_types::Citext,
         tname -> diesel_citext::sql_types::Citext,
         region-> Int4,
+        region_name -> diesel_citext::sql_types::Citext,
         neighbors -> Nullable<Json>,
     }
 }

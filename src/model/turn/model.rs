@@ -48,7 +48,7 @@ pub(crate) struct TurnInfo {
     pub(crate) map: Option<String>,
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]
+#[derive(Debug, Queryable, Serialize, Deserialize, JsonSchema, Clone)]
 #[allow(unreachable_pub)]
 pub struct Latest {
     pub(crate) season: i32,

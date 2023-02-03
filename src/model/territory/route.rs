@@ -33,7 +33,10 @@ pub(crate) async fn territories(
                 std::result::Result::Err(Status(rocket::http::Status::BadRequest))
             }
         }
-        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+        Err(e) => {
+            dbg!(e);
+            std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+        }
     }
 }
 

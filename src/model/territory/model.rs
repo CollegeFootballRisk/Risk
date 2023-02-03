@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{PlayerInTurns, TeamInTurns};
 use crate::schema::{
-    regions, teams, territories, territory_ownership, territory_ownership_with_neighbors,
+    teams, territories, territory_ownership, territory_ownership_with_neighbors,
     territory_ownership_without_neighbors, turninfo,
 };
 use diesel::prelude::*;
@@ -21,7 +21,7 @@ pub(crate) struct Territory {
     region_name: i32,
 }
 
-#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
+#[derive(Debug, Serialize, Queryable, Deserialize, JsonSchema)]
 pub(crate) struct TerritoryWithNeighbors {
     pub(crate) id: i32,
     pub(crate) name: String,
@@ -56,15 +56,12 @@ impl TerritoryWithNeighbors {
         territory_ownership_with_neighbors::table
             .filter(territory_ownership_with_neighbors::season.eq(season))
             .filter(territory_ownership_with_neighbors::day.eq(day))
-            .inner_join(
-                regions::table.on(regions::id.eq(territory_ownership_with_neighbors::region)),
-            )
             .select((
                 territory_ownership_with_neighbors::territory_id,
                 territory_ownership_with_neighbors::name,
                 territory_ownership_with_neighbors::tname,
                 territory_ownership_with_neighbors::region,
-                regions::name,
+                territory_ownership_with_neighbors::region_name,
                 territory_ownership_with_neighbors::neighbors,
             ))
             .load::<TerritoryWithNeighbors>(conn)

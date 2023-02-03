@@ -61,7 +61,9 @@ pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>
 }
 
 /// # Player Batching
+///
 /// Batch retrieval of players
+/// - <players> should be a comma-separated list of standardized usernames without spaces.
 #[openapi(tag = "Players", ignore = "conn")]
 #[get("/players/batch?<players>")]
 pub(crate) async fn player_multifetch(

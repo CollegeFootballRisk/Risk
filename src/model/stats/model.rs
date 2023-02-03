@@ -59,42 +59,55 @@ pub(crate) struct StatHistory {
     pub(crate) starbreakdown: StarBreakdown,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema, Queryable)]
+#[derive(Serialize, Deserialize, Debug, JsonSchema, Queryable)]
+/// Breakdown of the number of players having each number of overall stars.
 pub(crate) struct StarBreakdown {
+    /// The number of players having one star.
     pub(crate) ones: i32,
+    /// The number of players having two stars.
     pub(crate) twos: i32,
+    /// The number of players having three stars.
     pub(crate) threes: i32,
+    /// The number of players having four stars.
     pub(crate) fours: i32,
+    /// The number of players having five stars.
     pub(crate) fives: i32,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+/// Object for creating heatmaps that provides territory statistics for a given turn.
 pub(crate) struct Heat {
+    /// The (unstandardized) name of the territory.
     pub(crate) territory: CiString,
+    /// The (unstandardized) name of the team that owned the territory _after_ the turn.
     pub(crate) winner: CiString,
+    /// The number of players on all teams who submitted a move on the territory on the requested turn.
     pub(crate) players: i64,
+    /// The overall power (the sum of the weight * multiplier of each player) submitted by all teams submitted for the territory on the requested turn.
     pub(crate) power: f64,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema, Queryable, Debug)]
-pub(crate) struct StarBreakdown64 {
-    pub(crate) ones: i32,
-    pub(crate) twos: i32,
-    pub(crate) threes: i32,
-    pub(crate) fours: i32,
-    pub(crate) fives: i32,
-}
-
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
+/// Statistics pertaining to a particular team's probability of winning a territory.
 pub(crate) struct Odds {
+    /// The (unstandardized) name of the territory.
     pub(crate) territory: CiString,
+    /// The (unstandardized) name of the team that owned the territory _prior_ to the turn.
     pub(crate) owner: CiString,
+    /// The (unstandardized) name of the team that owned the territory _after_ the turn.
     pub(crate) winner: CiString,
+    /// The (unstandardized) name of the player that won a territory for a team that turn.
+    /// MVPs must have had > 0 star power (i.e. could not lose triple-or-nothing, if enabled) and must not have been flagged as an alt for that turn
     pub(crate) mvp: Option<CiString>,
+    /// The total number of players the requested team submitted for the territory on the requested turn.
     pub(crate) players: i32,
-    pub(crate) starBreakdown: StarBreakdown64,
+    /// Breakdown of the overall star values (how many players of each star classification) for the players the requested team submitted for the territory on the requested turn.
+    pub(crate) starBreakdown: StarBreakdown,
+    /// The overall power (the sum of the weight * multiplier of each player) submitted by the requested team submitted for the territory on the requested turn.
     pub(crate) teamPower: f64,
+    /// The overall power (the sum of the weight * multiplier of each player) submitted by all teams submitted for the territory on the requested turn.
     pub(crate) territoryPower: f64,
+    /// The likelihood the requested team wins the territory on the requested turn.
     pub(crate) chance: f64,
 }
 
