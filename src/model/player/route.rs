@@ -3,9 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::catchers::Status;
 use crate::db::DbConn;
-use crate::model::{
-    PlayerSummary, PlayerWithTurns, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer, User,
-};
+use crate::model::{PlayerSummary, PlayerWithTurnsAndAdditionalTeam, TeamMerc, TeamPlayer, User};
 use crate::Error;
 use rocket::serde::json::Json;
 
@@ -63,17 +61,17 @@ pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>
 /// # Player Batching
 ///
 /// Batch retrieval of players
-/// - <players> should be a comma-separated list of standardized usernames without spaces.
+/// - `players` should be a comma-separated list of standardized usernames without spaces.
 #[openapi(tag = "Players", ignore = "conn")]
 #[get("/players/batch?<players>")]
 pub(crate) async fn player_multifetch(
     players: Option<String>,
     conn: DbConn,
-) -> Result<Json<Vec<PlayerWithTurns>>, Status> {
+) -> Result<Json<Vec<PlayerWithTurnsAndAdditionalTeam>>, Status> {
     match players {
         Some(player) => std::result::Result::Ok(Json(
             conn.run(move |c| {
-                PlayerWithTurns::load(
+                PlayerWithTurnsAndAdditionalTeam::load_all(
                     player
                         .split(',')
                         .map(std::string::ToString::to_string)

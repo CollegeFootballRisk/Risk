@@ -2,12 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::schema::captchas;
+use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
-#[derive(Deserialize, Insertable)]
+#[derive(Deserialize, Insertable, Queryable)]
 #[table_name = "captchas"]
 pub struct Captchas {
     pub(crate) title: String,
     pub(crate) content: String,
+    pub(crate) creation: NaiveDateTime,
 }
 #[derive(Serialize, Deserialize)]
 pub(crate) struct UserCaptcha {
@@ -32,10 +34,26 @@ impl Captchas {
             .execute(conn)
     }
 
-    pub fn delete(delete_captcha: Captchas, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn check(
+        title: String,
+        content: String,
+        conn: &PgConnection,
+    ) -> Result<bool, diesel::result::Error> {
+        let true_content = captchas::table
+            .filter(captchas::title.eq(title))
+            .select((captchas::title, captchas::content, captchas::creation))
+            .first::<Captchas>(conn)?;
+        true_content.delete(conn)?;
+        Ok(
+            true_content.creation.timestamp() - Utc::now().naive_utc().timestamp() < 600
+                && content == true_content.content,
+        )
+    }
+
+    pub fn delete(&self, conn: &PgConnection) -> Result<usize, diesel::result::Error> {
         diesel::delete(captchas::table)
-            .filter(captchas::title.eq(&delete_captcha.title[0..7]))
-            .filter(captchas::content.eq(delete_captcha.content))
+            .filter(captchas::title.eq(&self.title))
+            .filter(captchas::content.eq(&self.content))
             .execute(conn)
     }
 }

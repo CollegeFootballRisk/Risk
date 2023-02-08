@@ -5,6 +5,7 @@ use crate::db::DbConn;
 use crate::model::{Captchas, UserCaptcha};
 use base64::encode;
 use captcha::{gen, Difficulty};
+use chrono::Utc;
 use diesel::prelude::*;
 use rocket::http::Status;
 use rocket::serde::json::Json;
@@ -15,8 +16,9 @@ use std::hash::{Hash, Hasher};
 pub(crate) async fn captchaServe(conn: DbConn) -> Result<Json<UserCaptcha>, Status> {
     let (_solution, png) = create_captcha(Difficulty::Easy).unwrap();
     let insert_captcha = Captchas {
-        title: calculate_hash(&_solution).to_string()[0..7].to_string(),
+        title: calculate_hash(&_solution).to_string(),
         content: _solution[..].to_string(),
+        creation: Utc::now().naive_utc(),
     };
 
     let result: QueryResult<usize> = conn.run(|c| Captchas::insert(insert_captcha, c)).await;

@@ -49,6 +49,8 @@ pub(crate) struct Log {
 pub struct MoveSub {
     pub target: i32,
     pub aon: Option<bool>,
+    pub captcha_title: Option<String>,
+    pub captcha_content: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]

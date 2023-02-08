@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
-use crate::model::{Colors, Ratings, Stats, Team, Turn};
+use crate::model::{Colors, Ratings, Stats, Team, Turn, UserId};
 use crate::schema::{award_info, awards, moves, past_turns, teams, territories, turninfo, users};
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -12,8 +12,12 @@ use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
+/// An official distinction applied by the game moderators to distinguish
+/// users for a given reson/purpose. Awards do not affect actual gameplay.
 pub struct Award {
+    /// Name of the award
     name: String,
+    /// Brief description of the award
     info: String,
 }
 
@@ -28,27 +32,45 @@ pub(crate) struct Player {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+/// A brief summary of a Player on a Team to display on the Team's page
 pub(crate) struct TeamPlayer {
+    /// The name of the Player's main team
     pub(crate) team: Option<CiString>,
+    /// The name of the Player
     pub(crate) player: Option<CiString>,
+    /// The number of turns played by the Player in all seasons
     pub(crate) turnsPlayed: Option<i32>,
+    /// The number of MVPs won by the Player in all seasons
     pub(crate) mvps: Option<i32>,
+    /// The season and day of the most-recent turn in which the Player participated.
     pub(crate) lastTurn: LastTurn,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+/// A brief summary of a Mercenary Player on a Team to display on the Team's page
 pub(crate) struct TeamMerc {
+    /// The name of the Player's main team
     pub(crate) team: CiString,
+    /// The name of the Player
     pub(crate) player: CiString,
+    /// The number of turns played by the Player in all seasons
     pub(crate) turnsPlayed: Option<i32>,
+    /// The number of MVPs won by the Player in all seasons
     pub(crate) mvps: Option<i32>,
+    /// The season and day of the most-recent turn in which the Player participated.
     pub(crate) stars: Option<i32>,
 }
 
 #[derive(Queryable, Identifiable, Associations, Serialize, Deserialize, JsonSchema)]
+/// An internal-only representation of a Player
 pub struct User {
+    /// The internal identifier for the user
     pub(crate) id: i32,
+    /// The internal username for the user
     pub(crate) uname: CiString,
+    /// [DEPRECATED] The `platform` from which the user connects
+    /// This will be removed in a later version of RR.
+    // TODO: Deprecate
     pub(crate) platform: CiString,
     pub(crate) turns: Option<i32>,
     pub(crate) game_turns: Option<i32>,
@@ -58,9 +80,15 @@ pub struct User {
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
+/// A representation of a Player that provides a view of the Player and the Turns made by that Player.
 pub(crate) struct PlayerWithTurns {
+    /// The name of the Player (which is kept current)
     pub(crate) name: CiString,
+    /// The current Team of the player
     pub(crate) team: Option<TeamWithColors>,
+    /// [DEPRECATED] The `platform` from which the user connects
+    /// This will be removed in a later version of RR.
+    // TODO: Deprecate
     pub(crate) platform: CiString,
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
@@ -84,6 +112,9 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
     pub name: CiString,
     pub team: Option<TeamWithColors>,
     pub active_team: Option<TeamWithColors>,
+    /// [DEPRECATED] The `platform` from which the user connects
+    /// This will be removed in a later version of RR.
+    // TODO: Deprecate
     pub platform: CiString,
     pub ratings: Ratings,
     pub stats: Stats,
@@ -95,6 +126,9 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct PlayerSummary {
     pub(crate) name: CiString,
+    /// [DEPRECATED] The `platform` from which the user connects
+    /// This will be removed in a later version of RR.
+    // TODO: Deprecate
     pub(crate) platform: CiString,
     pub(crate) team: Option<CiString>,
 }
@@ -175,6 +209,76 @@ impl PlayerWithTurnsAndAdditionalTeam {
             }
             _ => None,
         }
+    }
+    pub(crate) fn load_all(
+        names: Vec<String>,
+        team_assigned: bool,
+        conn: &PgConnection,
+    ) -> Vec<PlayerWithTurnsAndAdditionalTeam> {
+        let mut ret: Vec<PlayerWithTurnsAndAdditionalTeam> = vec![];
+        let me = PlayerWithTurns::load(names, true, conn);
+        for user in me {
+            use diesel::dsl::not;
+            let status_code: i32 = match team_assigned {
+                true => 0,
+                false => -1,
+            };
+            let ciName: CiString = user.name.clone();
+            let awards: Vec<Award> = awards::table
+                .left_join(award_info::table)
+                .left_join(users::table)
+                .filter(users::uname.eq(&user.name))
+                .select((award_info::name, award_info::info))
+                .load(conn)
+                .unwrap_or_default();
+            let results = users::table
+                .filter(users::uname.eq(ciName))
+                .filter(not(users::current_team.eq(status_code)))
+                .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+                .select((
+                    teams::tname.nullable(),
+                    teams::color_1.nullable(),
+                    teams::color_2.nullable(),
+                ))
+                .first::<Team>(conn);
+            match results {
+                Ok(results) => {
+                    let u = PlayerWithTurnsAndAdditionalTeam {
+                        name: user.name.clone(),
+                        team: user.team.clone(),
+                        active_team: Some(TeamWithColors {
+                            name: results.name,
+                            colors: Colors {
+                                primary: results.color_1.unwrap_or_else(|| String::from("#000")),
+                                secondary: results.color_2.unwrap_or_else(|| String::from("#000")),
+                            },
+                        }),
+                        platform: user.platform.clone(),
+                        ratings: user.ratings.clone(),
+                        stats: user.stats.clone(),
+                        turns: user.turns.clone(),
+                        awards,
+                        is_alt: user.is_alt,
+                    };
+                    ret.push(u)
+                }
+                Err(_e) => {
+                    let u = PlayerWithTurnsAndAdditionalTeam {
+                        name: user.name.clone(),
+                        team: None,
+                        active_team: None,
+                        platform: user.platform.clone(),
+                        ratings: user.ratings.clone(),
+                        stats: user.stats.clone(),
+                        turns: user.turns.clone(),
+                        awards,
+                        is_alt: user.is_alt,
+                    };
+                    ret.push(u)
+                }
+            };
+        }
+        ret
     }
 }
 
@@ -348,6 +452,11 @@ impl PlayerInTurns {
     }
 }
 
+impl UserId for User {
+    fn id(&self) -> i32 {
+        self.id
+    }
+}
 impl User {
     pub fn load(name: String, platform: String, conn: &PgConnection) -> Result<User, Error> {
         users::table

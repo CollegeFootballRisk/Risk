@@ -2,7 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use crate::{db::DbConn, model::User, sys::SysInfo};
+use crate::schema::audit_log;
+use crate::{
+    db::DbConn,
+    model::{User, UserId},
+    sys::SysInfo,
+};
 use chrono::Utc;
 use diesel_citext::types::CiString;
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
@@ -35,6 +40,7 @@ pub(crate) async fn callback(
     token: TokenResponse<RedditUserInfo>,
     cookies: &CookieJar<'_>,
     cip: Cip,
+    ua: UA,
     conn: DbConn,
     config: &State<SysInfo>,
 ) -> Result<Redirect, Status> {
@@ -89,7 +95,7 @@ pub(crate) async fn callback(
 
     // Allow security to inform us whether the login should go through
     // i.e. is the user banned from the platform?
-    check_login(&user, &user_info, &cip.0, &conn).await?;
+    audit_trail(&user, &user_info, &cip.0, &ua.0, 1, &conn).await?;
 
     // Cookie is valid for 30 Days
     // TODO: Pull this from Rocket settings...
@@ -135,22 +141,26 @@ pub(crate) async fn callback(
 }
 
 use diesel::prelude::*;
-pub(crate) async fn check_login(
-    user_information: &User,
+pub(crate) async fn audit_trail(
+    user_information: &impl UserId,
     user_ext: &Value,
     cip_ext: &Option<String>,
+    ua_ext: &Option<String>,
+    event: i32,
     conn: &DbConn,
 ) -> Result<(), Status> {
-    let user_id = user_information.id;
+    let user_id = user_information.id();
     let user_int = user_ext.clone();
     let cip_int: Option<String> = cip_ext.clone();
+    let ua_int: Option<String> = ua_ext.clone();
     conn.run(move |connection| {
         diesel::insert_into(audit_log::table)
             .values((
                 audit_log::user_id.eq(user_id),
-                audit_log::event.eq(1),
+                audit_log::event.eq(event),
                 audit_log::data.eq(user_int),
                 audit_log::cip.eq(cip_int),
+                audit_log::ua.eq(ua_int),
             ))
             .execute(connection)
     })
@@ -160,18 +170,7 @@ pub(crate) async fn check_login(
     Ok(())
 }
 
-table! {
-    audit_log (id) {
-        id -> Int4,
-        user_id -> Int4,
-        event -> Int4,
-        timestamp -> Timestamp,
-        data -> Nullable<Json>,
-        cip -> Nullable<Text>,
-    }
-}
-
-pub(crate) struct Cip(Option<String>);
+pub(crate) struct Cip(pub Option<String>);
 
 #[rocket::async_trait]
 impl<'a> FromRequest<'a> for Cip {
@@ -183,6 +182,19 @@ impl<'a> FromRequest<'a> for Cip {
                 .headers()
                 .get("CF-Connecting-IP")
                 .collect::<String>(),
+        )))
+    }
+}
+
+pub(crate) struct UA(pub Option<String>);
+
+#[rocket::async_trait]
+impl<'a> FromRequest<'a> for UA {
+    type Error = ();
+
+    async fn from_request(request: &'a Request<'_>) -> request::Outcome<Self, Self::Error> {
+        Outcome::Success(UA(Some(
+            request.headers().get("User-Agent").collect::<String>(),
         )))
     }
 }

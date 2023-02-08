@@ -2,9 +2,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::db::DbConn;
+use crate::model::reddit::route::{audit_trail, Cip, UA};
+#[cfg(feature = "risk_captcha")]
+use crate::model::Captchas;
 use crate::model::{
     Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
-    Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser,
+    Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
 };
 use crate::schema::{
     cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,
@@ -18,9 +21,10 @@ extern crate rand;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
+use serde_json::json;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct StatusUnauthed {
+pub struct StatusWrapper {
     code: i32,
     message: String,
 }
@@ -29,7 +33,7 @@ pub struct StatusUnauthed {
 #[serde(untagged)]
 pub enum EitherPorS {
     PlayerWithTurnsAndAdditionalTeam(Box<PlayerWithTurnsAndAdditionalTeam>),
-    StatusUnauthed(StatusUnauthed),
+    StatusWrapper(StatusWrapper),
     String(std::string::String),
 }
 
@@ -46,7 +50,7 @@ pub(crate) async fn me(
     let c = match Claims::from_private_cookie(cookies, config) {
         Ok(c) => c,
         Err(_) => {
-            return Ok(Json(EitherPorS::StatusUnauthed(StatusUnauthed {
+            return Ok(Json(EitherPorS::StatusWrapper(StatusWrapper {
                 code: 4000,
                 message: "Unauthenticated".to_owned(),
             })));
@@ -148,7 +152,7 @@ pub(crate) async fn my_move(
     let c = match Claims::from_private_cookie(cookies, config) {
         Ok(c) => c,
         Err(_) => {
-            return Ok(Json(EitherPorS::StatusUnauthed(StatusUnauthed {
+            return Ok(Json(EitherPorS::StatusWrapper(StatusWrapper {
                 code: 4000,
                 message: "Unauthenticated".to_owned(),
             })))
@@ -167,10 +171,16 @@ pub(crate) async fn my_move(
 pub(crate) async fn make_move(
     movesub: Json<MoveSub>,
     cookies: &CookieJar<'_>,
+    cip: Cip,
+    ua: UA,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<i32>, crate::Error> {
+) -> Result<Json<StatusWrapper>, crate::Error> {
     let target = movesub.target;
+    #[cfg(feature = "risk_captcha")]
+    let captcha_title: Option<String> = movesub.captcha_title.clone();
+    #[cfg(feature = "risk_captcha")]
+    let captcha_content: Option<String> = movesub.captcha_content.clone();
     let mut log = Log::begin(String::from("move"), target.to_string());
 
     // Get latest turn
@@ -201,6 +211,13 @@ pub(crate) async fn make_move(
         })?;
 
     log.payload.push_str(&format!("User: {user:?}\n"));
+    let uidfast = UserIdFast { id: user.0 };
+    audit_trail(&uidfast, &json!(null), &cip.0, &ua.0, 2, &conn)
+        .await
+        .map_err(|_| {
+            dbg!("Failed at point 3.1");
+            crate::Error::BadRequest {}
+        })?;
 
     //at this point we know the user is authorized to make the action, so let's go ahead and make it
     let user_stats = Stats {
@@ -225,6 +242,39 @@ pub(crate) async fn make_move(
 
     if user.0 != user.7 {
         merc = true;
+    }
+
+    #[cfg(feature = "risk_captcha")]
+    // User must complete captcha.
+    if user.9 {
+        // Check Captcha
+        if captcha_title.is_some() && captcha_content.is_some() {
+            let okay_captcha = conn
+                .run(move |connection| {
+                    Captchas::check(
+                        captcha_title.unwrap_or_default(),
+                        captcha_content.unwrap_or_default(),
+                        connection,
+                    )
+                })
+                .await
+                .map_err(|_| {
+                    dbg!("Failed at point 3.5");
+                    crate::Error::BadRequest {}
+                })?;
+            if !okay_captcha {
+                return std::result::Result::Ok(Json(StatusWrapper {
+                    code: 4004,
+                    message: "You have provided an incorrect captcha.".to_string(),
+                }));
+            }
+            // We are good to proceed, they passed the captcha!
+        } else {
+            return std::result::Result::Ok(Json(StatusWrapper {
+                code: 4003,
+                message: "You must correctly complete a captcha.".to_string(),
+            }));
+        }
     }
 
     let insert_turn = conn
@@ -281,7 +331,10 @@ pub(crate) async fn make_move(
     conn.run(move |c| log.insert(c)).await?;
 
     // We got to the end!
-    std::result::Result::Ok(Json(insert_turn[0]))
+    std::result::Result::Ok(Json(StatusWrapper {
+        code: 2001,
+        message: insert_turn[0].to_string(),
+    }))
 }
 
 #[get("/polls", rank = 1)]
@@ -426,6 +479,7 @@ pub(crate) fn handle_territory_info(
             // Option<i32>,
             i32,
             bool,
+            bool,
         ),
         f64,
     ),
@@ -445,6 +499,7 @@ pub(crate) fn handle_territory_info(
             // users::awards,
             users::current_team,
             users::is_alt,
+            users::must_captcha,
         ))
         .first::<(
             i32,
@@ -456,6 +511,7 @@ pub(crate) fn handle_territory_info(
             Option<i32>,
             //Option<i32>,
             i32,
+            bool,
             bool,
         )>(conn)
     {
@@ -580,6 +636,7 @@ pub(crate) fn insert_turn(
         Option<i32>,
         //Option<i32>,
         i32,
+        bool,
         bool,
     ),
     user_ratings: Ratings,

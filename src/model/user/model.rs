@@ -7,6 +7,19 @@ use diesel::prelude::*;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
+pub trait UserId {
+    fn id(&self) -> i32;
+}
+
+pub struct UserIdFast {
+    pub id: i32,
+}
+impl UserId for UserIdFast {
+    fn id(&self) -> i32 {
+        self.id
+    }
+}
+
 #[derive(Insertable, Queryable, Serialize, Deserialize, JsonSchema, AsChangeset)]
 #[table_name = "users"]
 pub struct UpsertableUser {

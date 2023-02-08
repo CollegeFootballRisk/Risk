@@ -47,6 +47,7 @@ table! {
         role_id -> Nullable<Int4>,
         playing_for -> Int4,
         is_alt -> Bool,
+        must_captcha -> Bool,
     }
 }
 
@@ -124,6 +125,7 @@ table! {
         id -> Int4,
         title -> Text,
         content -> Text,
+        creation -> Timestamp,
     }
 }
 
@@ -354,6 +356,18 @@ table! {
         id -> Int4,
         award_id -> Int4,
         user_id -> Int4,
+    }
+}
+
+table! {
+    audit_log (id) {
+        id -> Int4,
+        user_id -> Int4,
+        event -> Int4,
+        timestamp -> Timestamp,
+        data -> Nullable<Json>,
+        cip -> Nullable<Text>,
+        ua -> Nullable<Text>,
     }
 }
 
