@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::schema::users;
+use crate::schema::{bans, users};
 use diesel::prelude::*;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
@@ -28,15 +28,29 @@ pub struct UpsertableUser {
 }
 
 impl UpsertableUser {
-    pub fn upsert(user: UpsertableUser, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn upsert(&self, conn: &PgConnection) -> QueryResult<usize> {
         diesel::insert_into(users::table)
             .values((
-                users::uname.eq(&user.uname),
-                users::platform.eq(user.platform),
+                users::uname.eq(&self.uname),
+                users::platform.eq(&self.platform),
             ))
             .on_conflict((users::uname, users::platform))
             .do_update()
-            .set(users::uname.eq(&user.uname))
+            .set(users::uname.eq(&self.uname))
+            .execute(conn)
+    }
+    pub fn flag(uname: String, conn: &PgConnection) -> QueryResult<usize> {
+        let stop_ban = bans::table
+            .filter(bans::class.eq(2))
+            .filter(bans::uname.eq(&CiString::from(uname.clone())))
+            .count()
+            .get_result::<i64>(conn)?;
+        if stop_ban > 0 {
+            return QueryResult::Ok(0);
+        }
+        diesel::update(users::table)
+            .filter(users::uname.eq(&CiString::from(uname)))
+            .set(users::is_alt.eq(true))
             .execute(conn)
     }
 }

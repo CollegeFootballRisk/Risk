@@ -55,6 +55,11 @@ pub(crate) async fn js_api_player(_data: Option<String>) -> NamedFile {
     // We are assuming index.html exists. If it does not, uh oh!
 }
 
+#[get("/error/<_data>", rank = 1)]
+pub(crate) async fn error_ret(_data: Option<String>) -> NamedFile {
+    NamedFile::open("static/index.html").await.ok().unwrap()
+}
+
 #[get("/map/<_data>/<_data2>", rank = 1)]
 pub(crate) async fn js_api_map(_data: Option<String>, _data2: Option<String>) -> NamedFile {
     NamedFile::open("static/index.html").await.ok().unwrap()

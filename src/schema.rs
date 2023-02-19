@@ -371,6 +371,21 @@ table! {
     }
 }
 
+table! {
+    bans (id){
+        id -> Int4,
+        // IP: 0
+        // Username: 1
+        // Prevent ban, username, for suspend flag: 2
+        class -> Int4,
+        cip -> diesel_citext::sql_types::Citext,
+        uname -> diesel_citext::sql_types::Citext,
+        ua -> Text,
+    }
+}
+
+allow_tables_to_appear_in_same_query!(users, bans);
+
 allow_tables_to_appear_in_same_query!(users, awards, award_info);
 joinable!(awards -> users (user_id));
 joinable!(awards -> award_info (award_id));

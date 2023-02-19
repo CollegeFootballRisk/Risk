@@ -73,6 +73,21 @@ pub(crate) async fn callback(
             .ok_or(Status::InternalServerError)?,
     );
 
+    // We also want to ensure the user has a validated email with Reddit:
+    if user_info
+        .get("has_verified_email")
+        .unwrap_or_else(|| {
+            dbg!("Error serializing user email check");
+            return &serde_json::json!(false);
+        })
+        .as_bool()
+        .unwrap_or(false)
+        != true
+    {
+        dbg!("User {} does not have valid email", uname);
+        return std::result::Result::Ok(Redirect::to("/error/EmailError"));
+    }
+
     // Build the `UpsertableUser` for querying the DB
     let new_user = UpsertableUser {
         uname: CiString::from(uname.clone()),
@@ -80,11 +95,29 @@ pub(crate) async fn callback(
     };
 
     // Upsert the user
-    conn.run(move |c| UpsertableUser::upsert(new_user, c))
+    conn.run(move |c| new_user.upsert(c))
         .await
         .map_err(|_| Status::InternalServerError)?;
 
     let uname_int = uname.clone();
+    let uname_2_int = uname.clone();
+
+    dbg!(user_info
+        .get("is_suspended"));
+
+    if user_info
+        .get("is_suspended")
+        .unwrap_or_else(|| {
+            dbg!("Error: unable to know if user was suspended");
+            return &serde_json::json!(false);
+        })
+        .as_bool()
+        .unwrap_or(false)
+    {
+        conn.run(move |c| UpsertableUser::flag(uname_2_int, c))
+            .await
+            .map_err(|e| {dbg!(e); Status::InternalServerError})?;
+    }
 
     // We now retrieve the user from the database for `Cookie` creation
     // TODO: This query can in theory be removed.

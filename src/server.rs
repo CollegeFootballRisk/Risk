@@ -56,6 +56,7 @@ fn rocket() -> _ {
         hardcode::robots,
         hardcode::favicon,
         hardcode::global_css,
+        hardcode::error_ret,
     ];
 
     // The paths on the /api endpoint. Defined up here for cleanliness
