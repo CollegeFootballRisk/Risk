@@ -277,9 +277,9 @@ pub(crate) async fn make_move<'v>(
             Some(mv_tv2) => {
                 if mv_tv2 == "" {
                     return std::result::Result::Ok(Json(StatusWrapper {
-                code: 4004,
-                message: "Captcha required.".to_string(),
-            }));
+                        code: 4004,
+                        message: "Captcha required.".to_string(),
+                    }));
                 }
                 let rv_v2: String = format!("token={}", mv_tv2);
                 let r_v2 = rocket::form::ValueField::parse(&rv_v2);

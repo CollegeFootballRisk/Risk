@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use crate::schema::audit_log;
+use crate::schema::{audit_log, bans};
 use crate::{
     db::DbConn,
     model::{User, UserId},
@@ -73,6 +73,7 @@ pub(crate) async fn callback(
             .ok_or(Status::InternalServerError)?,
     );
 
+    let uname_ban_chk = uname.clone();
     // We also want to ensure the user has a validated email with Reddit:
     if user_info
         .get("has_verified_email")
@@ -83,6 +84,17 @@ pub(crate) async fn callback(
         .as_bool()
         .unwrap_or(false)
         != true
+        && conn
+            .run(move |c| {
+                bans::table
+                    .filter(bans::class.eq(3))
+                    .filter(bans::uname.eq(&CiString::from(uname_ban_chk)))
+                    .count()
+                    .get_result::<i64>(c)
+            })
+            .await
+            .map_err(|_| Status::InternalServerError)?
+            < 1
     {
         dbg!("User {} does not have valid email", uname);
         return std::result::Result::Ok(Redirect::to("/error/EmailError"));
