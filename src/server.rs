@@ -163,6 +163,7 @@ fn rocket() -> _ {
     }
 
     saturn_v = saturn_v.attach(ReCaptcha::fairing());
+    saturn_v = saturn_v.attach(ReCaptcha::fairing_v2());
 
     saturn_v
 }

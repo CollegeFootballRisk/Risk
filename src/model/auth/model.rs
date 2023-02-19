@@ -52,6 +52,7 @@ pub struct MoveSub {
     pub captcha_title: Option<String>,
     pub captcha_content: Option<String>,
     pub token: Option<String>,
+    pub token_v2: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]

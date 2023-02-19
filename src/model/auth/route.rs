@@ -4,7 +4,6 @@
 use crate::db::DbConn;
 use crate::model::reddit::route::{audit_trail, Cip, UA};
 #[cfg(feature = "risk_captcha")]
-use crate::model::Captchas;
 use crate::model::{
     Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
     Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
@@ -21,7 +20,7 @@ extern crate rand;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
-use rocket_recaptcha_v3::{ReCaptcha, ReCaptchaToken};
+use rocket_recaptcha_v3::{ReCaptcha, ReCaptchaToken, V2};
 use serde_json::json;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -177,12 +176,9 @@ pub(crate) async fn make_move<'v>(
     conn: DbConn,
     config: &State<SysInfo>,
     recaptcha: &State<ReCaptcha>,
+    recaptcha_v2: &State<ReCaptcha<V2>>,
 ) -> Result<Json<StatusWrapper>, crate::Error> {
     let target = movesub.target;
-    #[cfg(feature = "risk_captcha")]
-    let captcha_title: Option<String> = movesub.captcha_title.clone();
-    #[cfg(feature = "risk_captcha")]
-    let captcha_content: Option<String> = movesub.captcha_content.clone();
     let rv: String = match movesub.token.as_ref() {
         Some(e) => format!("token={}", e),
         None => return Err(crate::Error::BadRequest {}),
@@ -203,7 +199,6 @@ pub(crate) async fn make_move<'v>(
             dbg!(e);
             crate::Error::InternalServerError {}
         })?;
-
     if recaptcha_return.action != Some("submit".to_string()) {
         return Err(crate::Error::BadRequest {});
     }
@@ -275,32 +270,45 @@ pub(crate) async fn make_move<'v>(
     #[cfg(feature = "risk_captcha")]
     // User must complete captcha.
     if user.9 || recaptcha_return.score < 0.5 {
-        // Check Captcha
-        if captcha_title.is_some() && captcha_content.is_some() {
-            let okay_captcha = conn
-                .run(move |connection| {
-                    Captchas::check(
-                        captcha_title.unwrap_or_default(),
-                        captcha_content.unwrap_or_default(),
-                        connection,
-                    )
-                })
-                .await
-                .map_err(|_| {
-                    dbg!("Failed at point 3.5");
-                    crate::Error::BadRequest {}
-                })?;
-            if !okay_captcha {
-                return std::result::Result::Ok(Json(StatusWrapper {
-                    code: 4004,
-                    message: "You have provided an incorrect captcha.".to_string(),
-                }));
+        // Check Captcha V2
+        //dbg!(&movesub.token_v2);
+        let v2_verif = match &movesub.token_v2 {
+            None => false,
+            Some(mv_tv2) => {
+                if mv_tv2 == "" {
+                    return std::result::Result::Ok(Json(StatusWrapper {
+                code: 4004,
+                message: "Captcha required.".to_string(),
+            }));
+                }
+                let rv_v2: String = format!("token={}", mv_tv2);
+                let r_v2 = rocket::form::ValueField::parse(&rv_v2);
+                let recaptcha_token_v2 = ReCaptchaToken::from_value(r_v2)
+                    .as_ref()
+                    .map_err(|e| {
+                        dbg!(e);
+                        crate::Error::BadRequest {}
+                    })?
+                    .clone();
+                let r_v2_result = recaptcha_v2
+                    .verify(&recaptcha_token_v2, None)
+                    .await
+                    .map_err(|e| {
+                        dbg!(e);
+                        crate::Error::InternalServerError {}
+                    })?;
+                if r_v2_result.score > 0.5 {
+                    true
+                } else {
+                    false
+                }
             }
-            // We are good to proceed, they passed the captcha!
-        } else {
+        };
+
+        if !v2_verif {
             return std::result::Result::Ok(Json(StatusWrapper {
-                code: 4003,
-                message: "You must correctly complete a captcha.".to_string(),
+                code: 4004,
+                message: "Captcha required.".to_string(),
             }));
         }
     }
