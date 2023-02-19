@@ -102,8 +102,7 @@ pub(crate) async fn callback(
     let uname_int = uname.clone();
     let uname_2_int = uname.clone();
 
-    dbg!(user_info
-        .get("is_suspended"));
+    dbg!(user_info.get("is_suspended"));
 
     if user_info
         .get("is_suspended")
@@ -116,7 +115,10 @@ pub(crate) async fn callback(
     {
         conn.run(move |c| UpsertableUser::flag(uname_2_int, c))
             .await
-            .map_err(|e| {dbg!(e); Status::InternalServerError})?;
+            .map_err(|e| {
+                dbg!(e);
+                Status::InternalServerError
+            })?;
     }
 
     // We now retrieve the user from the database for `Cookie` creation

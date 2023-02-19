@@ -31,6 +31,7 @@ serde_derive = "1.0"
 thiserror = "1.0"
 toml="0.5.8"
 urlencoding = "2.1.0"
+rocket-recaptcha-v3 = "0.3.2"
 
 [features]
 chaos = []

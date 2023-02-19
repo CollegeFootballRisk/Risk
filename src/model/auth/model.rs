@@ -45,12 +45,13 @@ pub(crate) struct Log {
     pub(crate) payload: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct MoveSub {
     pub target: i32,
     pub aon: Option<bool>,
     pub captcha_title: Option<String>,
     pub captcha_content: Option<String>,
+    pub token: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Queryable)]

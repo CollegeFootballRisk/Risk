@@ -21,6 +21,7 @@ extern crate rand;
 use diesel_citext::types::CiString;
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
+use rocket_recaptcha_v3::{ReCaptcha, ReCaptchaToken};
 use serde_json::json;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -168,19 +169,45 @@ pub(crate) async fn my_move(
 }
 
 #[post("/move", rank = 1, format = "application/json", data = "<movesub>")]
-pub(crate) async fn make_move(
+pub(crate) async fn make_move<'v>(
     movesub: Json<MoveSub>,
     cookies: &CookieJar<'_>,
     cip: Cip,
     ua: UA,
     conn: DbConn,
     config: &State<SysInfo>,
+    recaptcha: &State<ReCaptcha>,
 ) -> Result<Json<StatusWrapper>, crate::Error> {
     let target = movesub.target;
     #[cfg(feature = "risk_captcha")]
     let captcha_title: Option<String> = movesub.captcha_title.clone();
     #[cfg(feature = "risk_captcha")]
     let captcha_content: Option<String> = movesub.captcha_content.clone();
+    let rv: String = match movesub.token.as_ref() {
+        Some(e) => format!("token={}", e),
+        None => return Err(crate::Error::BadRequest {}),
+    };
+    let r = rocket::form::ValueField::parse(&rv);
+    use crate::rocket::form::FromFormField;
+    let recaptcha_token = ReCaptchaToken::from_value(r)
+        .as_ref()
+        .map_err(|e| {
+            dbg!(e);
+            crate::Error::BadRequest {}
+        })?
+        .clone();
+    let recaptcha_return = recaptcha
+        .verify(&recaptcha_token, None)
+        .await
+        .map_err(|e| {
+            dbg!(e);
+            crate::Error::InternalServerError {}
+        })?;
+
+    if recaptcha_return.action != Some("submit".to_string()) {
+        return Err(crate::Error::BadRequest {});
+    }
+
     let mut log = Log::begin(String::from("move"), target.to_string());
 
     // Get latest turn
@@ -200,9 +227,10 @@ pub(crate) async fn make_move(
 
     //get user's team information, and whether they can make that move
     let temp_pfix = c.0.clone();
+    let msaon = movesub.aon;
     let (user, multiplier) = conn
         .run(move |connection| {
-            handle_territory_info(&temp_pfix, target, &tmplatest, connection, movesub.aon)
+            handle_territory_info(&temp_pfix, target, &tmplatest, connection, msaon)
         })
         .await
         .map_err(|_| {
@@ -246,7 +274,7 @@ pub(crate) async fn make_move(
 
     #[cfg(feature = "risk_captcha")]
     // User must complete captcha.
-    if user.9 {
+    if user.9 || recaptcha_return.score < 0.5 {
         // Check Captcha
         if captcha_title.is_some() && captcha_content.is_some() {
             let okay_captcha = conn
