@@ -7,13 +7,17 @@ use diesel::result::Error;
 use diesel_citext::types::CiString;
 use schemars::JsonSchema;
 
+/// The statistics for a Player
 #[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct Stats {
+    /// The number of turns submitted in all seasons by a Player
     pub totalTurns: i32,
+    /// The number of turns submitted this seasons by a Player
     pub gameTurns: i32,
+    /// The number of turns submitted in all seasons by a Player for which they were the MVP
     pub mvps: i32,
+    /// The number of consecutive turns submitted by a Player
     pub streak: i32,
-    // pub(crate) awards: i32,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]

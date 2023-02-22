@@ -27,12 +27,26 @@ pub(crate) struct LastTurn {
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone, Debug)]
 pub struct PastTurn {
+    /// The Season in which the Turn was made
     pub season: i32,
+    /// The Day within a Season in which the Turn was made
     pub day: i32,
+    /// The number of Stars held by the Player at the time the turn was made
     pub stars: i32,
+    /// Whether the Player won the Territory for their Team
     pub mvp: bool,
+    /// The name of the Territory on which the Turn was placed
     pub territory: String, //should be string
-    pub team: String,      //should be string
+    /// The name of the Team for which the Turn was placed (may not correspond
+    ///  with the user's `current_team`, as it's derived from their `playing_for` Team.)
+    pub team: String, //should be string
+    /// The starpower of the Move before adjusting for any `multiplier`
+    pub weight: f64,
+    /// The product of all `multiplier`s for a Player, including, but not limited to,
+    /// triple-or-nothing, defense, and/or region bonuses
+    pub multiplier: f64,
+    /// The total power the Player has for the Turn, after adjusting for all `multiplier`s (`weight` * `mulitplier`)
+    pub power: f64,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Clone)]

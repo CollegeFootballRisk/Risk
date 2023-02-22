@@ -377,6 +377,8 @@ table! {
         // IP: 0
         // Username: 1
         // Prevent ban, username, for suspend flag: 2
+        // Allow login without email: 3
+        // Prevent ban, reddit ban: 4
         class -> Int4,
         cip -> diesel_citext::sql_types::Citext,
         uname -> diesel_citext::sql_types::Citext,

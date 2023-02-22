@@ -3,7 +3,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::db::DbConn;
 use crate::model::reddit::route::{audit_trail, Cip, UA};
-#[cfg(feature = "risk_captcha")]
 use crate::model::{
     Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
     Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
@@ -167,6 +166,14 @@ pub(crate) async fn my_move(
     )))
 }
 
+// We allow unused variables here to avoid warnings around recaptcha and recaptcha_v2
+// which aren't required if captcha is disabled at build
+/// Submit a move
+///
+/// # Errors
+/// 4000: User is not authenticated, i.e. cookies submitted did not match, were expired, or did not exist
+/// 4004: Captcha is required, but was not provided
+#[allow(unused_variables)]
 #[post("/move", rank = 1, format = "application/json", data = "<movesub>")]
 pub(crate) async fn make_move<'v>(
     movesub: Json<MoveSub>,
@@ -192,6 +199,7 @@ pub(crate) async fn make_move<'v>(
             crate::Error::BadRequest {}
         })?
         .clone();
+    #[cfg(feature = "risk_captcha")]
     let recaptcha_return = recaptcha
         .verify(&recaptcha_token, None)
         .await
@@ -199,6 +207,7 @@ pub(crate) async fn make_move<'v>(
             dbg!(e);
             crate::Error::InternalServerError {}
         })?;
+    #[cfg(feature = "risk_captcha")]
     if recaptcha_return.action != Some("submit".to_string()) {
         return Err(crate::Error::BadRequest {});
     }

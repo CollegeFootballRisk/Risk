@@ -339,6 +339,9 @@ impl PlayerWithTurns {
                     past_turns::mvp,
                     territories::name,
                     teams::tname,
+                    past_turns::weight,
+                    past_turns::multiplier,
+                    past_turns::power,
                 ))
                 .order(past_turns::turn_id.desc())
                 .load::<PastTurn>(conn)
