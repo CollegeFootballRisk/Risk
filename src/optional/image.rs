@@ -8,7 +8,7 @@ use std::collections::HashMap;
 
 /// Generate an image, if necessary.
 #[cfg(feature = "risk_image")]
-pub fn make_image(territories: &[TerritoryOwnersInsert], conn: &PgConnection) {
+pub fn make_image(territories: &[TerritoryOwnersInsert], conn: &mut PgConnection) {
     use crate::structs::Team;
     extern crate image;
     extern crate nsvg;

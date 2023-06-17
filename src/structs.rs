@@ -14,11 +14,11 @@ use std::collections::BTreeMap;
 
 #[derive(QueryableByName)]
 pub struct Bar {
-    #[sql_type = "Bool"]
+    #[diesel(sql_type = Bool)]
     pub do_user_update: bool,
 }
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[table_name = "turns"]
+#[diesel(table_name = turns)]
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
@@ -35,7 +35,7 @@ pub struct PlayerMoves {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[table_name = "stats"]
+#[diesel(table_name = stats)]
 pub struct Stats {
     pub turn_id: i32,
     pub team: i32,
@@ -60,7 +60,7 @@ pub struct Team {
 }
 
 #[derive(Deserialize, Insertable, Queryable)]
-#[table_name = "territory_ownership"]
+#[diesel(table_name = territory_ownership)]
 pub struct TerritoryOwners {
     pub id: i32,
     pub territory_id: i32,
@@ -72,7 +72,7 @@ pub struct TerritoryOwners {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq)]
-#[table_name = "territory_ownership"]
+#[diesel(table_name = territory_ownership)]
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
     pub owner_id: i32,
@@ -83,7 +83,7 @@ pub struct TerritoryOwnersInsert {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[table_name = "territory_stats"]
+#[diesel(table_name = territory_stats)]
 pub struct TerritoryStats {
     pub team: i32,
     pub turn_id: i32,
@@ -99,7 +99,7 @@ pub struct TerritoryStats {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Eq, Clone)]
-#[table_name = "turninfo"]
+#[diesel(table_name = turninfo)]
 pub struct TurnInfo {
     pub id: i32,
     pub season: i32,
@@ -163,14 +163,14 @@ impl Victor {
 }
 
 impl PlayerMoves {
-    pub fn load(turn_id: &i32, conn: &PgConnection) -> Result<Vec<PlayerMoves>, Error> {
+    pub fn load(turn_id: &i32, conn: &mut PgConnection) -> Result<Vec<PlayerMoves>, Error> {
         turns::table
             .filter(turns::turn_id.eq(turn_id))
             .order_by(turns::territory.desc())
             .load::<PlayerMoves>(conn)
     }
 
-    pub fn mvps(mvps: Vec<PlayerMoves>, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn mvps(mvps: Vec<PlayerMoves>, conn: &mut PgConnection) -> QueryResult<usize> {
         //first we flatten
         let mvp_array = mvps.iter().map(|x| x.id).collect::<Vec<i32>>();
         update(turns::table.filter(turns::id.eq_any(mvp_array)))
@@ -183,7 +183,7 @@ impl Stats {
     pub fn insert(
         stats: BTreeMap<i32, Stats>,
         turn_id: i32,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> QueryResult<usize> {
         // calculate whichever has the highest number of territories and such
         let mut insertable_stats = stats.values().collect::<Vec<_>>();
@@ -286,7 +286,7 @@ impl Stats {
 }
 
 impl Team {
-    pub fn load(conn: &PgConnection) -> Result<Vec<Team>, Error> {
+    pub fn load(conn: &mut PgConnection) -> Result<Vec<Team>, Error> {
         teams::table
             .select((teams::id, teams::color_1))
             .load::<Team>(conn)
@@ -294,7 +294,7 @@ impl Team {
 }
 
 impl TerritoryStats {
-    pub fn insert(stats: Vec<TerritoryStats>, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn insert(stats: Vec<TerritoryStats>, conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::insert_into(territory_stats::table)
             .values(stats)
             .execute(conn)
@@ -320,7 +320,7 @@ impl Default for TerritoryStats {
 }
 
 impl TerritoryOwners {
-    pub fn load(turn_id: &i32, conn: &PgConnection) -> Result<Vec<TerritoryOwners>, Error> {
+    pub fn load(turn_id: &i32, conn: &mut PgConnection) -> Result<Vec<TerritoryOwners>, Error> {
         territory_ownership::table
             .filter(territory_ownership::turn_id.eq(turn_id))
             .load::<TerritoryOwners>(conn)
@@ -344,7 +344,7 @@ impl TerritoryOwnersInsert {
         }
     }
 
-    pub fn insert(owners: &[TerritoryOwnersInsert], conn: &PgConnection) -> QueryResult<usize> {
+    pub fn insert(owners: &[TerritoryOwnersInsert], conn: &mut PgConnection) -> QueryResult<usize> {
         use crate::schema::territory_ownership::dsl::territory_ownership;
         insert_into(territory_ownership)
             .values(owners)
@@ -353,7 +353,7 @@ impl TerritoryOwnersInsert {
 }
 
 impl TurnInfo {
-    pub fn update_or_insert(newturninfo: &Self, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn update_or_insert(newturninfo: &Self, conn: &mut PgConnection) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;
         diesel::insert_into(turninfo::table)
             .values(newturninfo)
@@ -379,7 +379,7 @@ impl TurnInfo {
         map: Option<String>,
         allornothingenabled: bool,
         start_time: Option<NaiveDateTime>,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> QueryResult<usize> {
         //use schema::turninfo::dsl::*;
         diesel::insert_into(turninfo::table)
@@ -406,7 +406,7 @@ impl TurnInfo {
             .execute(conn)
     }
 
-    pub fn get_latest(conn: &PgConnection) -> Result<TurnInfo, diesel::result::Error> {
+    pub fn get_latest(conn: &mut PgConnection) -> Result<TurnInfo, diesel::result::Error> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -431,7 +431,7 @@ impl TurnInfo {
         self
     }
 
-    pub fn lock(&mut self, conn: &PgConnection) -> Result<usize, Error> {
+    pub fn lock(&mut self, conn: &mut PgConnection) -> Result<usize, Error> {
         update(turninfo::table.filter(turninfo::id.eq(self.id)))
             .set(turninfo::active.eq(false))
             .execute(conn)

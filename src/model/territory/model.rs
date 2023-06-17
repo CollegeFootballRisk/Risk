@@ -7,7 +7,7 @@ use crate::schema::{
     territory_ownership_without_neighbors, turninfo,
 };
 use diesel::prelude::*;
-use diesel_citext::types::CiString;
+
 use schemars::JsonSchema;
 use serde_json::Value;
 use std::result::Result;
@@ -71,7 +71,7 @@ impl TerritoryWithNeighbors {
 
 #[derive(Serialize, Deserialize, Debug, QueryableByName)]
 struct TemporaryInts {
-    #[sql_type = "diesel::sql_types::Integer"]
+    #[diesel(sql_type = diesel::sql_types::Integer)]
     min: i32,
 }
 
@@ -82,7 +82,7 @@ impl TerritoryHistory {
         conn: &mut PgConnection,
     ) -> Vec<TerritoryHistory> {
         territory_ownership_without_neighbors::table
-            .filter(territory_ownership_without_neighbors::name.eq(CiString::from(name)))
+            .filter(territory_ownership_without_neighbors::name.eq(String::from(name)))
             .filter(territory_ownership_without_neighbors::season.eq(season))
             .select((
                 territory_ownership_without_neighbors::season,
@@ -106,7 +106,7 @@ impl TerritoryHistory {
                 territories::table.on(territory_ownership::territory_id.eq(territories::id)),
             )
             .filter(turninfo::season.eq(season))
-            .filter(teams::tname.eq(CiString::from(team)))
+            .filter(teams::tname.eq(String::from(team)))
             .filter(
                 territory_ownership::id.eq_any(
                     diesel::sql_query(
@@ -149,12 +149,12 @@ impl TerritoryTurn {
             .filter(territory_ownership_without_neighbors::day.eq(&day))
             .filter(territory_ownership_without_neighbors::season.eq(&season))
             .filter(
-                territory_ownership_without_neighbors::name.eq(CiString::from(territory.clone())),
+                territory_ownership_without_neighbors::name.eq(String::from(territory.clone())),
             )
-            .first::<(CiString, CiString)>(conn);
+            .first::<(String, String)>(conn);
         let (owner, previous) = match result {
             Ok(duo) => duo,
-            _ => (CiString::from("NotFound"), CiString::from("NotFound")),
+            _ => (String::from("NotFound"), String::from("NotFound")),
         };
         let teams = TeamInTurns::load(&season, &day, &territory, conn);
         let players = PlayerInTurns::load(&season, &day, &territory, conn);

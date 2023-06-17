@@ -4,11 +4,11 @@
 use crate::model::StarBreakdown;
 use crate::schema::{odds, team_player_moves, teams};
 use diesel::prelude::*;
-use diesel_citext::types::CiString;
+
 use schemars::JsonSchema;
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
-#[table_name = "teams"]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[diesel(table_name = teams)]
 pub(crate) struct Team {
     pub(crate) name: Option<String>,
     pub(crate) color_1: Option<String>,
@@ -35,7 +35,7 @@ pub(crate) struct TeamInfo {
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 pub(crate) struct TeamInTurns {
-    pub(crate) team: CiString,
+    pub(crate) team: String,
     pub(crate) color: String,
     pub(crate) secondaryColor: String,
     pub(crate) players: i32,
@@ -44,8 +44,8 @@ pub(crate) struct TeamInTurns {
     pub(crate) breakdown: StarBreakdown,
 }
 
-#[derive(Queryable, Serialize, Deserialize, JsonSchema, Associations)]
-#[table_name = "team_player_moves"]
+#[derive(Queryable, Serialize, Deserialize, JsonSchema)]
+#[diesel(table_name = team_player_moves)]
 pub(crate) struct TeamPlayerMoves {
     pub(crate) id: i32,
     pub(crate) season: Option<i32>,
@@ -59,7 +59,7 @@ pub(crate) struct TeamPlayerMoves {
 }
 
 impl TeamInfo {
-    pub(crate) fn load(conn: &PgConnection) -> Vec<TeamInfo> {
+    pub(crate) fn load(conn: &mut PgConnection) -> Vec<TeamInfo> {
         teams::table
             .select((
                 teams::id,
@@ -90,11 +90,11 @@ impl TeamPlayerMoves {
         season_seek: i32,
         day_seek: i32,
         team: Option<String>,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<TeamPlayerMoves>, diesel::result::Error> {
         match team {
             Some(team_seek) => {
-                let ciTeam_seek = CiString::from(team_seek);
+                let ciTeam_seek = String::from(team_seek);
                 team_player_moves::table
                     .select((
                         team_player_moves::id,
@@ -136,7 +136,7 @@ impl TeamInTurns {
         season: &i32,
         day: &i32,
         territory: &str,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<TeamInTurns>, diesel::result::Error> {
         odds::table
             .select((
@@ -156,7 +156,7 @@ impl TeamInTurns {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::territory_name.eq(CiString::from(territory)))
+            .filter(odds::territory_name.eq(String::from(territory)))
             .load::<TeamInTurns>(conn)
     }
 }

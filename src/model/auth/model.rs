@@ -111,7 +111,7 @@ impl Log {
         }
     }
 
-    pub(crate) fn insert(&self, conn: &PgConnection) -> Result<(), crate::Error> {
+    pub(crate) fn insert(&self, conn: &mut PgConnection) -> Result<(), crate::Error> {
         let route = self.route.clone();
         let query = self.query.clone();
         let payload = self.payload.clone();
@@ -137,7 +137,7 @@ impl Log {
 }
 
 impl MoveInfo {
-    pub(crate) fn get(season: i32, day: i32, user_id: i32, conn: &PgConnection) -> MoveInfo {
+    pub(crate) fn get(season: i32, day: i32, user_id: i32, conn: &mut PgConnection) -> MoveInfo {
         let r = turns::table
             .filter(turns::user_id.eq(user_id))
             .filter(turninfo::season.eq(season))
@@ -159,7 +159,7 @@ impl Poll {
     pub(crate) fn get(
         season: i32,
         day: i32,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<Poll>, diesel::result::Error> {
         continuation_polls::table
             .inner_join(turninfo::table.on(turninfo::id.eq(continuation_polls::turn_id)))
@@ -180,7 +180,7 @@ impl PollResponse {
     pub(crate) fn get(
         poll_id: i32,
         user_id: i32,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<PollResponse>, diesel::result::Error> {
         continuation_responses::table
             .filter(continuation_responses::poll_id.eq(poll_id))
@@ -188,7 +188,7 @@ impl PollResponse {
             .load::<PollResponse>(conn)
     }
 
-    pub(crate) fn upsert(response: PollResponse, conn: &PgConnection) -> QueryResult<usize> {
+    pub(crate) fn upsert(response: PollResponse, conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::insert_into(continuation_responses::table)
             .values((
                 continuation_responses::poll_id.eq(response.poll),

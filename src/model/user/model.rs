@@ -4,7 +4,7 @@
 
 use crate::schema::{bans, users};
 use diesel::prelude::*;
-use diesel_citext::types::CiString;
+
 use schemars::JsonSchema;
 
 pub trait UserId {
@@ -21,14 +21,14 @@ impl UserId for UserIdFast {
 }
 
 #[derive(Insertable, Queryable, Serialize, Deserialize, JsonSchema, AsChangeset)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct UpsertableUser {
-    pub(crate) uname: CiString,
-    pub(crate) platform: CiString,
+    pub(crate) uname: String,
+    pub(crate) platform: String,
 }
 
 impl UpsertableUser {
-    pub fn upsert(&self, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn upsert(&self, conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::insert_into(users::table)
             .values((
                 users::uname.eq(&self.uname),
@@ -39,24 +39,24 @@ impl UpsertableUser {
             .set(users::uname.eq(&self.uname))
             .execute(conn)
     }
-    pub fn flag(uname: String, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn flag(uname: String, conn: &mut PgConnection) -> QueryResult<usize> {
         let stop_ban = bans::table
             .filter(bans::class.eq(2))
-            .filter(bans::uname.eq(&CiString::from(uname.clone())))
+            .filter(bans::uname.eq(&String::from(uname.clone())))
             .count()
             .get_result::<i64>(conn)?;
         if stop_ban > 0 {
             return QueryResult::Ok(0);
         }
         diesel::update(users::table)
-            .filter(users::uname.eq(&CiString::from(uname)))
+            .filter(users::uname.eq(&String::from(uname)))
             .set(users::is_alt.eq(true))
             .execute(conn)
     }
 }
 
 #[derive(Queryable, Identifiable)]
-#[table_name = "users"]
+#[diesel(table_name = users)]
 pub struct UpdateUser {
     pub(crate) id: i32,
     pub(crate) overall: i32,
@@ -68,7 +68,7 @@ pub struct UpdateUser {
 }
 
 impl UpdateUser {
-    pub fn do_update(user: UpdateUser, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn do_update(user: UpdateUser, conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::update(users::table)
             .filter(users::id.eq(user.id))
             .set((

@@ -57,7 +57,8 @@ pub(crate) struct TurnInfo {
     pub(crate) complete: Option<bool>,
     pub(crate) active: Option<bool>,
     pub(crate) finale: Option<bool>,
-    pub(crate) rollTime: Option<crate::catchers::NaiveDateTime>,
+    // TODO: Fix
+    pub(crate) rollTime: Option<chrono::NaiveDateTime>,
     pub(crate) allOrNothingEnabled: Option<bool>,
     pub(crate) map: Option<String>,
 }
@@ -80,7 +81,7 @@ pub(crate) struct Roll {
 }
 
 impl TurnInfo {
-    pub(crate) fn load(conn: &PgConnection) -> Vec<TurnInfo> {
+    pub(crate) fn load(conn: &mut PgConnection) -> Vec<TurnInfo> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -99,7 +100,7 @@ impl TurnInfo {
             .expect("Error loading TurnInfo")
     }
 
-    pub(crate) fn loadall(conn: &PgConnection) -> Vec<TurnInfo> {
+    pub(crate) fn loadall(conn: &mut PgConnection) -> Vec<TurnInfo> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -117,7 +118,7 @@ impl TurnInfo {
             .expect("Error loading TurnInfo")
     }
 
-    pub(crate) fn latest(conn: &PgConnection) -> Result<TurnInfo, diesel::result::Error> {
+    pub(crate) fn latest(conn: &mut PgConnection) -> Result<TurnInfo, diesel::result::Error> {
         turninfo::table
             .select((
                 turninfo::id,
@@ -137,7 +138,7 @@ impl TurnInfo {
 }
 
 impl Latest {
-    pub(crate) fn latest(conn: &PgConnection) -> Result<Latest, diesel::result::Error> {
+    pub(crate) fn latest(conn: &mut PgConnection) -> Result<Latest, diesel::result::Error> {
         turninfo::table
             .select((turninfo::season, turninfo::day, turninfo::id))
             .order(turninfo::id.desc())
@@ -146,7 +147,7 @@ impl Latest {
 }
 
 impl Roll {
-    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Result<Roll, Error> {
+    pub(crate) fn load(season: i32, day: i32, conn: &mut PgConnection) -> Result<Roll, Error> {
         rollinfo::table
             .select((
                 rollinfo::rollstarttime,

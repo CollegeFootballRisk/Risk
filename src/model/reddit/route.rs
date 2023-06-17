@@ -9,7 +9,7 @@ use crate::{
     sys::SysInfo,
 };
 use chrono::Utc;
-use diesel_citext::types::CiString;
+
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::outcome::Outcome;
@@ -88,7 +88,7 @@ pub(crate) async fn callback(
             .run(move |c| {
                 bans::table
                     .filter(bans::class.eq(3))
-                    .filter(bans::uname.eq(&CiString::from(uname_ban_chk)))
+                    .filter(bans::uname.eq(&String::from(uname_ban_chk)))
                     .count()
                     .get_result::<i64>(c)
             })
@@ -102,8 +102,8 @@ pub(crate) async fn callback(
 
     // Build the `UpsertableUser` for querying the DB
     let new_user = UpsertableUser {
-        uname: CiString::from(uname.clone()),
-        platform: CiString::from("reddit"),
+        uname: String::from(uname.clone()),
+        platform: String::from("reddit"),
     };
 
     // Upsert the user

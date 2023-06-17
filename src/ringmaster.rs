@@ -561,7 +561,7 @@ fn get_team_star_breakdown(territory_player: &Vec<PlayerMoves>) -> [i32; 5] {
 /// Updates the statistics for all users after the roll
 fn user_update(
     turninfoblock: &TurnInfo,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> Result<Vec<Bar>, diesel::result::Error> {
     let query = format!(
         "SELECT do_user_update({},{})",
@@ -577,7 +577,7 @@ fn chaos_update(
     territories: &[TerritoryOwnersInsert],
     turn_id_n: i32,
     settings: &rocket::figment::Figment,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> Result<(), diesel::result::Error> {
     use crate::schema::territory_adjacency;
     // First, get the maximum and minimum territory numbers
@@ -623,7 +623,7 @@ fn chaos_update(
     // Goes 0, 1, 2, 3, num-1; excludes num just like normal languages
     let mut new_stuff = Vec::new();
     #[derive(Insertable)]
-    #[table_name = "territory_adjacency"]
+    #[diesel(table_name = "territory_adjacency")]
     struct TerritoryAdjacent<'a> {
         territory_id: i32,
         adjacent_id: i32,
@@ -708,18 +708,18 @@ fn runtime() -> Result<(), diesel::result::Error> {
     let rocket = rocket::build();
     let settings = rocket.figment();
     // Connect to the Postgres DB
-    let conn: PgConnection = establish_connection();
+    let mut conn: PgConnection = establish_connection();
     // Get the active turn
     // start_time_now then sets the start time to the current time.
-    let mut turninfoblock = TurnInfo::get_latest(&conn)?;
+    let mut turninfoblock = TurnInfo::get_latest(&mut conn)?;
     turninfoblock.start_time_now();
     // Prevent new moves from being submitted
-    turninfoblock.lock(&conn)?;
+    turninfoblock.lock(&mut conn)?;
     //dbg!(&turninfoblock.season, &turninfoblock.day);
     // Now we go get all player moves for the current day
-    let players = PlayerMoves::load(&turninfoblock.id, &conn)?;
+    let players = PlayerMoves::load(&turninfoblock.id, &mut conn)?;
     // And a list of all territories, and their current owners:
-    let territories = TerritoryOwners::load(&turninfoblock.id, &conn)?;
+    let territories = TerritoryOwners::load(&turninfoblock.id, &mut conn)?;
     // If there are no moves to load, we'll exit as something's not right.
     // TODO: Return Err, not Ok
     if players.is_empty() {
@@ -733,16 +733,16 @@ fn runtime() -> Result<(), diesel::result::Error> {
         &mut ChaCha12Rng::from_entropy(),
         false,
     );
-    TerritoryStats::insert(territory_stats, &conn)?;
-    Stats::insert(stats, turninfoblock.id, &conn)?;
-    let territory_insert = TerritoryOwnersInsert::insert(&owners, &conn)?;
+    TerritoryStats::insert(territory_stats, &mut conn)?;
+    Stats::insert(stats, turninfoblock.id, &mut conn)?;
+    let territory_insert = TerritoryOwnersInsert::insert(&owners, &mut conn)?;
     dbg!(territory_insert);
-    let playermoves = PlayerMoves::mvps(mvps, &conn)?;
+    let playermoves = PlayerMoves::mvps(mvps, &mut conn)?;
     dbg!(playermoves);
 
     // This calls an SQL function that updates each user's statistics
     // Not ideal, TODO: we ought to implement this in Rust.
-    let userupdate = user_update(&turninfoblock, &conn);
+    let userupdate = user_update(&turninfoblock, &mut conn);
     match userupdate {
         Ok(ok) => println!("Users updated successfully {}", ok[0].do_user_update),
         Err(e) => println!("Failed to update users: {e:?}"),
@@ -750,7 +750,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     turninfoblock.rollendtime = Some(Utc::now().naive_utc());
     turninfoblock.complete = Some(true);
     turninfoblock.active = Some(false);
-    match TurnInfo::update_or_insert(&turninfoblock, &conn) {
+    match TurnInfo::update_or_insert(&turninfoblock, &mut conn) {
         Ok(_ok) => {
             println!("Update turninfo success.")
         }
@@ -769,7 +769,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
         turninfoblock.map,
         aone,
         next_roll(settings),
-        &conn,
+        &mut conn,
     ) {
         Ok(_ok) => {
             println!("Create new turn succeeded")
@@ -778,11 +778,11 @@ fn runtime() -> Result<(), diesel::result::Error> {
     }
 
     #[cfg(feature = "risk_image")]
-    optional::image::make_image(&owners, &conn);
+    optional::image::make_image(&owners, &mut conn);
 
     #[cfg(feature = "chaos")]
     {
-        match chaos_update(&owners, turninfoblock.id + 1, settings, &conn) {
+        match chaos_update(&owners, turninfoblock.id + 1, settings, &mut conn) {
             Ok(_) => println!("Chaos bridges updated."),
             Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
         }

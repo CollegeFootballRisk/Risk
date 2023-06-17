@@ -4,7 +4,7 @@
 use crate::schema::{heat_full, odds, statistics};
 use diesel::prelude::*;
 use diesel::result::Error;
-use diesel_citext::types::CiString;
+
 use schemars::JsonSchema;
 
 /// The statistics for a Player
@@ -25,7 +25,7 @@ pub(crate) struct StatLeaderboard {
     /// The overall rank of the team (with ties unbroken)
     pub(crate) rank: i32, //determined by number of territories desc
     /// The name of the team
-    pub(crate) name: CiString,
+    pub(crate) name: String,
     /// The logo of the team
     pub(crate) logo: String,
     /// The number of territories won by the team that turn
@@ -82,9 +82,9 @@ pub(crate) struct StarBreakdown {
 /// Object for creating heatmaps that provides territory statistics for a given turn.
 pub(crate) struct Heat {
     /// The (unstandardized) name of the territory.
-    pub(crate) territory: CiString,
+    pub(crate) territory: String,
     /// The (unstandardized) name of the team that owned the territory _after_ the turn.
-    pub(crate) winner: CiString,
+    pub(crate) winner: String,
     /// The number of players on all teams who submitted a move on the territory on the requested turn.
     pub(crate) players: i64,
     /// The overall power (the sum of the weight * multiplier of each player) submitted by all teams submitted for the territory on the requested turn.
@@ -95,14 +95,14 @@ pub(crate) struct Heat {
 /// Statistics pertaining to a particular team's probability of winning a territory.
 pub(crate) struct Odds {
     /// The (unstandardized) name of the territory.
-    pub(crate) territory: CiString,
+    pub(crate) territory: String,
     /// The (unstandardized) name of the team that owned the territory _prior_ to the turn.
-    pub(crate) owner: CiString,
+    pub(crate) owner: String,
     /// The (unstandardized) name of the team that owned the territory _after_ the turn.
-    pub(crate) winner: CiString,
+    pub(crate) winner: String,
     /// The (unstandardized) name of the player that won a territory for a team that turn.
     /// MVPs must have had > 0 star power (i.e. could not lose triple-or-nothing, if enabled) and must not have been flagged as an alt for that turn
-    pub(crate) mvp: Option<CiString>,
+    pub(crate) mvp: Option<String>,
     /// The total number of players the requested team submitted for the territory on the requested turn.
     pub(crate) players: i32,
     /// Breakdown of the overall star values (how many players of each star classification) for the players the requested team submitted for the territory on the requested turn.
@@ -116,7 +116,7 @@ pub(crate) struct Odds {
 }
 
 impl Heat {
-    pub(crate) fn load(season: i32, day: i32, conn: &PgConnection) -> Vec<Heat> {
+    pub(crate) fn load(season: i32, day: i32, conn: &mut PgConnection) -> Vec<Heat> {
         heat_full::table
             .filter(heat_full::season.eq(season))
             .filter(heat_full::day.eq(day))
@@ -132,9 +132,9 @@ impl Heat {
 }
 
 impl StatHistory {
-    pub(crate) fn load(team: String, conn: &PgConnection) -> Vec<StatHistory> {
+    pub(crate) fn load(team: String, conn: &mut PgConnection) -> Vec<StatHistory> {
         statistics::table
-            .filter(statistics::tname.eq(CiString::from(team)))
+            .filter(statistics::tname.eq(String::from(team)))
             .select((
                 statistics::turn_id,
                 statistics::season,
@@ -157,7 +157,7 @@ impl StatHistory {
 }
 
 impl CurrentStrength {
-    pub(crate) fn load(team: String, conn: &PgConnection) -> Result<CurrentStrength, Error> {
+    pub(crate) fn load(team: String, conn: &mut PgConnection) -> Result<CurrentStrength, Error> {
         statistics::table
             .select((
                 statistics::tname,
@@ -166,12 +166,12 @@ impl CurrentStrength {
                 statistics::starpower,
                 statistics::territorycount,
             ))
-            .filter(statistics::tname.eq(CiString::from(team)))
+            .filter(statistics::tname.eq(String::from(team)))
             .order(statistics::turn_id.desc())
             .first::<CurrentStrength>(conn)
     }
 
-    pub(crate) fn load_id(team: i32, conn: &PgConnection) -> Result<CurrentStrength, Error> {
+    pub(crate) fn load_id(team: i32, conn: &mut PgConnection) -> Result<CurrentStrength, Error> {
         statistics::table
             .select((
                 statistics::tname,
@@ -193,7 +193,7 @@ impl CurrentStrength {
                 statistics::territorycount,
             ))
             .inner_join(turninfo::table.on(turninfo::id.eq(statistics::turn_id)))
-            .filter(statistics::tname.eq(CiString::from(team)))
+            .filter(statistics::tname.eq(String::from(team)))
             .filter(turninfo::complete.eq(true))
             .order(statistics::turn_id.desc())
             .first::<CurrentStrength>(conn)
@@ -204,7 +204,7 @@ impl StatLeaderboard {
     pub(crate) fn load(
         season: i32,
         day: i32,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<StatLeaderboard>, Error> {
         statistics::table
             .select((
@@ -230,7 +230,7 @@ impl Odds {
         season: i32,
         day: i32,
         team: String,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<Vec<Odds>, Error> {
         odds::table
             .select((
@@ -252,7 +252,7 @@ impl Odds {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::team_name.eq(CiString::from(team)))
+            .filter(odds::team_name.eq(String::from(team)))
             .load::<Odds>(conn)
     }
 }

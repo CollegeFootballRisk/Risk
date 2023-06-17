@@ -22,8 +22,8 @@ table! {
 table! {
     teams (id) {
         id -> Int4,
-        tname -> diesel_citext::sql_types::Citext,
-        tshortname -> diesel_citext::sql_types::Citext,
+        tname -> Text,
+        tshortname -> Text,
         creation_date -> Timestamp,
         logo -> Nullable<Text>,
         color_1 -> Text,
@@ -35,8 +35,8 @@ table! {
 table! {
     users (id) {
         id -> Int4,
-        uname -> diesel_citext::sql_types::Citext,
-        platform -> diesel_citext::sql_types::Citext,
+        uname -> Text,
+        platform -> Text,
         join_date -> Nullable<Timestamp>,
         current_team -> Int4,
         overall -> Nullable<Int4>,
@@ -59,10 +59,10 @@ table! {
         player -> Nullable<Int4>,
         team -> Nullable<Int4>,
         mvp -> Nullable<Int4>,
-        uname -> Nullable<diesel_citext::sql_types::Citext>,
+        uname -> Nullable<Text>,
         turns -> Nullable<Int4>,
         mvps -> Nullable<Int4>,
-        tname -> Nullable<diesel_citext::sql_types::Citext>,
+        tname -> Nullable<Text>,
         power -> Nullable<Double>,
         weight -> Nullable<Int4>,
         stars -> Nullable<Int4>,
@@ -72,7 +72,7 @@ table! {
 table! {
     territories (id) {
         id -> Int4,
-        name -> diesel_citext::sql_types::Citext,
+        name -> Text,
         region -> Int4,
     }
 }
@@ -80,7 +80,7 @@ table! {
 table! {
     regions (id){
         id -> Int4,
-        name -> diesel_citext::sql_types::Citext,
+        name -> Text,
     }
 }
 
@@ -108,12 +108,12 @@ table! {
         id -> Int4,
         season -> Nullable<Int4>,
         day -> Nullable<Int4>,
-        team -> Nullable<diesel_citext::sql_types::Citext>,
-        player -> Nullable<diesel_citext::sql_types::Citext>,
+        team -> Nullable<Text>,
+        player -> Nullable<Text>,
         stars -> Nullable<Int4>,
         mvp -> Nullable<Bool>,
-        territory -> Nullable<diesel_citext::sql_types::Citext>,
-        regularteam -> Nullable<diesel_citext::sql_types::Citext>,
+        territory -> Nullable<Text>,
+        regularteam -> Nullable<Text>,
         weight -> Double,
         power -> Double,
         multiplier -> Double,
@@ -134,10 +134,10 @@ table! {
         territory_id -> Int4,
         season -> Int4,
         day -> Int4,
-        name -> diesel_citext::sql_types::Citext,
-        tname -> diesel_citext::sql_types::Citext,
+        name -> Text,
+        tname -> Text,
         region-> Int4,
-        region_name -> diesel_citext::sql_types::Citext,
+        region_name -> Text,
         neighbors -> Nullable<Json>,
     }
 }
@@ -159,9 +159,9 @@ table! {
         territory_id -> Int4,
         season -> Int4,
         day -> Int4,
-        name -> diesel_citext::sql_types::Citext,
-        prev_owner -> diesel_citext::sql_types::Citext,
-        owner -> diesel_citext::sql_types::Citext,
+        name -> Text,
+        prev_owner -> Text,
+        owner -> Text,
     }
 }
 
@@ -179,19 +179,19 @@ table! {
 
 table! {
     heat_full (name) {
-        name -> diesel_citext::sql_types::Citext,
+        name -> Text,
         season -> Int4,
         day -> Int4,
         cumulative_players -> Int8,
         cumulative_power -> Double,
-        owner -> diesel_citext::sql_types::Citext,
+        owner -> Text,
     }
 }
 
 table! {
     cfbr_stats (player) {
-        player -> diesel_citext::sql_types::Citext,
-        team -> diesel_citext::sql_types::Citext,
+        player -> Text,
+        team -> Text,
         turnsplayed -> Int4,
         stars -> Int4,
     }
@@ -215,7 +215,7 @@ table! {
         threes -> Int4,
         fours -> Int4,
         fives -> Int4,
-        tname -> diesel_citext::sql_types::Citext,
+        tname -> Text,
         logo -> Text,
         regions -> Int8,
     }
@@ -282,13 +282,13 @@ table! {
         team -> Integer,
         season -> Integer,
         day -> Integer,
-        territory_name -> diesel_citext::sql_types::Citext,
-        tname -> diesel_citext::sql_types::Citext,
-        prev_owner -> diesel_citext::sql_types::Citext,
-        mvp -> Nullable<diesel_citext::sql_types::Citext>,
+        territory_name -> Text,
+        tname -> Text,
+        prev_owner -> Text,
+        mvp -> Nullable<Text>,
         color -> Text,
         secondary_color -> Text,
-        team_name -> diesel_citext::sql_types::Citext,
+        team_name -> Text,
     }
 }
 table! {
@@ -380,8 +380,8 @@ table! {
         // Allow login without email: 3
         // Prevent ban, reddit ban: 4
         class -> Int4,
-        cip -> diesel_citext::sql_types::Citext,
-        uname -> diesel_citext::sql_types::Citext,
+        cip -> Text,
+        uname -> Text,
         ua -> Text,
     }
 }
@@ -389,9 +389,9 @@ table! {
 allow_tables_to_appear_in_same_query!(users, bans);
 
 allow_tables_to_appear_in_same_query!(users, awards, award_info);
-joinable!(awards -> users (user_id));
-joinable!(awards -> award_info (award_id));
-joinable!(statistics -> turninfo (turn_id));
+diesel::joinable!(awards -> users (user_id));
+diesel::joinable!(awards -> award_info (award_id));
+diesel::joinable!(statistics -> turninfo (turn_id));
 
 allow_tables_to_appear_in_same_query!(
     past_turns,

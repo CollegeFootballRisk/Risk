@@ -16,7 +16,7 @@ use diesel::result::Error;
 use rocket::http::{CookieJar, Status};
 use rocket::State;
 extern crate rand;
-use diesel_citext::types::CiString;
+
 use rand::{thread_rng, Rng};
 use rocket::serde::json::Json;
 use rocket_recaptcha_v3::{ReCaptcha, ReCaptchaToken, V2};
@@ -479,7 +479,7 @@ pub(crate) async fn view_response(
 pub(crate) fn handleregionalownership(
     latest: &TurnInfo,
     team: i32,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> QueryResult<i64> {
     use diesel::dsl::count;
     region_ownership::table
@@ -509,7 +509,7 @@ pub(crate) fn handle_territory_info(
     c: &Claims,
     target: i32,
     latest: &TurnInfo,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
     aon: Option<bool>,
 ) -> Result<
     (
@@ -625,7 +625,7 @@ pub(crate) fn handle_territory_info(
 pub(crate) fn get_adjacent_territory_owners(
     target: i32,
     latest: &TurnInfo,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> Result<Vec<(i32, i32)>, Error> {
     territory_adjacency::table
         .filter(territory_adjacency::adjacent_id.eq(target))
@@ -643,7 +643,7 @@ pub(crate) fn get_adjacent_territory_owners(
         .load::<(i32, i32)>(conn)
 }
 
-pub(crate) fn get_territory_number(team: i32, latest: &TurnInfo, conn: &PgConnection) -> i32 {
+pub(crate) fn get_territory_number(team: i32, latest: &TurnInfo, conn: &mut PgConnection) -> i32 {
     use diesel::dsl::count;
     territory_ownership::table
         .filter(territory_ownership::turn_id.eq(latest.id))
@@ -654,9 +654,9 @@ pub(crate) fn get_territory_number(team: i32, latest: &TurnInfo, conn: &PgConnec
 }
 
 #[allow(dead_code)]
-pub(crate) fn get_cfb_points(name: String, conn: &PgConnection) -> i64 {
+pub(crate) fn get_cfb_points(name: String, conn: &mut PgConnection) -> i64 {
     match cfbr_stats::table
-        .filter(cfbr_stats::player.eq(CiString::from(name)))
+        .filter(cfbr_stats::player.eq(String::from(name)))
         .select(cfbr_stats::stars)
         .first(conn)
         .unwrap_or(1)
@@ -691,7 +691,7 @@ pub(crate) fn insert_turn(
     user_weight: f64,
     user_power: f64,
     merc: bool,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> QueryResult<Vec<i32>> {
     let alt_score: i32 = match user.8 {
         true => 175,
@@ -731,7 +731,7 @@ pub(crate) fn update_user(
     new: bool,
     user: i32,
     team: i32,
-    conn: &PgConnection,
+    conn: &mut PgConnection,
 ) -> QueryResult<usize> {
     match new {
         false => diesel::update(users::table)

@@ -5,7 +5,7 @@ use crate::schema::captchas;
 use chrono::{NaiveDateTime, Utc};
 use diesel::prelude::*;
 #[derive(Deserialize, Insertable, Queryable)]
-#[table_name = "captchas"]
+#[diesel(table_name = captchas)]
 pub struct Captchas {
     pub(crate) title: String,
     pub(crate) content: String,
@@ -28,7 +28,7 @@ pub(crate) struct UserCaptcha {
 //}
 
 impl Captchas {
-    pub fn insert(insert_captcha: Captchas, conn: &PgConnection) -> QueryResult<usize> {
+    pub fn insert(insert_captcha: Captchas, conn: &mut PgConnection) -> QueryResult<usize> {
         diesel::insert_into(captchas::table)
             .values(&insert_captcha)
             .execute(conn)
@@ -37,7 +37,7 @@ impl Captchas {
     pub fn check(
         title: String,
         content: String,
-        conn: &PgConnection,
+        conn: &mut PgConnection,
     ) -> Result<bool, diesel::result::Error> {
         let true_content = captchas::table
             .filter(captchas::title.eq(title))
@@ -50,7 +50,7 @@ impl Captchas {
         )
     }
 
-    pub fn delete(&self, conn: &PgConnection) -> Result<usize, diesel::result::Error> {
+    pub fn delete(&self, conn: &mut PgConnection) -> Result<usize, diesel::result::Error> {
         diesel::delete(captchas::table)
             .filter(captchas::title.eq(&self.title))
             .filter(captchas::content.eq(&self.content))

@@ -4,7 +4,7 @@
 use crate::model::{Claims, DiscordUserInfo, UpsertableUser};
 use crate::{db::DbConn, model::User, sys::SysInfo};
 use chrono::prelude::*;
-use diesel_citext::types::CiString;
+
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite, Status};
 use rocket::response::{Flash, Redirect};
@@ -54,8 +54,8 @@ pub(crate) async fn callback(
     match userinfo {
         Ok(user_info) => {
             let new_user = UpsertableUser {
-                uname: CiString::from(user_info.name()),
-                platform: CiString::from("discord"),
+                uname: String::from(user_info.name()),
+                platform: String::from("discord"),
             };
             match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
                 Ok(_n) => {

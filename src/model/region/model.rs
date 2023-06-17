@@ -4,20 +4,20 @@
 use crate::schema::regions;
 //use diesel::pg::expression::dsl::array;
 use diesel::prelude::*;
-use diesel_citext::types::CiString;
+
 use schemars::JsonSchema;
 use std::result::Result;
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub(crate) struct Region {
     id: i32,
-    name: CiString,
+    name: String,
     /*#[serde(skip_serializing)]
     territories: Vec<String>*/
 }
 
 impl Region {
-    pub(crate) fn load(conn: &PgConnection) -> Result<Vec<Region>, diesel::result::Error> {
+    pub(crate) fn load(conn: &mut PgConnection) -> Result<Vec<Region>, diesel::result::Error> {
         regions::table
             //.inner_join(territories::table.on(territories::region.eq(regions::id)))
             //.group_by(regions::id)
