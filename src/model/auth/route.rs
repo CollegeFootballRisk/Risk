@@ -162,7 +162,7 @@ pub(crate) async fn my_move(
         conn.run(move |connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection))
             .await
             .territory
-            .unwrap_or_else(|| String::from("")),
+            .unwrap_or_else(String::new),
     )))
 }
 
@@ -187,7 +187,7 @@ pub(crate) async fn make_move<'v>(
 ) -> Result<Json<StatusWrapper>, crate::Error> {
     let target = movesub.target;
     let rv: String = match movesub.token.as_ref() {
-        Some(e) => format!("token={}", e),
+        Some(e) => format!("token={e}"),
         None => return Err(crate::Error::BadRequest {}),
     };
     let r = rocket::form::ValueField::parse(&rv);

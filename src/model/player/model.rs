@@ -158,7 +158,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                     true => 0,
                     false => -1,
                 };
-                let ciName: Vec<String> = name.to_vec();
+                let ciName: Vec<String> = name;
                 let awards: Vec<Award> = awards::table
                     .inner_join(award_info::table)
                     .inner_join(users::table)
@@ -293,7 +293,7 @@ impl PlayerWithTurns {
             true => 0,
             false => -1,
         };
-        let ciName: Vec<String> = name.to_vec();
+        let ciName: Vec<String> = name;
         let results = users::table
             .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
@@ -372,7 +372,7 @@ impl TeamPlayer {
         tname: Vec<String>,
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
-        let ciTname: Vec<String> = tname.to_vec();
+        let ciTname: Vec<String> = tname;
         moves::table
             .filter(moves::tname.eq_any(ciTname))
             .select((
@@ -405,7 +405,7 @@ impl TeamMerc {
         tname: Vec<String>,
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
-        let ciTname: Vec<String> = tname.to_vec();
+        let ciTname: Vec<String> = tname;
         allow_tables_to_appear_in_same_query!(users, moves);
         let teamIds = teams::table
             .filter(teams::tname.eq_any(ciTname))

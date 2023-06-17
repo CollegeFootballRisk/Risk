@@ -328,7 +328,7 @@ impl TerritoryOwners {
 }
 
 impl TerritoryOwnersInsert {
-    pub fn new(
+    #[must_use] pub fn new(
         territory: &TerritoryOwners,
         owner: i32,
         random_number: Option<f64>,

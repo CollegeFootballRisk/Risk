@@ -688,7 +688,7 @@ fn next_day_in_seq(
     next_time: &NaiveTime,
     now: &DateTime<Utc>,
 ) -> Option<NaiveDateTime> {
-    let curr_day: i64 = now.weekday().number_from_monday() as i64;
+    let curr_day: i64 = i64::from(now.weekday().number_from_monday());
     let index: i64 = if next_days.is_empty() {
         return None;
     } else if let Some(next) = next_days.iter().filter(|&x| *x > curr_day).min() {
@@ -821,7 +821,7 @@ mod tests {
         let next_time = String::from("04:00:00");
         let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
         let mut next_days = [1, 2, 3, 4, 5, 6, 7];
-        next_days.sort();
+        next_days.sort_unstable();
 
         let now = NaiveDate::from_ymd_opt(2022, 10, 30)
             .unwrap()
@@ -842,7 +842,7 @@ mod tests {
         let next_time = String::from("04:00:00");
         let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
         let mut next_days = [];
-        next_days.sort();
+        next_days.sort_unstable();
 
         let now = NaiveDate::from_ymd_opt(2022, 10, 30)
             .unwrap()
@@ -859,7 +859,7 @@ mod tests {
         let next_time = String::from("04:00:00");
         let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
         let mut next_days = [2, 3, 4, 5, 6, 7];
-        next_days.sort();
+        next_days.sort_unstable();
 
         let now = NaiveDate::from_ymd_opt(2022, 10, 30)
             .unwrap()
@@ -880,7 +880,7 @@ mod tests {
         let next_time = String::from("04:00:00");
         let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
         let mut next_days = [3, 4, 5, 6, 7];
-        next_days.sort();
+        next_days.sort_unstable();
 
         let now = NaiveDate::from_ymd_opt(2022, 10, 30)
             .unwrap()
@@ -901,7 +901,7 @@ mod tests {
         let next_time = String::from("03:30:00");
         let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
         let mut next_days = [2, 3, 4, 5, 6, 7];
-        next_days.sort();
+        next_days.sort_unstable();
 
         let now = NaiveDate::from_ymd_opt(2022, 11, 26)
             .unwrap()
@@ -923,7 +923,7 @@ mod tests {
             let next_time = String::from("03:30:00");
             let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
             let mut next_days = [1, 2, 3, 4, 5, 6, 7];
-            next_days.sort();
+            next_days.sort_unstable();
 
             let now = NaiveDate::from_ymd_opt(2022, 11, 20 + i)
                 .unwrap()
@@ -946,7 +946,7 @@ mod tests {
             let next_time = String::from("03:30:00");
             let naive_time = NaiveTime::parse_from_str(&next_time, "%H:%M:%S").unwrap();
             let mut next_days = [2, 3, 4, 5, 6, 7];
-            next_days.sort();
+            next_days.sort_unstable();
 
             let now = NaiveDate::from_ymd_opt(2022, 11, 20 + i)
                 .unwrap()
@@ -1475,7 +1475,7 @@ mod tests {
         let new_owners = vec![TerritoryOwnersInsert::new(
             &territories[0],
             3,
-            Some(5.254147072201107),
+            Some(5.254_147_072_201_107),
             Some(6),
         )];
         let mvps: Vec<PlayerMoves> = vec![playermoves[0].clone()];
@@ -1522,7 +1522,7 @@ mod tests {
                 turn_id: 4,
                 territory: 2,
                 territory_power: 17.0,
-                chance: 0.29411764705882354,
+                chance: 0.294_117_647_058_823_54,
                 teampower: 5.0,
                 fours: 1,
                 ..TerritoryStats::default()
@@ -1532,7 +1532,7 @@ mod tests {
                 turn_id: 4,
                 territory: 2,
                 territory_power: 17.0,
-                chance: 0.7058823529411765,
+                chance: 0.705_882_352_941_176_5,
                 teampower: 12.0,
                 fives: 1,
                 ..TerritoryStats::default()
