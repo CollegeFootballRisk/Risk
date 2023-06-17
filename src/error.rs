@@ -80,8 +80,6 @@ impl OpenApiResponderInner for Error {
     fn responses(
         _generator: &mut OpenApiGenerator,
     ) -> std::result::Result<Responses, OpenApiError> {
-        Ok(Responses {
-            ..Default::default()
-        })
+        Ok(Default::default())
     }
 }

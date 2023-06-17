@@ -134,7 +134,7 @@ impl Heat {
 impl StatHistory {
     pub(crate) fn load(team: String, conn: &mut PgConnection) -> Vec<StatHistory> {
         statistics::table
-            .filter(statistics::tname.eq(String::from(team)))
+            .filter(statistics::tname.eq(team))
             .select((
                 statistics::turn_id,
                 statistics::season,
@@ -166,7 +166,7 @@ impl CurrentStrength {
                 statistics::starpower,
                 statistics::territorycount,
             ))
-            .filter(statistics::tname.eq(String::from(team)))
+            .filter(statistics::tname.eq(team))
             .order(statistics::turn_id.desc())
             .first::<CurrentStrength>(conn)
     }
@@ -252,7 +252,7 @@ impl Odds {
             ))
             .filter(odds::day.eq(day))
             .filter(odds::season.eq(season))
-            .filter(odds::team_name.eq(String::from(team)))
+            .filter(odds::team_name.eq(team))
             .load::<Odds>(conn)
     }
 }

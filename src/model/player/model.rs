@@ -133,7 +133,9 @@ pub(crate) struct PlayerSummary {
 }
 
 impl PlayerSummary {
-    pub(crate) fn load(conn: &mut PgConnection) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
+    pub(crate) fn load(
+        conn: &mut PgConnection,
+    ) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
         users::table
             .left_join(teams::table.on(teams::id.eq(users::playing_for)))
             .select((users::uname, users::platform, teams::tname.nullable()))
@@ -156,8 +158,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                     true => 0,
                     false => -1,
                 };
-                let ciName: Vec<String> =
-                    name.iter().map(|x| String::from(x.clone())).collect();
+                let ciName: Vec<String> = name.to_vec();
                 let awards: Vec<Award> = awards::table
                     .inner_join(award_info::table)
                     .inner_join(users::table)
@@ -292,7 +293,7 @@ impl PlayerWithTurns {
             true => 0,
             false => -1,
         };
-        let ciName: Vec<String> = name.iter().map(|x| String::from(x.clone())).collect();
+        let ciName: Vec<String> = name.to_vec();
         let results = users::table
             .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
@@ -371,7 +372,7 @@ impl TeamPlayer {
         tname: Vec<String>,
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
-        let ciTname: Vec<String> = tname.iter().map(|x| String::from(x.clone())).collect();
+        let ciTname: Vec<String> = tname.to_vec();
         moves::table
             .filter(moves::tname.eq_any(ciTname))
             .select((
@@ -384,7 +385,9 @@ impl TeamPlayer {
             .load::<TeamPlayer>(conn)
     }
 
-    pub(crate) fn loadall(conn: &mut PgConnection) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
+    pub(crate) fn loadall(
+        conn: &mut PgConnection,
+    ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
         moves::table
             .select((
                 moves::tname,
@@ -402,7 +405,7 @@ impl TeamMerc {
         tname: Vec<String>,
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
-        let ciTname: Vec<String> = tname.iter().map(|x| String::from(x.clone())).collect();
+        let ciTname: Vec<String> = tname.to_vec();
         allow_tables_to_appear_in_same_query!(users, moves);
         let teamIds = teams::table
             .filter(teams::tname.eq_any(ciTname))
@@ -431,7 +434,7 @@ impl PlayerInTurns {
         territory: &str,
         conn: &mut PgConnection,
     ) -> Result<Vec<PlayerInTurns>, Error> {
-        let ciTerritory = String::from(territory.to_owned());
+        let ciTerritory = territory.to_owned();
         dbg!(&season, &day, &ciTerritory);
         past_turns::table
             .inner_join(territories::table.on(past_turns::territory.eq(territories::id)))
@@ -462,8 +465,8 @@ impl UserId for User {
 impl User {
     pub fn load(name: String, platform: String, conn: &mut PgConnection) -> Result<User, Error> {
         users::table
-            .filter(users::uname.eq(String::from(name)))
-            .filter(users::platform.eq(String::from(platform)))
+            .filter(users::uname.eq(name))
+            .filter(users::platform.eq(platform))
             .select((
                 users::id,
                 users::uname,
@@ -479,7 +482,7 @@ impl User {
 
     pub fn search(s: String, limit: i32, conn: &mut PgConnection) -> Result<Vec<String>, Error> {
         users::table
-            .filter(users::uname.ilike(String::from(s)))
+            .filter(users::uname.ilike(s))
             .select(users::uname)
             .limit(limit.into())
             .load::<String>(conn)

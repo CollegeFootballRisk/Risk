@@ -42,14 +42,14 @@ impl UpsertableUser {
     pub fn flag(uname: String, conn: &mut PgConnection) -> QueryResult<usize> {
         let stop_ban = bans::table
             .filter(bans::class.eq(2))
-            .filter(bans::uname.eq(&String::from(uname.clone())))
+            .filter(bans::uname.eq(&uname.clone()))
             .count()
             .get_result::<i64>(conn)?;
         if stop_ban > 0 {
             return QueryResult::Ok(0);
         }
         diesel::update(users::table)
-            .filter(users::uname.eq(&String::from(uname)))
+            .filter(users::uname.eq(&uname))
             .set(users::is_alt.eq(true))
             .execute(conn)
     }

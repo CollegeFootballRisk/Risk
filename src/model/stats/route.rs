@@ -41,7 +41,7 @@ pub(crate) async fn leaderboard(
             }
         }
         _ => {
-            match conn.run(|c| Latest::latest(c)).await {
+            match conn.run(Latest::latest).await {
                 Ok(current) => {
                     //dbg!(&current.day - 1);
                     let leaderboard = conn
@@ -68,7 +68,7 @@ pub(crate) async fn heat(
     day: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<Heat>>, Status> {
-    match conn.run(|c| Latest::latest(c)).await {
+    match conn.run(Latest::latest).await {
         Ok(current) => {
             let heat = conn
                 .run(move |c| {

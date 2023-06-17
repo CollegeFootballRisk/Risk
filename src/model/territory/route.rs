@@ -16,7 +16,7 @@ pub(crate) async fn territories(
     day: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<TerritoryWithNeighbors>>, Status> {
-    match conn.run(move |c| Latest::latest(c)).await {
+    match conn.run(Latest::latest).await {
         Ok(current) => {
             let territories = conn
                 .run(move |c| {

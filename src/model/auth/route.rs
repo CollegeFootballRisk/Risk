@@ -144,7 +144,7 @@ pub(crate) async fn my_move(
 ) -> Result<Json<EitherPorS>, crate::Error> {
     // Get latest turn
     let latest = conn
-        .run(move |c| Latest::latest(c))
+        .run(Latest::latest)
         .await
         .map_err(|_| crate::Error::InternalServerError {})?;
     // Get user information from cookies
@@ -215,7 +215,7 @@ pub(crate) async fn make_move<'v>(
     let mut log = Log::begin(String::from("move"), target.to_string());
 
     // Get latest turn
-    let latest = conn.run(move |c| TurnInfo::latest(c)).await.map_err(|_| {
+    let latest = conn.run(TurnInfo::latest).await.map_err(|_| {
         dbg!("Failed at point 1");
         crate::Error::InternalServerError {}
     })?;
@@ -386,7 +386,7 @@ pub(crate) async fn make_move<'v>(
 pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, crate::Error> {
     // Get latest turn
     let latest = conn
-        .run(move |c| Latest::latest(c))
+        .run(Latest::latest)
         .await
         .map_err(|_| crate::Error::InternalServerError {})?;
 
@@ -656,7 +656,7 @@ pub(crate) fn get_territory_number(team: i32, latest: &TurnInfo, conn: &mut PgCo
 #[allow(dead_code)]
 pub(crate) fn get_cfb_points(name: String, conn: &mut PgConnection) -> i64 {
     match cfbr_stats::table
-        .filter(cfbr_stats::player.eq(String::from(name)))
+        .filter(cfbr_stats::player.eq(name))
         .select(cfbr_stats::stars)
         .first(conn)
         .unwrap_or(1)

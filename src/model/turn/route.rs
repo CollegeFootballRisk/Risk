@@ -11,7 +11,7 @@ use rocket::serde::json::Json;
 #[openapi(tag = "Turns", ignore = "conn")]
 #[get("/turns")]
 pub(crate) async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
-    let turns = conn.run(|c| TurnInfo::load(c)).await;
+    let turns = conn.run(TurnInfo::load).await;
     if turns.len() as i32 >= 1 {
         std::result::Result::Ok(Json(turns))
     } else {
@@ -24,7 +24,7 @@ pub(crate) async fn turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
 #[openapi(tag = "Turns", ignore = "conn")]
 #[get("/turns/all")]
 pub(crate) async fn all_turns(conn: DbConn) -> Result<Json<Vec<TurnInfo>>, Status> {
-    let turns = conn.run(|c| TurnInfo::loadall(c)).await;
+    let turns = conn.run(TurnInfo::loadall).await;
     if turns.len() as i32 >= 1 {
         std::result::Result::Ok(Json(turns))
     } else {

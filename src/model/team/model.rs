@@ -94,7 +94,7 @@ impl TeamPlayerMoves {
     ) -> Result<Vec<TeamPlayerMoves>, diesel::result::Error> {
         match team {
             Some(team_seek) => {
-                let ciTeam_seek = String::from(team_seek);
+                let ciTeam_seek = team_seek;
                 team_player_moves::table
                     .select((
                         team_player_moves::id,

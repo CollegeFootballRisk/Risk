@@ -12,5 +12,5 @@ use rocket::serde::json::Json;
 #[openapi(tag = "Regions", ignore = "conn")]
 #[get("/regions")]
 pub(crate) async fn regions(conn: DbConn) -> Result<Json<Vec<Region>>, Error> {
-    Ok(Json(conn.run(move |c| Region::load(c)).await?))
+    Ok(Json(conn.run(Region::load).await?))
 }

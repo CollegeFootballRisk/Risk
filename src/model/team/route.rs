@@ -12,7 +12,7 @@ use rocket::serde::json::Json;
 #[openapi(tag = "Teams", ignore = "conn")]
 #[get("/teams")]
 pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
-    let teams = conn.run(move |c| TeamInfo::load(c)).await;
+    let teams = conn.run(TeamInfo::load).await;
     if teams.len() as i32 >= 1 {
         std::result::Result::Ok(Json(teams))
     } else {

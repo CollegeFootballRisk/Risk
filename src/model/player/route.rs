@@ -26,7 +26,7 @@ pub(crate) async fn players(
             }
         }
         None => {
-            if let Ok(users) = conn.run(|c| TeamPlayer::loadall(c)).await {
+            if let Ok(users) = conn.run(TeamPlayer::loadall).await {
                 std::result::Result::Ok(Json(users))
             } else {
                 Error::not_found()
@@ -55,7 +55,7 @@ pub(crate) async fn mercs(team: String, conn: DbConn) -> Result<Json<Vec<TeamMer
 #[openapi(tag = "Players", ignore = "conn")]
 #[get("/players/full")]
 pub(crate) async fn player_full(conn: DbConn) -> Result<Json<Vec<PlayerSummary>>, Error> {
-    Ok(Json(conn.run(move |c| PlayerSummary::load(c)).await?))
+    Ok(Json(conn.run(PlayerSummary::load).await?))
 }
 
 /// # Player Batching

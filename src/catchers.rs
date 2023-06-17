@@ -41,7 +41,12 @@ pub struct NaiveDateTime(chrono::NaiveDateTime);
 impl Queryable<diesel::sql_types::Timestamp, Pg> for NaiveDateTime {
     type Row = chrono::NaiveDateTime;
 
-    fn build(time: Self::Row) -> std::result::Result<Self, Box<(dyn serde::ser::StdError + std::marker::Send + Sync + 'static)>> {
+    fn build(
+        time: Self::Row,
+    ) -> std::result::Result<
+        Self,
+        Box<(dyn serde::ser::StdError + std::marker::Send + Sync + 'static)>,
+    > {
         Ok(NaiveDateTime(time))
     }
 }
