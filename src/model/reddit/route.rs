@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{Claims, RedditUserInfo, UpsertableUser};
-use crate::schema::{audit_log, bans};
+use crate::schema::{audit_log, ban};
 use crate::{
     db::DbConn,
     model::{User, UserId},
@@ -85,9 +85,9 @@ pub(crate) async fn callback(
         .unwrap_or(false)
         && conn
             .run(move |c| {
-                bans::table
-                    .filter(bans::class.eq(3))
-                    .filter(bans::uname.eq(&uname_ban_chk))
+                ban::table
+                    .filter(ban::class.eq(3))
+                    .filter(ban::uname.eq(&uname_ban_chk))
                     .count()
                     .get_result::<i64>(c)
             })

@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::schema::{stats, teams, territory_ownership, territory_stats, turninfo, turns};
+use crate::schema::{team_statistic, team, territory_ownership, territory_statistic, turn, move_};
 use crate::Utc;
 use chrono::NaiveDateTime;
 use diesel::pg::PgConnection;
@@ -18,34 +18,34 @@ pub struct Bar {
     pub do_user_update: bool,
 }
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[diesel(table_name = turns)]
+#[diesel(table_name = move_)]
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
     pub turn_id: i32,
-    pub territory: i32,
-    pub mvp: bool,
+    pub territory_id: i32,
+    pub is_mvp: bool,
     pub power: f64,
     pub multiplier: f64,
     pub weight: f64,
     pub stars: i32,
-    pub team: i32,
+    pub team_id: i32,
     pub alt_score: i32,
-    pub merc: bool,
+    pub is_merc: bool,
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[diesel(table_name = stats)]
+#[diesel(table_name = team_statistic)]
 pub struct Stats {
     pub turn_id: i32,
     pub team: i32,
     pub rank: i32,
-    pub territorycount: i32,
-    pub playercount: i32,
-    pub merccount: i32,
+    pub territory_count: i32,
+    pub player_count: i32,
+    pub merc_count: i32,
     pub starpower: f64,
     pub efficiency: f64,
-    pub effectivepower: f64,
+    pub effective_power: f64,
     pub ones: i32,
     pub twos: i32,
     pub threes: i32,
@@ -83,7 +83,7 @@ pub struct TerritoryOwnersInsert {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
-#[diesel(table_name = territory_stats)]
+#[diesel(table_name = territory_statistic)]
 pub struct TerritoryStats {
     pub team: i32,
     pub turn_id: i32,
@@ -99,7 +99,7 @@ pub struct TerritoryStats {
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Eq, Clone)]
-#[diesel(table_name = turninfo)]
+#[diesel(table_name = turn)]
 pub struct TurnInfo {
     pub id: i32,
     pub season: i32,
@@ -107,10 +107,9 @@ pub struct TurnInfo {
     pub complete: Option<bool>,
     pub active: Option<bool>,
     pub finale: Option<bool>,
-    pub chaosweight: Option<i32>,
-    pub rollendtime: Option<NaiveDateTime>,
-    pub rollstarttime: Option<NaiveDateTime>,
-    pub allornothingenabled: Option<bool>,
+    pub roll_end: Option<NaiveDateTime>,
+    pub roll_start: Option<NaiveDateTime>,
+    pub all_or_nothing: Option<bool>,
     pub map: Option<String>,
 }
 
@@ -164,61 +163,61 @@ impl Victor {
 
 impl PlayerMoves {
     pub fn load(turn_id: &i32, conn: &mut PgConnection) -> Result<Vec<PlayerMoves>, Error> {
-        turns::table
-            .filter(turns::turn_id.eq(turn_id))
-            .order_by(turns::territory.desc())
+        move_::table
+            .filter(move_::turn_id.eq(turn_id))
+            .order_by(move_::territory_id.desc())
             .load::<PlayerMoves>(conn)
     }
 
     pub fn mvps(mvps: Vec<PlayerMoves>, conn: &mut PgConnection) -> QueryResult<usize> {
         //first we flatten
         let mvp_array = mvps.iter().map(|x| x.id).collect::<Vec<i32>>();
-        update(turns::table.filter(turns::id.eq_any(mvp_array)))
-            .set(turns::mvp.eq(true))
+        update(move_::table.filter(move_::id.eq_any(mvp_array)))
+            .set(move_::is_mvp.eq(true))
             .execute(conn)
     }
 }
 
 impl Stats {
     pub fn insert(
-        stats: BTreeMap<i32, Stats>,
+        statistic: BTreeMap<i32, Stats>,
         turn_id: i32,
         conn: &mut PgConnection,
     ) -> QueryResult<usize> {
         // calculate whichever has the highest number of territories and such
-        let mut insertable_stats = stats.values().collect::<Vec<_>>();
-        insertable_stats.sort_by_key(|a| a.territorycount);
-        insertable_stats.reverse();
+        let mut insertable_statistic = statistic.values().collect::<Vec<_>>();
+        insertable_statistic.sort_by_key(|a| a.territory_count);
+        insertable_statistic.reverse();
         let mut rankings: i32 = 1;
         let mut territories: i32 = 0;
         let mut next_ranking: i32 = 1;
-        let mut amended_stats: Vec<Stats> = Vec::new();
-        for i in &insertable_stats {
+        let mut amended_statistic: Vec<Stats> = Vec::new();
+        for i in &insertable_statistic {
             // Do not count the 'NCAA' (placeholder for empty territories).
             if i.team == 0 {
                 continue;
             }
-            // if there are more territories, then teams are not tied; increment +1
-            if i.territorycount < territories {
+            // if there are more territories, then team are not tied; increment +1
+            if i.territory_count < territories {
                 rankings = next_ranking;
             }
             // increment the rank counter
             next_ranking += 1;
-            territories = i.territorycount;
+            territories = i.territory_count;
             let teamefficiency: f64 = match territories {
                 0 => 0.0,
-                _ => i.starpower / f64::from(i.territorycount),
+                _ => i.starpower / f64::from(i.territory_count),
             };
-            amended_stats.push(Stats {
+            amended_statistic.push(Stats {
                 turn_id,
                 team: i.team,
                 rank: rankings,
-                territorycount: i.territorycount,
-                playercount: i.playercount,
-                merccount: i.merccount,
+                territory_count: i.territory_count,
+                player_count: i.player_count,
+                merc_count: i.merc_count,
                 starpower: i.starpower,
                 efficiency: teamefficiency,
-                effectivepower: i.effectivepower,
+                effective_power: i.effective_power,
                 ones: i.ones,
                 twos: i.twos,
                 threes: i.threes,
@@ -226,8 +225,8 @@ impl Stats {
                 fives: i.fives,
             });
         }
-        diesel::insert_into(stats::table)
-            .values(amended_stats)
+        diesel::insert_into(team_statistic::table)
+            .values(amended_statistic)
             .execute(conn)
     }
 
@@ -237,12 +236,12 @@ impl Stats {
             turn_id,
             team,
             rank: 0,
-            territorycount: 0,
-            playercount: 0,
-            merccount: 0,
+            territory_count: 0,
+            player_count: 0,
+            merc_count: 0,
             starpower: 0.0,
             efficiency: 0.0,
-            effectivepower: 0.0,
+            effective_power: 0.0,
             ones: 0,
             twos: 0,
             threes: 0,
@@ -270,16 +269,16 @@ impl Stats {
         self
     }
 
-    pub fn effectivepower(&mut self, effectivepower: f64) -> &mut Self {
-        self.effectivepower += effectivepower;
+    pub fn effective_power(&mut self, effective_power: f64) -> &mut Self {
+        self.effective_power += effective_power;
         self
     }
 
     pub fn add_player_or_merc(&mut self, merc: bool) -> &mut Self {
         if merc {
-            self.merccount += 1;
+            self.merc_count += 1;
         } else {
-            self.playercount += 1;
+            self.player_count += 1;
         }
         self
     }
@@ -287,16 +286,16 @@ impl Stats {
 
 impl Team {
     pub fn load(conn: &mut PgConnection) -> Result<Vec<Team>, Error> {
-        teams::table
-            .select((teams::id, teams::color_1))
+        team::table
+            .select((team::id, team::primary_color))
             .load::<Team>(conn)
     }
 }
 
 impl TerritoryStats {
-    pub fn insert(stats: Vec<TerritoryStats>, conn: &mut PgConnection) -> QueryResult<usize> {
-        diesel::insert_into(territory_stats::table)
-            .values(stats)
+    pub fn insert(statistic: Vec<TerritoryStats>, conn: &mut PgConnection) -> QueryResult<usize> {
+        diesel::insert_into(territory_statistic::table)
+            .values(statistic)
             .execute(conn)
     }
 }
@@ -353,19 +352,19 @@ impl TerritoryOwnersInsert {
 }
 
 impl TurnInfo {
-    pub fn update_or_insert(newturninfo: &Self, conn: &mut PgConnection) -> QueryResult<usize> {
-        //use schema::turninfo::dsl::*;
-        diesel::insert_into(turninfo::table)
-            .values(newturninfo)
-            .on_conflict(turninfo::id)
+    pub fn update_or_insert(newturn: &Self, conn: &mut PgConnection) -> QueryResult<usize> {
+        //use schema::turn::dsl::*;
+        diesel::insert_into(turn::table)
+            .values(newturn)
+            .on_conflict(turn::id)
             .do_update()
             .set((
-                turninfo::complete.eq(newturninfo.complete),
-                turninfo::active.eq(newturninfo.active),
-                turninfo::rollstarttime.eq(newturninfo.rollstarttime),
-                turninfo::rollendtime.eq(newturninfo.rollendtime),
-                turninfo::map.eq(&newturninfo.map),
-                turninfo::allornothingenabled.eq(newturninfo.allornothingenabled),
+                turn::complete.eq(newturn.complete),
+                turn::active.eq(newturn.active),
+                turn::roll_start.eq(newturn.roll_start),
+                turn::roll_end.eq(newturn.roll_end),
+                turn::map.eq(&newturn.map),
+                turn::all_or_nothing.eq(newturn.all_or_nothing),
             ))
             .execute(conn)
     }
@@ -377,63 +376,62 @@ impl TurnInfo {
         active: bool,
         finale: bool,
         map: Option<String>,
-        allornothingenabled: bool,
+        all_or_nothing: bool,
         start_time: Option<NaiveDateTime>,
         conn: &mut PgConnection,
     ) -> QueryResult<usize> {
-        //use schema::turninfo::dsl::*;
-        diesel::insert_into(turninfo::table)
+        //use schema::turn::dsl::*;
+        diesel::insert_into(turn::table)
             .values((
-                turninfo::season.eq(season),
-                turninfo::day.eq(day),
-                turninfo::complete.eq(&Some(false)),
-                turninfo::active.eq(&Some(active)),
-                turninfo::finale.eq(&Some(finale)),
-                turninfo::map.eq(&map),
-                turninfo::rollstarttime.eq(&start_time),
-                turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
+                turn::season.eq(season),
+                turn::day.eq(day),
+                turn::complete.eq(&Some(false)),
+                turn::active.eq(&Some(active)),
+                turn::finale.eq(&Some(finale)),
+                turn::map.eq(&map),
+                turn::roll_start.eq(&start_time),
+                turn::all_or_nothing.eq(&Some(all_or_nothing)),
             ))
-            .on_conflict((turninfo::season, turninfo::day))
+            .on_conflict((turn::season, turn::day))
             .do_update()
             .set((
-                turninfo::active.eq(&Some(active)),
-                turninfo::complete.eq(&Some(false)),
-                turninfo::finale.eq(&Some(finale)),
-                turninfo::map.eq(&map),
-                turninfo::rollstarttime.eq(&start_time),
-                turninfo::allornothingenabled.eq(&Some(allornothingenabled)),
+                turn::active.eq(&Some(active)),
+                turn::complete.eq(&Some(false)),
+                turn::finale.eq(&Some(finale)),
+                turn::map.eq(&map),
+                turn::roll_start.eq(&start_time),
+                turn::all_or_nothing.eq(&Some(all_or_nothing)),
             ))
             .execute(conn)
     }
 
     pub fn get_latest(conn: &mut PgConnection) -> Result<TurnInfo, diesel::result::Error> {
-        turninfo::table
+        turn::table
             .select((
-                turninfo::id,
-                turninfo::season,
-                turninfo::day,
-                turninfo::complete,
-                turninfo::active,
-                turninfo::finale,
-                turninfo::chaosweight,
-                turninfo::rollendtime,
-                turninfo::rollstarttime,
-                turninfo::allornothingenabled,
-                turninfo::map,
+                turn::id,
+                turn::season,
+                turn::day,
+                turn::complete,
+                turn::active,
+                turn::finale,
+                turn::roll_end,
+                turn::roll_start,
+                turn::all_or_nothing,
+                turn::map,
             ))
-            .filter(turninfo::active.eq(true))
-            .order((turninfo::season.desc(), turninfo::day.desc()))
+            .filter(turn::active.eq(true))
+            .order((turn::season.desc(), turn::day.desc()))
             .first::<TurnInfo>(conn)
     }
 
     pub fn start_time_now(&mut self) -> &mut Self {
-        self.rollstarttime = Some(Utc::now().naive_utc());
+        self.roll_start = Some(Utc::now().naive_utc());
         self
     }
 
     pub fn lock(&mut self, conn: &mut PgConnection) -> Result<usize, Error> {
-        update(turninfo::table.filter(turninfo::id.eq(self.id)))
-            .set(turninfo::active.eq(false))
+        update(turn::table.filter(turn::id.eq(self.id)))
+            .set(turn::active.eq(false))
             .execute(conn)
     }
 }

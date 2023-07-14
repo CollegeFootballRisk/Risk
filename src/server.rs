@@ -18,6 +18,8 @@ extern crate serde_derive;
 extern crate diesel;
 #[macro_use]
 extern crate rocket_okapi;
+#[macro_use]
+extern crate rr_proc_macros;
 
 mod catchers;
 pub mod db;
@@ -30,13 +32,24 @@ mod schema;
 use crate::db::DbConn;
 pub use error::Error;
 //use crate::limits::RateLimitGuard;
-use crate::model::{auth, player, region, stats, sys, team, territory, turn};
+//use crate::model::{auth, player, region, stats, sys, team, territory, turn};
+use crate::model::{sys};
 use rocket::fs::FileServer;
 //use rocket_governor::rocket_governor_catcher;
 use rocket_oauth2::OAuth2;
+use rocket_oauth2::OAuthConfig;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use rocket_recaptcha_v3::ReCaptcha;
 
+#[openapi(skip)]
+#[get("/my_move", rank = 0)]
+//#[protect]
+pub(crate) async fn my_move(
+    cookies: &rocket::http::CookieJar<'_>,
+    conn: DbConn,
+) -> Result<rocket::serde::json::Json<i32>, crate::Error> {
+    Ok(rocket::serde::json::Json(32))
+}
 #[rocket::launch]
 fn rocket() -> _ {
     let mut global_info_private = sys::SysInfo::default();
@@ -62,7 +75,8 @@ fn rocket() -> _ {
 
     // The paths on the /api endpoint. Defined up here for cleanliness
     let api_paths = openapi_get_routes![
-        player::route::player,
+        my_move,
+        /*      player::route::player,
         player::route::search,
         player::route::player_full,
         player::route::mercs,
@@ -82,19 +96,19 @@ fn rocket() -> _ {
         stats::route::stathistory,
         stats::route::currentstrength,
         stats::route::leaderboard,
-        stats::route::odds,
+        stats::route::odds,*/
         sys::route::sysinfo,
     ];
 
     // The paths on the /auth endpoint. Defined up here for cleanliness
     let auth_paths = routes![
-        auth::route::make_move,
-        auth::route::my_move,
-        auth::route::join_team,
-        auth::route::view_response,
-        auth::route::submit_poll,
-        auth::route::get_polls,
-        auth::route::me,
+        //auth::route::make_move,
+        //auth::route::my_move,
+        //auth::route::join_team,
+        //auth::route::view_response,
+        //auth::route::submit_poll,
+        //auth::route::get_polls,
+        //auth::route::me,
     ];
 
     // Get Static Dir
@@ -132,31 +146,37 @@ fn rocket() -> _ {
         .figment()
         .extract_inner("risk")
         .expect("Cookie key not set; aborting!");
-    saturn_v = saturn_v.manage(global_info_private);
 
     // Attach Discord routes
-    #[cfg(feature = "risk_discord")]
+    #[cfg(feature = "discord")]
     {
-        use crate::model::discord;
-        saturn_v = saturn_v.attach(OAuth2::<discord::DiscordUserInfo>::fairing("discord"));
-        saturn_v = saturn_v.mount("/login", routes![discord::route::login]);
-        saturn_v = saturn_v.mount("/auth", routes![discord::route::callback]);
+    global_info_private.discord_config = Some(
+        OAuthConfig::from_figment(saturn_v.figment(), "discord")
+            .expect("No Discord Oauth available :()"),
+    );
+        use crate::model::auth::auth_providers::discord;
+        saturn_v = saturn_v.attach(OAuth2::<discord::Discord>::fairing("discord"));
+        saturn_v = saturn_v.mount("/login", routes![discord::login]);
+        saturn_v = saturn_v.mount("/auth", routes![discord::callback]);
     }
 
     // Attach Reddit routes
-    #[cfg(feature = "risk_reddit")]
+    #[cfg(feature = "reddit")]
     {
-        use crate::model::reddit;
-        saturn_v = saturn_v.attach(OAuth2::<reddit::RedditUserInfo>::fairing("reddit"));
-        saturn_v = saturn_v.mount("/login", routes![reddit::route::login]);
-        saturn_v = saturn_v.mount(
-            "/auth",
-            routes![reddit::route::callback, reddit::route::logout],
-        );
+            global_info_private.reddit_config = Some(
+        OAuthConfig::from_figment(saturn_v.figment(), "reddit")
+            .expect("No Reddit Oauth available :()"),
+    );
+        use crate::model::auth::auth_providers::reddit;
+        saturn_v = saturn_v.attach(OAuth2::<reddit::Reddit>::fairing("reddit"));
+        saturn_v = saturn_v.mount("/login", routes![reddit::login]);
+        saturn_v = saturn_v.mount("/auth", routes![reddit::callback]);
     }
 
+    saturn_v = saturn_v.manage(global_info_private);
+
     // Attach Captcha routes
-    #[cfg(feature = "risk_captcha")]
+    #[cfg(feature = "captcha")]
     {
         use crate::model::captchasvc;
         saturn_v = saturn_v.mount("/auth", routes![captchasvc::route::captchaServe]);
@@ -167,57 +187,3 @@ fn rocket() -> _ {
 
     saturn_v
 }
-
-/* use serde_derive::Deserialize;
-use std::fs;
-use std::path::Path;
-use xdg::BaseDirectories;
-//use rocket::config::{Config, Environment};
-
-#[derive(Deserialize, Debug)]
-struct Config {
-    name: String,
-    base_uri: Option<u16>,
-    port: i32,
-    keys: Keys,
-    postgres_string: String,
-    log: Option<String>,
-    workers: Option<i32>,
-    keep_alive: Option<i32>,
-    timeout: Option<i32>,
-    tls: Option<bool>,
-}
-
-#[derive(Deserialize, Debug)]
-struct Keys {
-    reddit: Option<OAuthCredentials>,
-    discord: Option<OAuthCredentials>,
-    groupme: Option<OAuthCredentials>,
-}
-
-#[derive(Deserialize, Debug)]
-struct OAuthCredentials {
-    client_id: String,
-    client_secret: String,
-    auth_uri: Option<String>,
-    token_uri: Option<String>,
-}
-
-fn getConfig() -> Result<(), std::io::Error> {
-    let path = BaseDirectories::with_prefix("rust-risk")?;
-    let config_filename = path.place_config_file("config.toml")?;
-    if Path::new(&config_filename).exists() {
-        let contents = fs::read_to_string(config_filename)?;
-        let config: Config = toml::from_str(&contents)?;
-        dbg!(config);
-        Ok(())
-    } else {
-        /*let config = Config::default();
-        let toml = toml::to_string(&config).unwrap();
-        let mut file = File::create(&config_filename)?;
-        file.write_all(&toml.as_bytes())?;*/
-        dbg!("No config file!");
-        Err(std::io::Error::new(std::io::ErrorKind::Other, "oh no!"))
-    }
-}
-*/

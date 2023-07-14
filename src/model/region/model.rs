@@ -1,7 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::schema::regions;
+use crate::schema::region;
 //use diesel::pg::expression::dsl::array;
 use diesel::prelude::*;
 
@@ -18,13 +18,13 @@ pub(crate) struct Region {
 
 impl Region {
     pub(crate) fn load(conn: &mut PgConnection) -> Result<Vec<Region>, diesel::result::Error> {
-        regions::table
-            //.inner_join(territories::table.on(territories::region.eq(regions::id)))
-            //.group_by(regions::id)
-            //.group_by(regions::name)
+        region::table
+            //.inner_join(territories::table.on(territories::region.eq(region::id)))
+            //.group_by(region::id)
+            //.group_by(region::name)
             .select((
-                regions::id,
-                regions::name,
+                region::id,
+                region::name,
                 //array(territories::name)
             ))
             .load::<Region>(conn)

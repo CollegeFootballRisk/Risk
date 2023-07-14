@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::schema::{rollinfo, turninfo};
+use crate::schema::{rollinfo, turn};
 use diesel::prelude::*;
 use diesel::result::Error;
 use schemars::JsonSchema;
@@ -75,73 +75,71 @@ pub struct Latest {
 pub(crate) struct Roll {
     pub(crate) startTime: String,
     pub(crate) endTime: String,
-    pub(crate) chaosRerolls: i32,
-    pub(crate) chaosWeight: i32,
     pub(crate) territoryRolls: Value,
 }
 
 impl TurnInfo {
     pub(crate) fn load(conn: &mut PgConnection) -> Vec<TurnInfo> {
-        turninfo::table
+        turn::table
             .select((
-                turninfo::id,
-                turninfo::season,
-                turninfo::day,
-                turninfo::complete,
-                turninfo::active,
-                turninfo::finale,
-                turninfo::rollstarttime,
-                turninfo::allornothingenabled,
-                turninfo::map,
+                turn::id,
+                turn::season,
+                turn::day,
+                turn::complete,
+                turn::active,
+                turn::finale,
+                turn::rollstarttime,
+                turn::allornothingenabled,
+                turn::map,
             ))
-            .filter(turninfo::complete.eq(true).or(turninfo::active.eq(true)))
-            .order_by(turninfo::id.desc()) // always desc so downstream know how to parse this consistently
+            .filter(turn::complete.eq(true).or(turn::active.eq(true)))
+            .order_by(turn::id.desc()) // always desc so downstream know how to parse this consistently
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }
 
     pub(crate) fn loadall(conn: &mut PgConnection) -> Vec<TurnInfo> {
-        turninfo::table
+        turn::table
             .select((
-                turninfo::id,
-                turninfo::season,
-                turninfo::day,
-                turninfo::complete,
-                turninfo::active,
-                turninfo::finale,
-                turninfo::rollstarttime,
-                turninfo::allornothingenabled,
-                turninfo::map,
+                turn::id,
+                turn::season,
+                turn::day,
+                turn::complete,
+                turn::active,
+                turn::finale,
+                turn::rollstarttime,
+                turn::allornothingenabled,
+                turn::map,
             ))
-            .order_by(turninfo::id)
+            .order_by(turn::id)
             .load::<TurnInfo>(conn)
             .expect("Error loading TurnInfo")
     }
 
     pub(crate) fn latest(conn: &mut PgConnection) -> Result<TurnInfo, diesel::result::Error> {
-        turninfo::table
+        turn::table
             .select((
-                turninfo::id,
-                turninfo::season,
-                turninfo::day,
-                turninfo::complete,
-                turninfo::active,
-                turninfo::finale,
-                turninfo::rollstarttime,
-                turninfo::allornothingenabled,
-                turninfo::map,
+                turn::id,
+                turn::season,
+                turn::day,
+                turn::complete,
+                turn::active,
+                turn::finale,
+                turn::rollstarttime,
+                turn::allornothingenabled,
+                turn::map,
             ))
-            .filter(turninfo::active.eq(Some(true)))
-            .order_by(turninfo::id.desc())
+            .filter(turn::active.eq(Some(true)))
+            .order_by(turn::id.desc())
             .first::<TurnInfo>(conn)
     }
 }
 
 impl Latest {
     pub(crate) fn latest(conn: &mut PgConnection) -> Result<Latest, diesel::result::Error> {
-        turninfo::table
-            .select((turninfo::season, turninfo::day, turninfo::id))
-            .order(turninfo::id.desc())
+        turn::table
+            .select((turn::season, turn::day, turn::id))
+            .order(turn::id.desc())
             .first::<Latest>(conn)
     }
 }
@@ -152,8 +150,6 @@ impl Roll {
             .select((
                 rollinfo::rollstarttime,
                 rollinfo::rollendtime,
-                rollinfo::chaosrerolls,
-                rollinfo::chaosweight,
                 rollinfo::json_agg,
             ))
             .filter(rollinfo::day.eq(day))

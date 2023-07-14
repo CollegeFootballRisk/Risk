@@ -482,7 +482,9 @@ dependencies = [
  "byteorder",
  "chrono",
  "diesel_derives",
+ "ipnetwork",
  "itoa",
+ "libc",
  "num-bigint",
  "num-integer",
  "num-traits",
@@ -1164,6 +1166,15 @@ name = "ipnet"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "12b6ee2129af8d4fb011108c73d99a1b83a85977f23b82460c0ae2e25bb4b57f"
+
+[[package]]
+name = "ipnetwork"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bf466541e9d546596ee94f9f69590f89473455f88372423e0008fc1a7daf100e"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "is-terminal"
@@ -2157,6 +2168,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rr_proc_macros"
+version = "0.0.0"
+dependencies = [
+ "proc-macro2 1.0.60",
+ "quote 1.0.28",
+ "syn 2.0.18",
+]
+
+[[package]]
 name = "rust-risk"
 version = "0.3.0"
 dependencies = [
@@ -2167,6 +2187,7 @@ dependencies = [
  "git-version",
  "hyper",
  "image 0.24.6",
+ "ipnetwork",
  "jsonwebtoken",
  "nsvg",
  "okapi",
@@ -2178,6 +2199,7 @@ dependencies = [
  "rocket_oauth2",
  "rocket_okapi",
  "rocket_sync_db_pools",
+ "rr_proc_macros",
  "schemars",
  "serde",
  "serde_derive",
@@ -2186,6 +2208,7 @@ dependencies = [
  "time 0.3.22",
  "toml 0.5.11",
  "urlencoding",
+ "uuid",
 ]
 
 [[package]]
@@ -2960,6 +2983,9 @@ name = "uuid"
 version = "1.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fa2982af2eec27de306107c027578ff7f423d65f7250e40ce0fea8f45248b81"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "validators"

@@ -4,5 +4,3 @@
 pub(crate) mod model;
 pub(crate) mod route;
 pub(crate) use model::*;
-pub(crate) mod auth_providers;
-pub(crate) use auth_providers::*;

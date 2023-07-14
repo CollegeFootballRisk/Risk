@@ -1,412 +1,396 @@
-/* This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+// @generated automatically by Diesel CLI.
 
-table! {
-    past_turns (id) {
+diesel::table! {
+    use diesel::sql_types::*;
+
+    audit_log (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        event -> Int4,
+        data -> Nullable<Json>,
+        session_id -> Uuid,
+        created -> Timestamp,
+        createdby -> Uuid,
+        updated -> Timestamp,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    authentication_method (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        #[max_length = 10]
+        platform -> Varchar,
+        #[max_length = 256]
+        foreign_id -> Varchar,
+        #[max_length = 128]
+        foreign_name -> Nullable<Varchar>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    award (id) {
         id -> Int4,
-        user_id -> Int4,
-        turn_id -> Int4,
-        territory -> Int4,
-        mvp -> Bool,
-        power -> Double,
-        multiplier -> Double,
-        weight -> Double,
+        user_id -> Uuid,
+        award_id -> Int4,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    award_info (id) {
+        id -> Int4,
+        name -> Nullable<Text>,
+        info -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    ban (id) {
+        id -> Int4,
+        class -> Nullable<Int4>,
+        #[max_length = 128]
+        cip -> Nullable<Varchar>,
+        #[max_length = 64]
+        name -> Nullable<Varchar>,
+        #[max_length = 256]
+        ua -> Nullable<Varchar>,
+        #[max_length = 256]
+        reason -> Nullable<Varchar>,
+        #[max_length = 20]
+        foreign_service -> Nullable<Varchar>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    log (id) {
+        id -> Int4,
+        route -> Nullable<Text>,
+        query -> Nullable<Text>,
+        payload -> Nullable<Text>,
+        created -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    #[sql_name = "move"]
+    move_ (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        session_id -> Uuid,
+        territory_id -> Int4,
+        is_mvp -> Bool,
+        power -> Float8,
+        multiplier -> Float8,
+        weight -> Float8,
         stars -> Int4,
-        team -> Int4,
+        team_id -> Int4,
         alt_score -> Int4,
-        merc -> Bool,
-    }
-}
-
-table! {
-    teams (id) {
-        id -> Int4,
-        tname -> Text,
-        tshortname -> Text,
-        creation_date -> Timestamp,
-        logo -> Nullable<Text>,
-        color_1 -> Text,
-        color_2 -> Text,
-        seasons -> Array<Int4>,
-    }
-}
-
-table! {
-    users (id) {
-        id -> Int4,
-        uname -> Text,
-        platform -> Text,
-        join_date -> Nullable<Timestamp>,
-        current_team -> Int4,
-        overall -> Nullable<Int4>,
-        turns -> Nullable<Int4>,
-        game_turns -> Nullable<Int4>,
-        mvps -> Nullable<Int4>,
-        streak -> Nullable<Int4>,
-        role_id -> Nullable<Int4>,
-        playing_for -> Int4,
-        is_alt -> Bool,
-        must_captcha -> Bool,
-    }
-}
-
-table! {
-    moves (player) {
-        season -> Nullable<Int4>,
-        day -> Nullable<Int4>,
-        territory -> Nullable<Int4>,
-        player -> Nullable<Int4>,
-        team -> Nullable<Int4>,
-        mvp -> Nullable<Int4>,
-        uname -> Nullable<Text>,
-        turns -> Nullable<Int4>,
-        mvps -> Nullable<Int4>,
-        tname -> Nullable<Text>,
-        power -> Nullable<Double>,
-        weight -> Nullable<Int4>,
-        stars -> Nullable<Int4>,
-    }
-}
-
-table! {
-    territories (id) {
-        id -> Int4,
-        name -> Text,
-        region -> Int4,
-    }
-}
-
-table! {
-    regions (id){
-        id -> Int4,
-        name -> Text,
-    }
-}
-
-table! {
-    turninfo (id) {
-        id -> Int4,
-        season -> Int4,
-        day -> Int4,
-        complete -> Nullable<Bool>,
-        active -> Nullable<Bool>,
-        finale -> Nullable<Bool>,
-        chaosrerolls -> Nullable<Int4>,
-        chaosweight -> Nullable<Int4>,
-        rollendtime -> Nullable<Timestamp>,
-        rollstarttime -> Nullable<Timestamp>,
-        map -> Nullable<Text>,
-        allornothingenabled -> Nullable<Bool>,
-    }
-}
-
-//TODO: Get rid of this.
-// ^^^ Blocked by not being on diesel 2.0
-table! {
-    team_player_moves (id) {
-        id -> Int4,
-        season -> Nullable<Int4>,
-        day -> Nullable<Int4>,
-        team -> Nullable<Text>,
-        player -> Nullable<Text>,
-        stars -> Nullable<Int4>,
-        mvp -> Nullable<Bool>,
-        territory -> Nullable<Text>,
-        regularteam -> Nullable<Text>,
-        weight -> Double,
-        power -> Double,
-        multiplier -> Double,
-    }
-}
-
-table! {
-    captchas (id) {
-        id -> Int4,
-        title -> Text,
-        content -> Text,
-        creation -> Timestamp,
-    }
-}
-
-table! {
-    territory_ownership_with_neighbors (territory_id) {
-        territory_id -> Int4,
-        season -> Int4,
-        day -> Int4,
-        name -> Text,
-        tname -> Text,
-        region-> Int4,
-        region_name -> Text,
-        neighbors -> Nullable<Json>,
-    }
-}
-
-table! {
-    rollinfo (day) {
-        season -> Int4,
-        day -> Int4,
-        chaosrerolls -> Int4,
-        chaosweight -> Int4,
-        rollstarttime -> Text,
-        rollendtime -> Text,
-        json_agg -> Json,
-    }
-}
-
-table! {
-    territory_ownership_without_neighbors (territory_id) {
-        territory_id -> Int4,
-        season -> Int4,
-        day -> Int4,
-        name -> Text,
-        prev_owner -> Text,
-        owner -> Text,
-    }
-}
-
-table! {
-    territory_ownership (id) {
-        id -> Int4,
-        territory_id -> Int4,
-        owner_id -> Int4,
+        is_merc -> Bool,
         turn_id -> Int4,
-        previous_owner_id -> Int4,
-        random_number -> Double,
-        mvp -> Nullable<Int4>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    heat_full (name) {
-        name -> Text,
-        season -> Int4,
-        day -> Int4,
-        cumulative_players -> Int8,
-        cumulative_power -> Double,
-        owner -> Text,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    permission (id) {
+        id -> Int4,
+        #[max_length = 24]
+        name -> Varchar,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    cfbr_stats (player) {
-        player -> Text,
-        team -> Text,
-        turnsplayed -> Int4,
-        stars -> Int4,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    region (id) {
+        id -> Int4,
+        #[max_length = 64]
+        name -> Varchar,
     }
 }
 
-table! {
-    statistics (turn_id) {
-        turn_id -> Int4,
-        season -> Int4,
-        day -> Int4,
-        team -> Int4,
-        rank -> Int4,
-        territorycount -> Int4,
-        playercount -> Int4,
-        merccount -> Int4,
-        starpower -> Double,
-        efficiency -> Double,
-        effectivepower -> Double,
-        ones -> Int4,
-        twos -> Int4,
-        threes -> Int4,
-        fours -> Int4,
-        fives -> Int4,
-        tname -> Text,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    role (id) {
+        id -> Int4,
+        #[max_length = 24]
+        name -> Varchar,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    role_permission (id) {
+        role_id -> Int4,
+        permission_id -> Int4,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+        id -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    session (id) {
+        id -> Uuid,
+        user_id -> Uuid,
+        authentication_method_id -> Uuid,
+        is_active -> Bool,
+        #[max_length = 512]
+        user_agent -> Varchar,
+        ip_address -> Inet,
+        created -> Timestamp,
+        expires -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    team (id) {
+        id -> Int4,
+        #[max_length = 64]
+        name -> Varchar,
+        primary_color -> Text,
+        secondary_color -> Text,
         logo -> Text,
-        regions -> Int8,
+        seasons -> Nullable<Array<Nullable<Int4>>>,
+        created -> Timestamp,
+        updated -> Timestamp,
     }
 }
 
-table! {
-    stats (turn_id) {
-        turn_id -> Int4,
-        team -> Int4,
-        rank -> Int4,
-        territorycount -> Int4,
-        playercount -> Int4,
-        merccount -> Int4,
-        starpower -> Double,
-        efficiency -> Double,
-        effectivepower -> Double,
-        ones -> Int4,
-        twos -> Int4,
-        threes -> Int4,
-        fours -> Int4,
-        fives -> Int4,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    team_statistic (id) {
+        id -> Uuid,
+        team -> Nullable<Int4>,
+        rank -> Nullable<Int4>,
+        territory_count -> Nullable<Int4>,
+        player_count -> Nullable<Int4>,
+        merc_count -> Nullable<Int4>,
+        starpower -> Nullable<Float8>,
+        efficiency -> Nullable<Float8>,
+        effective_power -> Nullable<Float8>,
+        ones -> Nullable<Int4>,
+        twos -> Nullable<Int4>,
+        threes -> Nullable<Int4>,
+        fours -> Nullable<Int4>,
+        fives -> Nullable<Int4>,
+        turn_id -> Nullable<Int4>,
     }
 }
 
-table! {
+diesel::table! {
+    use diesel::sql_types::*;
+
+    territory (id) {
+        id -> Int4,
+        #[max_length = 64]
+        name -> Varchar,
+        region -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
     territory_adjacency (id) {
         id -> Int4,
         territory_id -> Int4,
         adjacent_id -> Int4,
-        note -> Text,
+        note -> Nullable<Text>,
         min_turn -> Int4,
         max_turn -> Int4,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    territory_stats (id) {
-        team -> Int4,
-        turn_id -> Int4,
-        ones -> Int4,
-        twos -> Int4,
-        threes -> Int4,
-        fours -> Int4,
-        fives -> Int4,
-        teampower -> Double,
-        chance -> Double,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    territory_ownership (id) {
         id -> Int4,
-        territory -> Int4,
-        territory_power -> Double,
+        turn_id -> Int4,
+        territory_id -> Int4,
+        owner_id -> Int4,
+        previous_owner_id -> Int4,
+        random_number -> Nullable<Float8>,
+        mvp -> Nullable<Uuid>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    odds (territory_name) {
-        players -> Int4,
-        ones -> Int4,
-        twos -> Int4,
-        threes -> Int4,
-        fours -> Int4,
-        fives -> Int4,
-        teampower -> Double,
-        territorypower -> Double,
-        chance -> Double,
-        team -> Integer,
-        season -> Integer,
-        day -> Integer,
-        territory_name -> Text,
-        tname -> Text,
-        prev_owner -> Text,
-        mvp -> Nullable<Text>,
-        color -> Text,
-        secondary_color -> Text,
-        team_name -> Text,
-    }
-}
-table! {
-    turns (id) {
+diesel::table! {
+    use diesel::sql_types::*;
+
+    territory_statistic (id) {
         id -> Int4,
-        user_id -> Int4,
-        turn_id -> Int4,
-        territory -> Int4,
-        mvp -> Bool,
-        power -> Double,
-        multiplier -> Double,
-        weight -> Double,
-        stars -> Int4,
-        team -> Int4,
-        alt_score -> Int4,
-        merc -> Bool,
-    }
-}
-table! {
-    continuation_polls (id){
-        id -> Int4,
-        turn_id -> Int4,
-        question -> Text,
-        incrment -> Int4,
-    }
-}
-table! {
-    continuation_responses (id){
-        id -> Int4,
-        poll_id -> Int4,
-        user_id -> Int4,
-        response -> Bool,
+        team -> Nullable<Int4>,
+        ones -> Nullable<Int4>,
+        twos -> Nullable<Int4>,
+        threes -> Nullable<Int4>,
+        fours -> Nullable<Int4>,
+        fives -> Nullable<Int4>,
+        teampower -> Nullable<Float8>,
+        chance -> Nullable<Float8>,
+        territory -> Nullable<Int4>,
+        territory_power -> Nullable<Float8>,
+        turn_id -> Nullable<Int4>,
     }
 }
 
-table! {
-    region_ownership (day){
-        owner_count -> Int8,
-        owners -> Array<Int4>,
-        day -> Int4,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    turn (id) {
+        id -> Int4,
         season -> Int4,
-        region -> Int4,
+        day -> Int4,
+        complete -> Bool,
+        active -> Bool,
+        finale -> Bool,
+        rerolls -> Int4,
+        roll_start -> Timestamp,
+        roll_end -> Nullable<Timestamp>,
+        all_or_nothing -> Bool,
+        map -> Nullable<Text>,
+        random_seed -> Nullable<Char>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    logs (id){
-        id -> Int4,
-        route -> Text,
-        query -> Text,
-        payload -> Text,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    user (id) {
+        id -> Uuid,
+        #[max_length = 64]
+        name -> Varchar,
+        main_team -> Nullable<Int4>,
+        playing_for -> Nullable<Int4>,
+        overall -> Int4,
+        turns -> Int4,
+        game_turns -> Int4,
+        mvps -> Int4,
+        streak -> Int4,
+        is_alt -> Bool,
+        must_captcha -> Bool,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
     }
 }
 
-table! {
-    award_info (id){
-        id -> Int4,
-        name -> Text,
-        info -> Text,
+diesel::table! {
+    use diesel::sql_types::*;
+
+    user_role (id) {
+        role_id -> Int4,
+        user_id -> Uuid,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+        id -> Uuid,
     }
 }
 
-table! {
-    awards (id){
-        id -> Int4,
-        award_id -> Int4,
-        user_id -> Int4,
-    }
-}
+diesel::joinable!(audit_log -> session (session_id));
+diesel::joinable!(authentication_method -> user (user_id));
+diesel::joinable!(award -> award_info (award_id));
+diesel::joinable!(move_ -> session (session_id));
+diesel::joinable!(move_ -> team (team_id));
+diesel::joinable!(move_ -> territory (territory_id));
+diesel::joinable!(move_ -> turn (turn_id));
+diesel::joinable!(role_permission -> permission (permission_id));
+diesel::joinable!(role_permission -> role (role_id));
+diesel::joinable!(session -> authentication_method (authentication_method_id));
+diesel::joinable!(session -> user (user_id));
+diesel::joinable!(team_statistic -> team (team));
+diesel::joinable!(team_statistic -> turn (turn_id));
+diesel::joinable!(territory -> region (region));
+diesel::joinable!(territory_ownership -> territory (territory_id));
+diesel::joinable!(territory_ownership -> user (mvp));
+diesel::joinable!(territory_statistic -> team (team));
+diesel::joinable!(territory_statistic -> territory (territory));
+diesel::joinable!(territory_statistic -> turn (turn_id));
+diesel::joinable!(user_role -> role (role_id));
 
-table! {
-    audit_log (id) {
-        id -> Int4,
-        user_id -> Int4,
-        event -> Int4,
-        timestamp -> Timestamp,
-        data -> Nullable<Json>,
-        cip -> Nullable<Text>,
-        ua -> Nullable<Text>,
-    }
-}
-
-table! {
-    bans (id){
-        id -> Int4,
-        // IP: 0
-        // Username: 1
-        // Prevent ban, username, for suspend flag: 2
-        // Allow login without email: 3
-        // Prevent ban, reddit ban: 4
-        class -> Int4,
-        cip -> Text,
-        uname -> Text,
-        ua -> Text,
-    }
-}
-
-allow_tables_to_appear_in_same_query!(users, bans);
-
-allow_tables_to_appear_in_same_query!(users, awards, award_info);
-diesel::joinable!(awards -> users (user_id));
-diesel::joinable!(awards -> award_info (award_id));
-diesel::joinable!(statistics -> turninfo (turn_id));
-
-allow_tables_to_appear_in_same_query!(
-    past_turns,
-    teams,
-    users,
-    territory_ownership,
+diesel::allow_tables_to_appear_in_same_query!(
+    audit_log,
+    authentication_method,
+    award,
+    award_info,
+    ban,
+    log,
+    move_,
+    permission,
+    region,
+    role,
+    role_permission,
+    session,
+    team,
+    team_statistic,
+    territory,
     territory_adjacency,
-    territories,
-    turninfo,
+    territory_ownership,
+    territory_statistic,
+    turn,
+    user,
+    user_role,
 );
-
-allow_tables_to_appear_in_same_query!(turns, territories);
-allow_tables_to_appear_in_same_query!(regions, territory_ownership_with_neighbors);
-allow_tables_to_appear_in_same_query!(regions, territories);
-
-allow_tables_to_appear_in_same_query!(turns, turninfo);
-allow_tables_to_appear_in_same_query!(continuation_polls, turninfo);
-allow_tables_to_appear_in_same_query!(statistics, turninfo);

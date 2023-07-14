@@ -4,7 +4,7 @@
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, Turn, UserId};
-use crate::schema::{award_info, awards, moves, past_turns, teams, territories, turninfo, users};
+use crate::schema::{award_info, award, move, turn, team, territory, turn, user};
 use diesel::prelude::*;
 use diesel::result::Error;
 
@@ -12,7 +12,7 @@ use schemars::JsonSchema;
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
 /// An official distinction applied by the game moderators to distinguish
-/// users for a given reson/purpose. Awards do not affect actual gameplay.
+/// user for a given reson/purpose. Awards do not affect actual gameplay.
 pub struct Award {
     /// Name of the award
     name: String,
@@ -75,7 +75,7 @@ pub struct User {
     pub(crate) game_turns: Option<i32>,
     pub(crate) mvps: Option<i32>,
     pub(crate) streak: Option<i32>,
-    pub(crate) is_alt: bool, //pub(crate) awards: Option<i32>, //    pub team: Option<String>
+    pub(crate) is_alt: bool, //pub(crate) award: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
@@ -118,7 +118,7 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
     pub ratings: Ratings,
     pub stats: Stats,
     pub turns: Vec<PastTurn>,
-    pub awards: Vec<Award>,
+    pub award: Vec<Award>,
     pub is_alt: bool,
 }
 
@@ -136,9 +136,9 @@ impl PlayerSummary {
     pub(crate) fn load(
         conn: &mut PgConnection,
     ) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
-        users::table
-            .left_join(teams::table.on(teams::id.eq(users::playing_for)))
-            .select((users::uname, users::platform, teams::tname.nullable()))
+        user::table
+            .left_join(team::table.on(team::id.eq(user::playing_for)))
+            .select((user::uname, user::platform, team::tname.nullable()))
             .load::<PlayerSummary>(conn)
     }
 }
@@ -159,21 +159,21 @@ impl PlayerWithTurnsAndAdditionalTeam {
                     false => -1,
                 };
                 let ciName: Vec<String> = name;
-                let awards: Vec<Award> = awards::table
+                let award: Vec<Award> = award::table
                     .inner_join(award_info::table)
-                    .inner_join(users::table)
-                    .filter(users::uname.eq(&me[0].name))
+                    .inner_join(user::table)
+                    .filter(user::uname.eq(&me[0].name))
                     .select((award_info::name, award_info::info))
                     .load(conn)
                     .unwrap_or_default();
-                let results = users::table
-                    .filter(users::uname.eq_any(ciName))
-                    .filter(not(users::current_team.eq(status_code)))
-                    .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+                let results = user::table
+                    .filter(user::uname.eq_any(ciName))
+                    .filter(not(user::current_team.eq(status_code)))
+                    .left_join(team::table.on(team::id.eq(user::playing_for)))
                     .select((
-                        teams::tname.nullable(),
-                        teams::color_1.nullable(),
-                        teams::color_2.nullable(),
+                        team::tname.nullable(),
+                        team::color_1.nullable(),
+                        team::color_2.nullable(),
                     ))
                     .first::<Team>(conn);
                 match results {
@@ -191,7 +191,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: me[0].ratings.clone(),
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
-                        awards,
+                        award,
                         is_alt: me[0].is_alt,
                     }),
                     Err(_e) => Some(PlayerWithTurnsAndAdditionalTeam {
@@ -202,7 +202,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: me[0].ratings.clone(),
                         stats: me[0].stats.clone(),
                         turns: me[0].turns.clone(),
-                        awards,
+                        award,
                         is_alt: me[0].is_alt,
                     }),
                 }
@@ -224,21 +224,21 @@ impl PlayerWithTurnsAndAdditionalTeam {
                 false => -1,
             };
             let ciName: String = user.name.clone();
-            let awards: Vec<Award> = awards::table
+            let award: Vec<Award> = award::table
                 .inner_join(award_info::table)
-                .inner_join(users::table)
-                .filter(users::uname.eq(&user.name))
+                .inner_join(user::table)
+                .filter(user::uname.eq(&user.name))
                 .select((award_info::name, award_info::info))
                 .load(conn)
                 .unwrap_or_default();
-            let results = users::table
-                .filter(users::uname.eq(ciName))
-                .filter(not(users::current_team.eq(status_code)))
-                .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+            let results = user::table
+                .filter(user::uname.eq(ciName))
+                .filter(not(user::current_team.eq(status_code)))
+                .left_join(team::table.on(team::id.eq(user::playing_for)))
                 .select((
-                    teams::tname.nullable(),
-                    teams::color_1.nullable(),
-                    teams::color_2.nullable(),
+                    team::tname.nullable(),
+                    team::color_1.nullable(),
+                    team::color_2.nullable(),
                 ))
                 .first::<Team>(conn);
             match results {
@@ -257,7 +257,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: user.ratings.clone(),
                         stats: user.stats.clone(),
                         turns: user.turns.clone(),
-                        awards,
+                        award,
                         is_alt: user.is_alt,
                     };
                     ret.push(u)
@@ -271,7 +271,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                         ratings: user.ratings.clone(),
                         stats: user.stats.clone(),
                         turns: user.turns.clone(),
-                        awards,
+                        award,
                         is_alt: user.is_alt,
                     };
                     ret.push(u)
@@ -294,30 +294,30 @@ impl PlayerWithTurns {
             false => -1,
         };
         let ciName: Vec<String> = name;
-        let results = users::table
-            .filter(users::uname.eq_any(ciName))
-            .filter(not(users::current_team.eq(status_code)))
-            .left_join(teams::table.on(teams::id.eq(users::current_team)))
+        let results = user::table
+            .filter(user::uname.eq_any(ciName))
+            .filter(not(user::current_team.eq(status_code)))
+            .left_join(team::table.on(team::id.eq(user::current_team)))
             .select((
                 (
-                    users::id,
-                    users::uname,
-                    users::platform,
-                    users::turns,
-                    users::game_turns,
-                    users::mvps,
-                    users::streak,
-                    users::is_alt,
-                    //users::awards,
+                    user::id,
+                    user::uname,
+                    user::platform,
+                    user::turns,
+                    user::game_turns,
+                    user::mvps,
+                    user::streak,
+                    user::is_alt,
+                    //user::award,
                 ),
                 (
-                    teams::tname.nullable(),
-                    teams::color_1.nullable(),
-                    teams::color_2.nullable(),
+                    team::tname.nullable(),
+                    team::color_1.nullable(),
+                    team::color_2.nullable(),
                 ),
             ))
             .load::<(User, Team)>(conn)
-            .expect("Error loading users");
+            .expect("Error loading user");
         let mut out = Vec::new();
         for user in results {
             let stats = Stats {
@@ -325,25 +325,25 @@ impl PlayerWithTurns {
                 gameTurns: user.0.game_turns.unwrap_or(0),
                 mvps: user.0.mvps.unwrap_or(0),
                 streak: user.0.streak.unwrap_or(0),
-                //awards: user.0.awards.unwrap_or(0),
+                //award: user.0.award.unwrap_or(0),
             };
-            let users_turns = past_turns::table
-                .filter(past_turns::user_id.eq(&user.0.id))
-                .inner_join(teams::table.on(teams::id.eq(past_turns::team)))
-                .inner_join(territories::table.on(territories::id.eq(past_turns::territory)))
-                .inner_join(turninfo::table.on(turninfo::id.eq(past_turns::turn_id)))
+            let user_turns = turn::table
+                .filter(turn::user_id.eq(&user.0.id))
+                .inner_join(team::table.on(team::id.eq(turn::team)))
+                .inner_join(territory::table.on(territory::id.eq(turn::territory)))
+                .inner_join(turn::table.on(turn::id.eq(turn::turn_id)))
                 .select((
-                    turninfo::season,
-                    turninfo::day,
-                    past_turns::stars,
-                    past_turns::mvp,
-                    territories::name,
-                    teams::tname,
-                    past_turns::weight,
-                    past_turns::multiplier,
-                    past_turns::power,
+                    turn::season,
+                    turn::day,
+                    turn::stars,
+                    turn::mvp,
+                    territory::name,
+                    team::tname,
+                    turn::weight,
+                    turn::multiplier,
+                    turn::power,
                 ))
-                .order(past_turns::turn_id.desc())
+                .order(turn::turn_id.desc())
                 .load::<PastTurn>(conn)
                 .expect("Error loading user turns");
             let uwp = PlayerWithTurns {
@@ -358,7 +358,7 @@ impl PlayerWithTurns {
                 platform: user.0.platform,
                 ratings: Ratings::load(&stats),
                 stats,
-                turns: users_turns,
+                turns: user_turns,
                 is_alt: user.0.is_alt,
             };
             out.push(uwp);
@@ -373,14 +373,14 @@ impl TeamPlayer {
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
         let ciTname: Vec<String> = tname;
-        moves::table
-            .filter(moves::tname.eq_any(ciTname))
+        move::table
+            .filter(move::tname.eq_any(ciTname))
             .select((
-                moves::tname,
-                moves::uname,
-                moves::turns,
-                moves::mvps,
-                (moves::season, moves::day, moves::stars),
+                move::tname,
+                move::uname,
+                move::turns,
+                move::mvps,
+                (move::season, move::day, move::stars),
             ))
             .load::<TeamPlayer>(conn)
     }
@@ -388,13 +388,13 @@ impl TeamPlayer {
     pub(crate) fn loadall(
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamPlayer>, diesel::result::Error> {
-        moves::table
+        move::table
             .select((
-                moves::tname,
-                moves::uname,
-                moves::turns,
-                moves::mvps,
-                (moves::season, moves::day, moves::stars),
+                move::tname,
+                move::uname,
+                move::turns,
+                move::mvps,
+                (move::season, move::day, move::stars),
             ))
             .load::<TeamPlayer>(conn)
     }
@@ -406,22 +406,22 @@ impl TeamMerc {
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
         let ciTname: Vec<String> = tname;
-        allow_tables_to_appear_in_same_query!(users, moves);
-        let teamIds = teams::table
-            .filter(teams::tname.eq_any(ciTname))
-            .select(teams::id)
+        allow_tables_to_appear_in_same_query!(user, move);
+        let teamIds = team::table
+            .filter(team::tname.eq_any(ciTname))
+            .select(team::id)
             .load::<i32>(conn)?;
         use diesel::dsl::not;
-        users::table
-            .inner_join(teams::table.on(teams::id.eq(users::current_team)))
-            .filter(users::playing_for.eq_any(teamIds))
-            .filter(not(users::playing_for.eq(users::current_team)))
+        user::table
+            .inner_join(team::table.on(team::id.eq(user::current_team)))
+            .filter(user::playing_for.eq_any(teamIds))
+            .filter(not(user::playing_for.eq(user::current_team)))
             .select((
-                teams::tname,
-                users::uname,
-                users::turns,
-                users::mvps,
-                users::overall,
+                team::tname,
+                user::uname,
+                user::turns,
+                user::mvps,
+                user::overall,
             ))
             .load::<TeamMerc>(conn)
     }
@@ -436,23 +436,23 @@ impl PlayerInTurns {
     ) -> Result<Vec<PlayerInTurns>, Error> {
         let ciTerritory = territory.to_owned();
         dbg!(&season, &day, &ciTerritory);
-        past_turns::table
-            .inner_join(territories::table.on(past_turns::territory.eq(territories::id)))
-            .inner_join(teams::table.on(past_turns::team.eq(teams::id)))
-            .inner_join(turninfo::table.on(past_turns::turn_id.eq(turninfo::id)))
-            .inner_join(users::table.on(past_turns::user_id.eq(users::id)))
+        turn::table
+            .inner_join(territory::table.on(turn::territory.eq(territory::id)))
+            .inner_join(team::table.on(turn::team.eq(team::id)))
+            .inner_join(turn::table.on(turn::turn_id.eq(turn::id)))
+            .inner_join(user::table.on(turn::user_id.eq(user::id)))
             .select((
-                teams::tname,
-                users::uname,
-                past_turns::stars,
-                past_turns::weight,
-                past_turns::multiplier,
-                past_turns::mvp,
-                past_turns::power,
+                team::tname,
+                user::uname,
+                turn::stars,
+                turn::weight,
+                turn::multiplier,
+                turn::mvp,
+                turn::power,
             ))
-            .filter(turninfo::day.eq(day))
-            .filter(turninfo::season.eq(season))
-            .filter(territories::name.eq(ciTerritory))
+            .filter(turn::day.eq(day))
+            .filter(turn::season.eq(season))
+            .filter(territory::name.eq(ciTerritory))
             .load::<PlayerInTurns>(conn)
     }
 }
@@ -464,26 +464,26 @@ impl UserId for User {
 }
 impl User {
     pub fn load(name: String, platform: String, conn: &mut PgConnection) -> Result<User, Error> {
-        users::table
-            .filter(users::uname.eq(name))
-            .filter(users::platform.eq(platform))
+        user::table
+            .filter(user::uname.eq(name))
+            .filter(user::platform.eq(platform))
             .select((
-                users::id,
-                users::uname,
-                users::platform,
-                users::turns,
-                users::game_turns,
-                users::mvps,
-                users::streak,
-                users::is_alt, //users::awards,
+                user::id,
+                user::uname,
+                user::platform,
+                user::turns,
+                user::game_turns,
+                user::mvps,
+                user::streak,
+                user::is_alt, //user::award,
             ))
             .first::<User>(conn)
     }
 
     pub fn search(s: String, limit: i32, conn: &mut PgConnection) -> Result<Vec<String>, Error> {
-        users::table
-            .filter(users::uname.ilike(s))
-            .select(users::uname)
+        user::table
+            .filter(user::uname.ilike(s))
+            .select(user::uname)
             .limit(limit.into())
             .load::<String>(conn)
     }

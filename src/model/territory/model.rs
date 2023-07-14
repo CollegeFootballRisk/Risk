@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{PlayerInTurns, TeamInTurns};
 use crate::schema::{
-    teams, territories, territory_ownership, territory_ownership_with_neighbors,
+    team, territory, territory_ownership, territory_ownership_with_neighbors,
     territory_ownership_without_neighbors, turninfo,
 };
 use diesel::prelude::*;
@@ -43,7 +43,7 @@ pub(crate) struct TerritoryHistory {
 pub(crate) struct TerritoryTurn {
     pub(crate) occupier: String,
     pub(crate) winner: String,
-    pub(crate) teams: Vec<TeamInTurns>,
+    pub(crate) team: Vec<TeamInTurns>,
     pub(crate) players: Vec<PlayerInTurns>,
 }
 
@@ -100,13 +100,13 @@ impl TerritoryHistory {
         conn: &mut PgConnection,
     ) -> Result<Vec<TerritoryHistory>, diesel::result::Error> {
         territory_ownership::table
-            .inner_join(teams::table.on(territory_ownership::owner_id.eq(teams::id)))
+            .inner_join(team::table.on(territory_ownership::owner_id.eq(team::id)))
             .inner_join(turninfo::table.on(territory_ownership::turn_id.eq(turninfo::id)))
             .inner_join(
-                territories::table.on(territory_ownership::territory_id.eq(territories::id)),
+                territory::table.on(territory_ownership::territory_id.eq(territory::id)),
             )
             .filter(turninfo::season.eq(season))
-            .filter(teams::tname.eq(team))
+            .filter(team::tname.eq(team))
             .filter(
                 territory_ownership::id.eq_any(
                     diesel::sql_query(
@@ -127,8 +127,8 @@ impl TerritoryHistory {
             .select((
                 turninfo::season,
                 turninfo::day,
-                territories::name,
-                teams::tname,
+                territory::name,
+                team::tname,
             ))
             .load::<TerritoryHistory>(conn)
     }
@@ -154,14 +154,14 @@ impl TerritoryTurn {
             Ok(duo) => duo,
             _ => (String::from("NotFound"), String::from("NotFound")),
         };
-        let teams = TeamInTurns::load(&season, &day, &territory, conn);
+        let team = TeamInTurns::load(&season, &day, &territory, conn);
         let players = PlayerInTurns::load(&season, &day, &territory, conn);
-        match teams {
-            Ok(teams) => match players {
+        match team {
+            Ok(team) => match players {
                 Ok(players) => Ok(TerritoryTurn {
                     occupier: owner,
                     winner: previous,
-                    teams,
+                    team,
                     players,
                 }),
                 _ => Err("Error".to_string()),

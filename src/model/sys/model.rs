@@ -3,10 +3,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use rand::distributions::Alphanumeric;
 use rand::Rng;
+use rocket_oauth2::OAuthConfig;
 
 // Since we're not using a state machine here
 #[allow(clippy::struct_excessive_bools, unreachable_pub)]
-#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Debug)]
 pub struct SysInfo {
     pub(crate) version: String,
     pub(crate) discord: bool,
@@ -14,7 +15,12 @@ pub struct SysInfo {
     pub(crate) groupme: bool,
     pub(crate) image: bool,
     pub(crate) captcha: bool,
+    #[serde(skip_serializing)]
     pub(crate) settings: SysSettings,
+    #[serde(skip)]
+    pub(crate) reddit_config: Option<OAuthConfig>,
+    #[serde(skip)]
+    pub(crate) discord_config: Option<OAuthConfig>,
 }
 
 #[allow(dead_code)]
@@ -46,6 +52,8 @@ impl Default for SysInfo {
             image: false,
             captcha: false,
             settings: SysSettings::default(),
+            reddit_config: None,
+            discord_config: None,
         }
     }
 }
@@ -53,7 +61,7 @@ impl Default for SysInfo {
 impl Default for SysSettings {
     fn default() -> SysSettings {
         SysSettings {
-            name: String::from("AggieRisk Local"),
+            name: String::from("RustRisk Local"),
             base_url: String::from("http://localhost:8000"),
             cookie_key: rand::thread_rng()
                 .sample_iter(&Alphanumeric)

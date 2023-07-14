@@ -10,7 +10,7 @@ captcha = {version = "0.0.9", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
 git-version = "0.3.4"
 time = "0.3"
-diesel = { version = "2.1.0", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json"] }
+diesel = { version = "2.1.0", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json", "network-address"] }
 hyper = { version = "0.14.16", features = ["full"] }
 image = {version = "0.24.1", optional=true}
 nsvg = {version = "0.5.1", optional=true}
@@ -29,22 +29,25 @@ serde_json = "1.0"
 serde_derive = "1.0"
 thiserror = "1.0"
 toml="0.5.8"
+uuid ={version = "1.3.4", features = ["serde"]}
 urlencoding = "2.1.0"
 rocket-recaptcha-v3 = "0.3.2"
+rr_proc_macros = {path = "rr_proc_macros/"}
+ipnetwork = "0.20.0"
+
 
 [features]
 chaos = []
-default = ["risk_reddit"]
-risk_discord = []
-risk_groupme = []
+default = ["reddit"]
+discord = []
 risk_image = ["image", "nsvg"]
-risk_reddit = []
+reddit = []
 risk_captcha = ["captcha", "base64"]
 
 [[bin]]
 name = "rrserver"
 path = "src/server.rs"
 
-[[bin]]
-name = "rrringmaster"
-path = "src/ringmaster.rs"
+#[[bin]]
+#name = "rrringmaster"
+#path = "src/ringmaster.rs"
