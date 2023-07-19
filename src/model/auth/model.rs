@@ -1,8 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::model::User;
-use crate::schema::{authentication_method, permission, role, user, user_role};
+use crate::model::player::Player;
+use crate::schema::{authentication_method, permission, player, player_role, role};
 use crate::sys::SysInfo;
 use chrono::{Duration, NaiveDateTime, Utc};
 use diesel::{insert_into, prelude::*};
@@ -21,12 +21,13 @@ pub const COOKIE_DURATION: i64 = 2592000;
 
 #[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone)]
 #[diesel(table_name = authentication_method)]
+#[diesel(belongs_to(Player))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-/// An `AuthenticationMethod` denotes a method for logging in for a User, e.g.
+/// An `AuthenticationMethod` denotes a method for logging in for a Player, e.g.
 /// Reddit, Discord, etc.
 pub(crate) struct AuthenticationMethod {
     pub(crate) id: Uuid,
-    pub(crate) user_id: Uuid,
+    pub(crate) player_id: Uuid,
     // Limited to 10 char
     pub(crate) platform: String,
     // Limited to 256 char
@@ -41,7 +42,7 @@ pub(crate) struct AuthenticationMethod {
 
 impl AuthenticationMethod {
     pub(crate) fn new(
-        _user_id: Uuid,
+        _player_id: Uuid,
         _platform: String,
         _foreign_id: String,
         _foreign_name: Option<String>,
@@ -52,12 +53,12 @@ impl AuthenticationMethod {
         use crate::schema::authentication_method::dsl::*;
         Ok(insert_into(authentication_method)
             .values((
-                user_id.eq(_user_id),
+                player_id.eq(_player_id),
                 platform.eq(_platform),
                 foreign_id.eq(_foreign_id),
                 foreign_name.eq(_foreign_name),
                 createdby.eq(_createdby),
-                updatedby.eq(_createdby)
+                updatedby.eq(_createdby),
             ))
             .get_result(conn)?)
     }
@@ -88,22 +89,23 @@ impl AuthenticationMethod {
         self.id
     }
 
-    pub(crate) fn user_id(&self) -> Uuid {
-        self.user_id
+    pub(crate) fn player_id(&self) -> Uuid {
+        self.player_id
     }
 }
 
 #[derive(Queryable, Debug, Serialize, Deserialize, Clone)]
 #[diesel(table_name = session)]
+#[diesel(belongs_to(Player))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-/// A `Session` denote an active instance of a `User` (i.e. a logged-in user)
+/// A `Session` denotes an active instance of a `Player` (i.e. a logged-in player)
 pub(crate) struct Session {
     #[diesel(deserialize_as = Uuid)]
     pub(crate) id: Option<Uuid>,
-    pub(crate) user_id: Uuid,
+    pub(crate) player_id: Uuid,
     pub(crate) authentication_method_id: Uuid,
     pub(crate) is_active: bool,
-    pub(crate) user_agent: String,
+    pub(crate) player_agent: String,
     pub(crate) ip_address: IpNetwork,
     #[diesel(deserialize_as = NaiveDateTime)]
     pub(crate) created: Option<NaiveDateTime>,
@@ -114,14 +116,14 @@ impl Session {
     /// Create a new `Session` by insertion
     ///
     /// # Fields
-    /// _user_id: the Uuid of the `User`
-    /// _authentication_method_id: the Uuid of the `AuthenticationMethod` a user has
+    /// _player_id: the Uuid of the `Player`
+    /// _authentication_method_id: the Uuid of the `AuthenticationMethod` a player has
     /// _expires: optional `NaiveDateTime` for the token to expire.
     pub(crate) fn new(
-        _user_id: Uuid,
+        _player_id: Uuid,
         _authentication_method_id: Uuid,
         _expires: Option<NaiveDateTime>,
-        _user_agent: String,
+        _player_agent: String,
         _ip_address: Option<IpNetwork>,
         conn: &mut PgConnection,
     ) -> Result<Self, crate::Error> {
@@ -129,21 +131,18 @@ impl Session {
         // Ok(..) coerces this into a Session
         Ok(insert_into(session)
             .values((
-                user_id.eq(_user_id),
+                player_id.eq(_player_id),
                 authentication_method_id.eq(_authentication_method_id),
                 expires.eq(_expires),
-                user_agent.eq(_user_agent),
+                player_agent.eq(_player_agent),
                 ip_address.eq(_ip_address.unwrap_or("1.1.1.1".parse::<IpNetwork>().unwrap())),
             ))
             .get_result(conn)?)
     }
 
     pub(crate) fn put(&self, key: &[u8]) -> Result<String, crate::Error> {
-        encode(
-            &Header::default(),
-            &self,
-            &EncodingKey::from_secret(key),
-        ).map_err(|_| crate::Error::InternalServerError{})
+        encode(&Header::default(), &self, &EncodingKey::from_secret(key))
+            .map_err(|_| crate::Error::InternalServerError {})
     }
 
     pub(crate) fn interpret(key: &[u8], token: String) -> Result<(Session, Header), String> {
@@ -171,6 +170,10 @@ impl Session {
     pub(crate) fn get_permissions() -> Permission {
         todo!()
     }
+
+    pub(crate) fn check_permissions(permissions: Vec<String>) -> Permission {
+        todo!()
+    }
 }
 
 #[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone)]
@@ -186,15 +189,15 @@ pub(crate) struct Permission {
     pub(crate) created: NaiveDateTime,
     /// The timestamp of the last update to `Permisison`
     pub(crate) updated: NaiveDateTime,
-    /// The `Uuid` of the `User` who created the `Permission`
+    /// The `Uuid` of the `Player` who created the `Permission`
     pub(crate) createdby: Uuid,
-    /// The `Uuid` of the `User` who most recently updated `Permission`
+    /// The `Uuid` of the `Player` who most recently updated `Permission`
     pub(crate) updatedby: Uuid,
 }
 
-#[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone, JsonSchema)]
 #[diesel(table_name = role)]
-#[diesel(belongs_to(UserRole))]
+#[diesel(belongs_to(PlayerRole))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub(crate) struct Role {
     // The `id` for the `Role`
@@ -205,56 +208,56 @@ pub(crate) struct Role {
     pub(crate) created: NaiveDateTime,
     /// The timestamp of the last update to `Role`
     pub(crate) updated: NaiveDateTime,
-    /// The `Uuid` of the `User` who created the `Role`
+    /// The `Uuid` of the `Player` who created the `Role`
     pub(crate) createdby: Uuid,
-    /// The `Uuid` of the `User` who most recently updated `Role`
+    /// The `Uuid` of the `Player` who most recently updated `Role`
     pub(crate) updatedby: Uuid,
 }
 
 #[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone)]
-#[diesel(table_name = user_role)]
-#[diesel(belongs_to(InternalUser))]
+#[diesel(table_name = player_role)]
+#[diesel(belongs_to(InternalPlayer))]
 #[diesel(belongs_to(Role))]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub(crate) struct UserRole {
-    // The `Uuid` for the `UserRole`
+pub(crate) struct PlayerRole {
+    // The `Uuid` for the `PlayerRole`
     pub(crate) id: Uuid,
-    // The `Uuid` for the `User` having the `UserRole`
-    pub(crate) user_id: Uuid,
-    // The `id` for the `Role` had by the `User`
+    // The `Uuid` for the `Player` having the `PlayerRole`
+    pub(crate) player_id: Uuid,
+    // The `id` for the `Role` had by the `Player`
     pub(crate) role_id: i32,
-    /// The timestamp of the creation of the `UserRole`
+    /// The timestamp of the creation of the `PlayerRole`
     pub(crate) created: NaiveDateTime,
-    /// The timestamp of the last update to `UserRole`
+    /// The timestamp of the last update to `PlayerRole`
     pub(crate) updated: NaiveDateTime,
-    /// The `Uuid` of the `User` who created the `UserRole`
+    /// The `Uuid` of the `Player` who created the `PlayerRole`
     pub(crate) createdby: Uuid,
-    /// The `Uuid` of the `User` who most recently updated the `UserRole`
+    /// The `Uuid` of the `Player` who most recently updated the `PlayerRole`
     pub(crate) updatedby: Uuid,
 }
 
 #[derive(Queryable, Identifiable, Selectable, Debug, Serialize, Deserialize, Clone)]
-#[diesel(table_name = user)]
+#[diesel(table_name = player)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-// A simpler version of a `User` for internal representation ONLY
-pub(crate) struct InternalUser {
-    // The `Uuid` for the `User`
+// A simpler version of a `Player` for internal representation ONLY
+pub(crate) struct InternalPlayer {
+    // The `Uuid` for the `Player`
     pub(crate) id: Uuid,
-    /// The id of the `Team` to which the `User` is primarily aligned (may be dead)
+    /// The id of the `Team` to which the `Player` is primarily aligned (may be dead)
     pub(crate) main_team: Option<i32>,
-    /// The id of the `Team` to which the `User` is currently aligned (will not be dead)
+    /// The id of the `Team` to which the `Player` is currently aligned (will not be dead)
     pub(crate) playing_for: Option<i32>,
-    /// Whether the user is an alt
+    /// Whether the player is an alt
     pub(crate) is_alt: bool,
-    /// Whether the user must captcha or not, not displayed to end user
+    /// Whether the player must captcha or not, not displayed to end player
     pub(crate) must_captcha: bool,
-    /// The timestamp of the creation of the `InternalUser`
+    /// The timestamp of the creation of the `InternalPlayer`
     pub(crate) created: NaiveDateTime,
-    /// The timestamp of the last update to `InternalUser`
+    /// The timestamp of the last update to `InternalPlayer`
     pub(crate) updated: NaiveDateTime,
-    /// The `Uuid` of the `InternalUser` who most created the `InternalUser`
+    /// The `Uuid` of the `InternalPlayer` who most created the `InternalPlayer`
     pub(crate) createdby: Uuid,
-    /// The `Uuid` of the `InternalUser` who most recently updated `InternalUser`
+    /// The `Uuid` of the `InternalPlayer` who most recently updated `InternalPlayer`
     pub(crate) updatedby: Uuid,
 }
 
@@ -264,10 +267,10 @@ pub trait AuthProvider {
     fn foreign_name(&self) -> Option<String>;
 }
 
-impl InternalUser {
-    pub fn login_user(
+impl InternalPlayer {
+    pub fn login_player(
         login: impl AuthProvider,
-        user_agent: UA,
+        player_agent: UA,
         ip_address: Cip,
         conn: &mut PgConnection,
     ) -> Result<Session, crate::Error> {
@@ -275,8 +278,8 @@ impl InternalUser {
         let authentication_method =
             match AuthenticationMethod::get(login.platform(), login.foreign_id(), conn) {
                 Ok(x) => x,
-                Error => {
-                    let user = InternalUser::new(
+                Err(_) => {
+                    let player = InternalPlayer::new(
                         format!(
                             "{}_{}",
                             login.platform(),
@@ -291,7 +294,7 @@ impl InternalUser {
                         conn,
                     )?;
                     AuthenticationMethod::new(
-                        user.id(),
+                        player.id(),
                         login.platform(),
                         login.foreign_id(),
                         login.foreign_name(),
@@ -302,18 +305,18 @@ impl InternalUser {
             };
         // Create Session
         Session::new(
-            authentication_method.user_id(),
+            authentication_method.player_id(),
             authentication_method.id(),
             Some((Utc::now() + Duration::seconds(COOKIE_DURATION)).naive_utc()),
-            user_agent.into(),
+            player_agent.into(),
             ip_address.into(),
             conn,
         )
     }
 
     pub fn new(_name: String, conn: &mut PgConnection) -> Result<Self, crate::Error> {
-        use crate::schema::user::dsl::*;
-        Ok(insert_into(user)
+        use crate::schema::player::dsl::*;
+        Ok(insert_into(player)
             .values(name.eq(_name))
             .returning((
                 id,
@@ -334,9 +337,9 @@ impl InternalUser {
     }
 }
 
-impl From<User> for InternalUser {
-    fn from(w: User) -> InternalUser {
-        InternalUser {
+impl From<Player> for InternalPlayer {
+    fn from(w: Player) -> InternalPlayer {
+        InternalPlayer {
             id: w.id,
             main_team: w.main_team,
             playing_for: w.playing_for,
@@ -385,7 +388,7 @@ impl<'a> FromRequest<'a> for UA {
 
     async fn from_request(request: &'a Request<'_>) -> request::Outcome<Self, Self::Error> {
         Outcome::Success(UA(Some(
-            request.headers().get("User-Agent").collect::<String>(),
+            request.headers().get("Player-Agent").collect::<String>(),
         )))
     }
 }

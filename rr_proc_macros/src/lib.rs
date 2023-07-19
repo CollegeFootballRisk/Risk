@@ -58,7 +58,7 @@ pub fn protect(attrs: TokenStream, stream: TokenStream) -> TokenStream {
                .get_private("jwt")
                .ok_or(crate::Error::Unauthorized {})?;
            // Check to see that the cookie is valid
-           let user = crate::model::User::from_cookie(&cookie)?;
+           let user = crate::model::Session::from_private_cookie(&cookies, &config)?;
            // Check to see if the user contains the requisite permission
            user.check_permissions(#permissions)?;
             #(#stmts)*

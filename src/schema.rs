@@ -5,7 +5,7 @@ diesel::table! {
 
     audit_log (id) {
         id -> Uuid,
-        user_id -> Uuid,
+        player_id -> Uuid,
         event -> Int4,
         data -> Nullable<Json>,
         session_id -> Uuid,
@@ -21,7 +21,7 @@ diesel::table! {
 
     authentication_method (id) {
         id -> Uuid,
-        user_id -> Uuid,
+        player_id -> Uuid,
         #[max_length = 10]
         platform -> Varchar,
         #[max_length = 256]
@@ -40,7 +40,7 @@ diesel::table! {
 
     award (id) {
         id -> Int4,
-        user_id -> Uuid,
+        player_id -> Uuid,
         award_id -> Int4,
         created -> Timestamp,
         updated -> Timestamp,
@@ -100,7 +100,7 @@ diesel::table! {
     #[sql_name = "move"]
     move_ (id) {
         id -> Uuid,
-        user_id -> Uuid,
+        player_id -> Uuid,
         session_id -> Uuid,
         territory_id -> Int4,
         is_mvp -> Bool,
@@ -130,6 +130,43 @@ diesel::table! {
         updated -> Timestamp,
         createdby -> Uuid,
         updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    player (id) {
+        id -> Uuid,
+        #[max_length = 64]
+        name -> Varchar,
+        main_team -> Nullable<Int4>,
+        playing_for -> Nullable<Int4>,
+        overall -> Int4,
+        turns -> Int4,
+        game_turns -> Int4,
+        mvps -> Int4,
+        streak -> Int4,
+        is_alt -> Bool,
+        must_captcha -> Bool,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+
+    player_role (id) {
+        role_id -> Int4,
+        player_id -> Uuid,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+        id -> Uuid,
     }
 }
 
@@ -176,11 +213,11 @@ diesel::table! {
 
     session (id) {
         id -> Uuid,
-        user_id -> Uuid,
+        player_id -> Uuid,
         authentication_method_id -> Uuid,
         is_active -> Bool,
         #[max_length = 512]
-        user_agent -> Varchar,
+        player_agent -> Varchar,
         ip_address -> Inet,
         created -> Timestamp,
         expires -> Nullable<Timestamp>,
@@ -305,71 +342,34 @@ diesel::table! {
         roll_end -> Nullable<Timestamp>,
         all_or_nothing -> Bool,
         map -> Nullable<Text>,
-        random_seed -> Nullable<Char>,
+        random_seed -> Nullable<Float8>,
         created -> Timestamp,
         updated -> Timestamp,
         createdby -> Uuid,
         updatedby -> Uuid,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-
-    user (id) {
-        id -> Uuid,
-        #[max_length = 64]
-        name -> Varchar,
-        main_team -> Nullable<Int4>,
-        playing_for -> Nullable<Int4>,
-        overall -> Int4,
-        turns -> Int4,
-        game_turns -> Int4,
-        mvps -> Int4,
-        streak -> Int4,
-        is_alt -> Bool,
-        must_captcha -> Bool,
-        created -> Timestamp,
-        updated -> Timestamp,
-        createdby -> Uuid,
-        updatedby -> Uuid,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-
-    user_role (id) {
-        role_id -> Int4,
-        user_id -> Uuid,
-        created -> Timestamp,
-        updated -> Timestamp,
-        createdby -> Uuid,
-        updatedby -> Uuid,
-        id -> Uuid,
     }
 }
 
 diesel::joinable!(audit_log -> session (session_id));
-diesel::joinable!(authentication_method -> user (user_id));
+diesel::joinable!(authentication_method -> player (player_id));
 diesel::joinable!(award -> award_info (award_id));
 diesel::joinable!(move_ -> session (session_id));
 diesel::joinable!(move_ -> team (team_id));
 diesel::joinable!(move_ -> territory (territory_id));
 diesel::joinable!(move_ -> turn (turn_id));
+diesel::joinable!(player_role -> role (role_id));
 diesel::joinable!(role_permission -> permission (permission_id));
 diesel::joinable!(role_permission -> role (role_id));
 diesel::joinable!(session -> authentication_method (authentication_method_id));
-diesel::joinable!(session -> user (user_id));
+diesel::joinable!(session -> player (player_id));
 diesel::joinable!(team_statistic -> team (team));
 diesel::joinable!(team_statistic -> turn (turn_id));
 diesel::joinable!(territory -> region (region));
+diesel::joinable!(territory_ownership -> player (mvp));
 diesel::joinable!(territory_ownership -> territory (territory_id));
-diesel::joinable!(territory_ownership -> user (mvp));
 diesel::joinable!(territory_statistic -> team (team));
 diesel::joinable!(territory_statistic -> territory (territory));
 diesel::joinable!(territory_statistic -> turn (turn_id));
-diesel::joinable!(user_role -> role (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     audit_log,
@@ -380,6 +380,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     log,
     move_,
     permission,
+    player,
+    player_role,
     region,
     role,
     role_permission,
@@ -391,6 +393,4 @@ diesel::allow_tables_to_appear_in_same_query!(
     territory_ownership,
     territory_statistic,
     turn,
-    user,
-    user_role,
 );

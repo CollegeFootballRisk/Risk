@@ -9,7 +9,7 @@ base64 = {version = "0.20.0", optional=true}
 captcha = {version = "0.0.9", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
 git-version = "0.3.4"
-time = "0.3"
+time = { version = "0.3", features = ["serde","macros", "parsing"] }
 diesel = { version = "2.1.0", features = ["postgres", "r2d2", "uuid", "chrono", "numeric", "serde_json", "network-address"] }
 hyper = { version = "0.14.16", features = ["full"] }
 image = {version = "0.24.1", optional=true}
@@ -18,12 +18,12 @@ jsonwebtoken = "8.0.1"
 rand = {version = "0.8", features = ["std"]}
 rand_chacha="0.3"
 reqwest = { version = "0.11.8", default-features = false, features = ["json", "rustls-tls"] }
-rocket = {version = "0.5.0-rc.3", features = ["secrets", "json"] }
+rocket = {version = "0.5.0-rc.3", features = ["uuid", "secrets", "json"] }
 rocket_sync_db_pools = {version = "0.1.0-rc.3", features=["diesel_postgres_pool"]}
 rocket_oauth2 = {git = "https://github.com/mautamu/rocket_oauth2", branch="next", features = ["hyper_rustls_adapter"]}
 okapi = {version = "0.7.0-rc.1" }
 rocket_okapi = { version = "0.8.0-rc.3", features = ["swagger"] }
-schemars = { version = "0.8", features = ["chrono","preserve_order"] }
+schemars = { version = "0.8", features = ["chrono","uuid1","preserve_order"] }
 serde = "1.0"
 serde_json = "1.0"
 serde_derive = "1.0"
@@ -35,6 +35,9 @@ rocket-recaptcha-v3 = "0.3.2"
 rr_proc_macros = {path = "rr_proc_macros/"}
 ipnetwork = "0.20.0"
 
+[dependencies.rocket_dyn_templates]
+version = "=0.1.0-rc.3"
+features = ["handlebars", "tera"]
 
 [features]
 chaos = []

@@ -1,15 +1,17 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use rocket::time::Duration;
 use crate::db::DbConn;
 use crate::model::model::COOKIE_DURATION;
-use crate::model::{auth::{Cip, UA, InternalUser, Session}, AuthProvider};
+use crate::model::{
+    auth::{Cip, InternalPlayer, UA},
+    AuthProvider,
+};
 use crate::sys::SysInfo;
 use reqwest::header::{AUTHORIZATION, USER_AGENT};
 use rocket::http::{Cookie, CookieJar, SameSite};
 use rocket::response::Redirect;
-use rocket::serde::json::Json;
+use rocket::time::Duration;
 use rocket::State;
 use rocket_oauth2::{OAuth2, TokenResponse};
 
@@ -50,10 +52,10 @@ pub(crate) async fn callback(
     ua: UA,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<Session>, crate::Error> {
+) -> Result<Redirect, crate::Error> {
     let user_info: serde_json::Value = reqwest::Client::builder()
         .build()
-        .map_err(|_| crate::Error::InternalServerError{})?
+        .map_err(|_| crate::Error::InternalServerError {})?
         .get("https://discord.com/api/v10/users/@me")
         .header(AUTHORIZATION, format!("Bearer {}", token.access_token()))
         .header(
@@ -69,33 +71,39 @@ pub(crate) async fn callback(
         .await
         .map_err(|e| {
             dbg!(e);
-            crate::Error::InternalServerError{}
+            crate::Error::InternalServerError {}
         })?
         .json()
         .await
         .map_err(|e| {
             dbg!(e);
-            crate::Error::InternalServerError{}
+            crate::Error::InternalServerError {}
         })?;
-        
+
     let login_data = Discord {
         foreign_id: user_info
             .get("id")
-            .ok_or(crate::Error::InternalServerError{})?
+            .ok_or(crate::Error::InternalServerError {})?
             .as_str()
-            .ok_or(crate::Error::InternalServerError{})?
+            .ok_or(crate::Error::InternalServerError {})?
             .to_owned(),
         foreign_name: Some(
             user_info
                 .get("username")
-                .ok_or(crate::Error::InternalServerError{})?
+                .ok_or(crate::Error::InternalServerError {})?
                 .as_str()
-                .ok_or(crate::Error::InternalServerError{})?
+                .ok_or(crate::Error::InternalServerError {})?
                 .to_owned(),
         ),
     };
 
-    let session = conn.run(|c| InternalUser::login_user(login_data, ua, cip, c)).await.map_err(|e| {dbg!(&e); e} )?;
+    let session = conn
+        .run(|c| InternalPlayer::login_player(login_data, ua, cip, c))
+        .await
+        .map_err(|e| {
+            dbg!(&e);
+            e
+        })?;
 
     cookies.add_private(
         Cookie::build("jwt", session.put(config.settings.cookie_key.as_bytes())?)
@@ -105,6 +113,6 @@ pub(crate) async fn callback(
             .max_age(Duration::seconds(COOKIE_DURATION))
             .finish(),
     );
-    
-    std::result::Result::Ok(Json(session))
+
+    std::result::Result::Ok(Redirect::to("/"))
 }

@@ -47,7 +47,27 @@ pub enum Error {
     Teapot,
 }
 
-//pub type Result<T> = std::result::Result<T, crate::Error>;
+pub type Result<T> = std::result::Result<T, crate::Error>;
+
+pub trait MapRre<T> {
+    fn map_rre(self) -> Result<T>;
+}
+
+impl<T, E> MapRre<T> for std::result::Result<T, E>
+where
+    Error: From<E>,
+{
+    fn map_rre(self) -> Result<T> {
+        self.map_err(crate::Error::from)
+    }
+}
+/*
+
+impl<T> MapRre<T> for crate::error::Result<T> {
+    fn map_rre(self) -> Result<T> {
+        self.map_err(crate::Error::from)
+    }
+}*/
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'o> {

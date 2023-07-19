@@ -4,8 +4,7 @@
 
 pub(crate) mod auth;
 pub(crate) use auth::*;
-pub(crate) mod user;
-pub(crate) use user::*;
+pub(crate) mod player;
 /*pub(crate) mod discord;
 pub(crate) mod player;
 pub(crate) mod ratings;

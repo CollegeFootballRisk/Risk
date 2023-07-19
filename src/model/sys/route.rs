@@ -13,7 +13,8 @@ pub(crate) async fn sysinfo() -> Result<Json<SystemInformation>, Status> {
 }
 
 #[allow(clippy::struct_excessive_bools, unreachable_pub)]
-#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone, Debug, PartialEq)]
+/// # System Information
 /// Information about the configuration of the backend.
 pub struct SystemInformation {
     /// The git version of the backend at compile time. `-modified` suffix
@@ -40,12 +41,12 @@ impl Default for SystemInformation {
                 fallback = option_env!("GIT_HASH").unwrap_or(env!("CARGO_PKG_VERSION"))
             )
             .to_string(),
-            discord: cfg!(feature = "risk_discord"),
-            reddit: cfg!(feature = "risk_reddit"),
-            groupme: cfg!(feature = "risk_groupme"),
-            image: cfg!(feature = "risk_image"),
+            discord: cfg!(feature = "discord"),
+            reddit: cfg!(feature = "reddit"),
+            groupme: cfg!(feature = "groupme"),
+            image: cfg!(feature = "image"),
             chaos: cfg!(feature = "chaos"),
-            captcha: cfg!(feature = "risk_captcha"),
+            captcha: cfg!(feature = "captcha"),
         }
     }
 }
