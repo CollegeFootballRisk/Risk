@@ -7,6 +7,7 @@ use crate::model::Role;
 use crate::schema;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel::sql_types::Text;
 use okapi::openapi3::SchemaObject;
 use rocket::form::Form;
 use rocket::serde::json::Json;
@@ -16,7 +17,9 @@ use schemars::schema::InstanceType;
 use uuid::Uuid;
 /// # Lite Team
 /// Simple rendition of a team, with minimal information
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::team)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SimpleTeam {
     id: i32,
     name: String,
@@ -24,26 +27,31 @@ pub struct SimpleTeam {
 
 /// # Lite Player
 /// Simple rendition of a player, with minimal information
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::player)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SimplePlayer {
     /// [Limit: 36 Char] A player's id (UUID)
     id: Uuid,
     /// [Limit: 64 Char] A player's local username
     name: String,
-    team: SimpleTeam,
+    team: Option<SimpleTeam>,
 }
 
 impl SimplePlayer {
-    fn all(active_only: bool, conn: &PgConnection) -> Result<Vec<SimplePlayer>> {
-        use crate::schema::player::{dsl::player, name};
-        let query = player
-            .select(Self::as_select())
-            .order_by(name.asc())
+    fn all(active_only: bool, conn: &mut PgConnection) -> Result<Vec<SimplePlayer>> {
+        diesel::joinable!(crate::schema::player -> crate::schema::team (main_team));
+        use crate::schema::player;
+        use crate::schema::team;
+        let mut query = player::table
+            .left_join(team::table.on(player::main_team.eq(team::id.nullable())))
+            .select((player::id, player::name, (team::id, team::name).nullable()))
+            .order_by(player::name.asc())
             .into_boxed();
 
         // If a season was specified, then return only the items in that season
-        if let Some(season_filter) = season_filter {
-            query = query.filter(season.eq(season_filter));
+        if active_only == true {
+            query = query.filter(player::main_team.is_not_null());
         }
 
         query.load(conn).map_rre()
@@ -51,15 +59,16 @@ impl SimplePlayer {
 
     fn search(
         search_string: String,
-        limit: Option<i32>,
-        conn: &PgConnection,
+        limit: Option<i64>,
+        conn: &mut PgConnection,
     ) -> Result<Vec<SimplePlayer>> {
-        use crate::schema::player::{dsl::player, name};
-        use diesel::expression_methods::ilike;
-        let query = player
-            .select(Self::as_select())
-            .order_by(name.asc())
-            .filter(name.ilike(search_string))
+        use crate::schema::player;
+        use crate::schema::team;
+        let mut query = player::table
+            .left_join(team::table.on(player::main_team.eq(team::id.nullable())))
+            .select((player::id, player::name, (team::id, team::name).nullable()))
+            .order_by(player::name.nullable().asc())
+            .filter(player::name.ilike(search_string))
             .into_boxed();
 
         if let Some(limit) = limit {
@@ -133,12 +142,13 @@ pub struct Player {
 
 /// # Move
 /// Gather metadata and related objects for a player
-#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Debug, JsonSchema)]
 #[diesel(table_name = schema::move_)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Move {
     id: Uuid,
     territory_id: i32,
-    is_mvp: i32,
+    is_mvp: bool,
     power: f64,
     multiplier: f64,
     weight: f64,
@@ -151,7 +161,10 @@ pub struct Move {
 }
 
 impl Move {
-    fn available_move_to_player(player: Player, turn_id: Option<i32>) {}
+    fn player_moves(player: Uuid, conn: &mut PgConnection) -> Result<Vec<Move>> {
+        use crate::schema::move_::{dsl::move_, player_id};
+        move_.select(Self::as_select()).filter(player_id.eq(player)).load(conn).map_rre()
+    }
 }
 
 /// # Player With Related Objects
@@ -169,45 +182,45 @@ pub struct Player360 {
 }
 
 /// # Team Colors
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, PartialEq, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::team)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Color {
     /// The rgba primary (foreground) color of the team
     /// Format: `rgba(red, green, blue, alpha)`
     /// where red, green, blue, and alpha 0.0<=x<=255.0
+    #[diesel(sql_type = Text)]
     primary_color: String,
     /// The rgba primary (accent) color of the team
     /// Format: `rgba(red, green, blue, alpha)`
     /// where red, green, blue, and alpha 0.0<=x<=255.0
+    #[diesel(sql_type = Text)]
     secondary_color: String,
 }
 
 /// # Team Metadata
 /// Full metadata of a team
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, PartialEq, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::team)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Team {
     id: i32,
     name: String,
+    #[diesel(embed)]
     colors: Color,
     logo: String,
-    seasons: Vec<i32>,
+    seasons: Option<Vec<Option<i32>>>,
     created: NaiveDateTime,
     updated: NaiveDateTime,
 }
 
 impl Team {
-    fn all(conn: &PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::team::{dsl::team, id};
-        let mut query = team
-            .select(Self::as_select())
+    fn all(conn: &mut PgConnection) -> Result<Vec<Self>> {
+        use crate::schema::team::{dsl::team, id, name, logo, seasons, created, updated, primary_color, secondary_color};
+        team
+            .select((id, name, (primary_color, secondary_color), logo, seasons, created, updated))
             .order_by(id.asc())
-            .into_boxed();
-
-        // If a season was specified, then return only the items in that season
-        if let Some(season_filter) = season_filter {
-            query = query.filter(season.eq(season_filter));
-        }
-
-        query.load(conn).map_rre()
+            .load(conn).map_rre()
     }
 }
 
@@ -268,7 +281,7 @@ pub struct AwardInfo {
 /// Returns all players, but provides simplified data structure for smaller payload size. Unlike other methods, this one will return before a player has been part of a roll.
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players")]
-pub(crate) async fn players(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
+pub(crate) async fn get_players(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
     conn.run(move |c| SimplePlayer::all(false, c))
         .await
         .map(Json)
@@ -278,7 +291,7 @@ pub(crate) async fn players(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
 /// Returns all active players, but provides simplified data structure for smaller payload size. Unlike other methods, this one will return before a player has been part of a roll.
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players/active")]
-pub(crate) async fn players_active(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
+pub(crate) async fn get_players_active(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
     conn.run(move |c| SimplePlayer::all(true, c))
         .await
         .map(Json)
@@ -288,9 +301,9 @@ pub(crate) async fn players_active(conn: DbConn) -> Result<Json<Vec<SimplePlayer
 /// Search for player(s) by partial name
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players/search/<query>?<limit>")]
-pub(crate) async fn player_search(
+pub(crate) async fn get_player_search(
     mut query: String,
-    limit: Option<i32>,
+    limit: Option<i64>,
     conn: DbConn,
 ) -> Result<Json<Vec<SimplePlayer>>> {
     conn.run(move |c| SimplePlayer::search(query, limit, c))
@@ -304,7 +317,7 @@ pub(crate) async fn player_search(
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>")]
-pub(crate) async fn player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<Player>> {
+pub(crate) async fn get_player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<Player>> {
     todo!()
 }
 
@@ -315,7 +328,7 @@ pub(crate) async fn player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<Pl
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/available_moves?<turn_id>")]
-pub(crate) async fn available_player_moves(
+pub(crate) async fn get_available_player_moves(
     player_id: Uuid,
     turn_id: Option<i32>,
     conn: DbConn,
@@ -330,8 +343,8 @@ pub(crate) async fn available_player_moves(
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/moves")]
-pub(crate) async fn player_moves(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Move>>> {
-    todo!()
+pub(crate) async fn get_player_moves(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Move>>> {
+    conn.run(move |c| Move::player_moves(player_id, c)).await.map(Json)
 }
 
 /// # Retrieve awards for a player
@@ -341,7 +354,7 @@ pub(crate) async fn player_moves(player_id: Uuid, conn: DbConn) -> Result<Json<V
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/awards")]
-pub(crate) async fn player_awards(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<AwardInfo>>> {
+pub(crate) async fn get_player_awards(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<AwardInfo>>> {
     todo!()
 }
 
@@ -352,7 +365,7 @@ pub(crate) async fn player_awards(player_id: Uuid, conn: DbConn) -> Result<Json<
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/roles")]
-pub(crate) async fn player_roles(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Role>>> {
+pub(crate) async fn get_player_roles(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Role>>> {
     todo!()
 }
 
@@ -363,7 +376,7 @@ pub(crate) async fn player_roles(player_id: Uuid, conn: DbConn) -> Result<Json<V
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/links")]
-pub(crate) async fn player_links(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Link>>> {
+pub(crate) async fn get_player_links(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Link>>> {
     todo!()
 }
 
@@ -372,7 +385,7 @@ pub(crate) async fn player_links(player_id: Uuid, conn: DbConn) -> Result<Json<V
 /// Batch retrieval of `players` - `players` should be a comma-separated list of up to and including 100 player.id without spaces.
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players/batch?<players>")]
-pub(crate) async fn player_batch(players: Uuid, conn: DbConn) -> Result<Json<Vec<Player360>>> {
+pub(crate) async fn get_player_batch(players: Uuid, conn: DbConn) -> Result<Json<Vec<Player360>>> {
     todo!()
 }
 
@@ -413,7 +426,7 @@ impl JsonSchema for PrimitiveDateTime {
 ///
 #[openapi(tag = "Event", ignore = "conn")]
 #[get("/events?<since>&<after>&<event_type>&<count>&<page>")]
-pub(crate) async fn events(
+pub(crate) async fn get_events(
     since: Option<PrimitiveDateTime>,
     after: Option<Uuid>,
     event_type: Option<Vec<EventType>>,
@@ -472,30 +485,31 @@ impl Turn {
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
 pub struct Turn360 {
     turn: Turn,
-    events: Event,
+    events: Vec<Event>,
 }
 
 impl Turn360 {
     /// Retrieve the Turn and Event details (retrieves _all_ event details)
-    fn get_turn_events(&self, turn_id: i32, conn: &PgConnection) -> Result<Turn360> {
+    fn get_turn_events(turn_id: i32, conn: &mut PgConnection) -> Result<Turn360> {
         use schema::event;
         use schema::turn;
-        Turn360 {
+        Ok(Turn360 {
             turn: turn::table
                 .select(Turn::as_select())
-                .filter(turn::turn_id.eq(turn_id))
-                .load(conn)
+                .filter(turn::id.eq(turn_id))
+                .first(conn)
                 .map_rre()?,
             events: event::table
                 .select(Event::as_select())
-                .belongs_to(turn::id.eq(turn_id))
+                .filter(event::turn_id.eq(turn_id))
                 .load(conn)
                 .map_rre()?,
-        }
+        })
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, JsonSchema, FromFormField)]
+#[derive(diesel_derive_enum::DbEnum, Serialize, Deserialize, Debug, JsonSchema, FromFormField)]
+#[ExistingTypePath = "crate::schema::sql_types::EventType"]
 pub enum EventType {
     /// A player has been updated
     PlayerCreate,
@@ -548,14 +562,15 @@ pub enum EventType {
 /// _**Note:** Each `EventType` (`event_type`) has its own meaning for `before`, `after`, and
 /// `description`. See the documentation for `EventType` to know what those fields mean within the
 /// context of that `EventType`._
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = schema::event)]
 pub struct Event {
     id: Uuid,
     event_type: EventType,
     before: Option<String>,
     after: Option<String>,
     description: Option<String>,
-    active_turn: Option<i32>,
+    turn_id: Option<i32>,
     created: NaiveDateTime,
     createdby: Uuid,
     updated: NaiveDateTime,
@@ -567,14 +582,14 @@ pub struct Event {
 /// Returns information about all turns, or just the turns specified in `season if it is provided
 #[openapi(tag = "Turn", ignore = "conn")]
 #[get("/turns?<season>")]
-pub(crate) async fn turns(season: Option<i32>, conn: DbConn) -> Result<Json<Vec<Turn>>> {
+pub(crate) async fn get_turns(season: Option<i32>, conn: DbConn) -> Result<Json<Vec<Turn>>> {
     conn.run(move |c| Turn::all(season, c)).await.map(Json)
 }
 
 /// # Retrieve audit log for a turn/roll.
 #[openapi(tag = "Turn", ignore = "conn")]
 #[get("/turn/<turn_id>")]
-pub(crate) async fn turn_log(turn_id: i32, conn: DbConn) -> Result<Json<Vec<Turn360>>> {
+pub(crate) async fn get_turn_log(turn_id: i32, conn: DbConn) -> Result<Json<Turn360>> {
     conn.run(move |c| Turn360::get_turn_events(turn_id, c))
         .await
         .map(Json)
@@ -585,25 +600,25 @@ pub(crate) async fn turn_log(turn_id: i32, conn: DbConn) -> Result<Json<Vec<Turn
 /// Returns a list of all teams, including those from past seasons
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/teams")]
-pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<Team>>> {
+pub(crate) async fn get_teams(conn: DbConn) -> Result<Json<Vec<Team>>> {
     conn.run(move |c| Team::all(c)).await.map(Json)
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/stats/history")]
-pub(crate) async fn team_stat_history(team_id: i32, conn: DbConn) -> Result<Json<Vec<Team>>> {
+pub(crate) async fn get_team_stat_history(team_id: i32, conn: DbConn) -> Result<Json<Vec<Team>>> {
     todo!()
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/stats")]
-pub(crate) async fn team_stats(team_id: i32, conn: DbConn) -> Result<Json<Vec<Turn360>>> {
+pub(crate) async fn get_team_stats(team_id: i32, conn: DbConn) -> Result<Json<Vec<Turn360>>> {
     todo!()
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/teams/leaderboard?<turn_id>")]
-pub(crate) async fn team_leaderboard(
+pub(crate) async fn get_team_leaderboard(
     turn_id: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<Turn360>>> {
@@ -612,7 +627,7 @@ pub(crate) async fn team_leaderboard(
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/teams/search/<query>")]
-pub(crate) async fn team_search(
+pub(crate) async fn get_team_search(
     mut query: String,
     // TODO: Limit the length of this
     conn: DbConn,
@@ -622,13 +637,13 @@ pub(crate) async fn team_search(
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/players")]
-pub(crate) async fn team_players(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
+pub(crate) async fn get_team_players(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
     todo!()
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/mercs")]
-pub(crate) async fn team_mercs(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
+pub(crate) async fn get_team_mercs(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
     todo!()
 }
 
@@ -667,7 +682,7 @@ pub struct TeamOdd {
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/odds/<turn_id>")]
-pub(crate) async fn team_odds(
+pub(crate) async fn get_team_odds(
     team_id: i32,
     turn_id: i32,
     conn: DbConn,
@@ -677,7 +692,7 @@ pub(crate) async fn team_odds(
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/territories_visited/<season>")]
-pub(crate) async fn territories_visited(
+pub(crate) async fn get_territories_visited(
     team_id: i32,
     season: i32,
     conn: DbConn,
@@ -689,13 +704,13 @@ pub(crate) async fn territories_visited(
 // /territories
 #[openapi(tag = "Territory", ignore = "conn")]
 #[get("/territories")]
-pub(crate) async fn territories(conn: DbConn) -> Result<Json<Vec<Territory>>> {
+pub(crate) async fn get_territories(conn: DbConn) -> Result<Json<Vec<Territory>>> {
     todo!()
 }
 // /territories/search/<query>
 #[openapi(tag = "Territory", ignore = "conn")]
 #[get("/territories/search/<query>")]
-pub(crate) async fn territory_search(
+pub(crate) async fn get_territory_search(
     mut query: String,
     // TODO: Limit the length of this
     conn: DbConn,
@@ -709,7 +724,7 @@ pub(crate) async fn territory_search(
 // /territory/<territory_id>/moves/<turn_id>
 #[openapi(tag = "Territory", ignore = "conn")]
 #[get("/territory/<territory_id>/moves/<turn_id>")]
-pub(crate) async fn territory_moves_by_turn(
+pub(crate) async fn get_territory_moves_by_turn(
     territory_id: i32,
     turn_id: i32,
     // TODO: Limit the length of this
@@ -721,7 +736,7 @@ pub(crate) async fn territory_moves_by_turn(
 // /territory/<territory_id>/neighbors
 #[openapi(tag = "Territory", ignore = "conn")]
 #[get("/territory/<territory_id>/neighbors")]
-pub(crate) async fn territory_neighbors(
+pub(crate) async fn get_territory_neighbors(
     mut territory_id: i32,
     // TODO: Limit the length of this
     conn: DbConn,
@@ -826,14 +841,14 @@ pub(crate) async fn get_cases(conn: DbConn) -> Result<Json<Vec<Case>>> {
 
 #[openapi(tag = "Case", ignore = "conn")]
 #[post("/case", data = "<case>")]
-pub(crate) async fn create_case(case: Form<Case>, conn: DbConn) -> Result<Json<Case>> {
+pub(crate) async fn post_case(case: Form<Case>, conn: DbConn) -> Result<Json<Case>> {
     todo!()
 }
 
 // Todo: add limits on how many cases can be created per day and per user
 #[openapi(tag = "Case", ignore = "conn")]
 #[patch("/case/<case_id>", data = "<case>")]
-pub(crate) async fn update_case(
+pub(crate) async fn patch_case(
     case: Form<Case>,
     case_id: Uuid,
     conn: DbConn,
@@ -850,7 +865,7 @@ pub(crate) async fn get_case_notifications(case_id: Uuid, conn: DbConn) -> Resul
 // Todo: add limits on how many notifications can be created per day, per user, and per case
 #[openapi(tag = "Case", ignore = "conn")]
 #[post("/case/<case_id>/notification", data = "<notification>")]
-pub(crate) async fn create_case_notification(
+pub(crate) async fn post_case_notification(
     case_id: Uuid,
     notification: Form<Notification>,
     conn: DbConn,
@@ -862,7 +877,7 @@ pub(crate) async fn create_case_notification(
 // Todo: restrict who can create what types of notifications and two whom
 #[openapi(tag = "Notification", ignore = "conn")]
 #[post("/notification", data = "<notification>")]
-pub(crate) async fn create_notification(
+pub(crate) async fn post_notification(
     notification: Form<Notification>,
     conn: DbConn,
 ) -> Result<Json<Notification>> {

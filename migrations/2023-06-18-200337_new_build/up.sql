@@ -323,6 +323,29 @@ CREATE TABLE IF NOT EXISTS public.player_role
         INCLUDE(role_id, player_id)
 );
 
+CREATE TYPE EventType AS ENUM ('PlayerCreate', 'PlayerNameUpdate', 'PlayerTeamUpdate', 'PlayerAward', 'PlayerMerge', 'TerritoryDecision', 'TerritoryReroll');
+
+CREATE TABLE IF NOT EXISTS public.event
+(
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  event_type EventType NOT NULL,
+  before character varying(256),
+  after character varying(256),
+  description character varying(256),
+  turn_id int,
+  created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  createdby uuid NOT NULL DEFAULT 'a147b32b-6779-462c-b20b-5f5bef4702fa',
+  updatedby uuid NOT NULL DEFAULT 'a147b32b-6779-462c-b20b-5f5bef4702fa'
+);
+
+ALTER TABLE IF EXISTS public.event
+    ADD FOREIGN KEY (turn_id)
+    REFERENCES public."turn" (id) MATCH SIMPLE
+    ON UPDATE NO ACTION
+    ON DELETE NO ACTION
+    NOT VALID;
+
 ALTER TABLE IF EXISTS public.audit_log
     ADD FOREIGN KEY (player_id)
     REFERENCES public."player" (id) MATCH SIMPLE
@@ -860,6 +883,13 @@ CREATE TRIGGER update_player_task_updated_on
     BEFORE UPDATE
     ON
         player_role
+    FOR EACH ROW
+EXECUTE PROCEDURE update_field_alignment();
+
+CREATE TRIGGER update_event_updated_on
+    BEFORE UPDATE
+    ON
+        event
     FOR EACH ROW
 EXECUTE PROCEDURE update_field_alignment();
 

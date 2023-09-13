@@ -1,5 +1,11 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType, diesel::query_builder::QueryId)]
+    #[diesel(postgres_type(name = "EventType"))]
+    pub struct EventType;
+}
+
 diesel::table! {
     use diesel::sql_types::*;
 
@@ -75,6 +81,27 @@ diesel::table! {
         reason -> Nullable<Varchar>,
         #[max_length = 20]
         foreign_service -> Nullable<Varchar>,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::EventType;
+
+    event (id) {
+        id -> Uuid,
+        event_type -> EventType,
+        #[max_length = 256]
+        before -> Nullable<Varchar>,
+        #[max_length = 256]
+        after -> Nullable<Varchar>,
+        #[max_length = 256]
+        description -> Nullable<Varchar>,
+        turn_id -> Nullable<Int4>,
         created -> Timestamp,
         updated -> Timestamp,
         createdby -> Uuid,
