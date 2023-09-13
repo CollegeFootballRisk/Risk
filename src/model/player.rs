@@ -21,7 +21,9 @@ use uuid::Uuid;
 #[diesel(table_name = crate::schema::team)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SimpleTeam {
+    /// A team's id
     id: i32,
+    /// A team's name
     name: String,
 }
 
@@ -35,6 +37,7 @@ pub struct SimplePlayer {
     id: Uuid,
     /// [Limit: 64 Char] A player's local username
     name: String,
+    /// A player's main team (`SimpleTeam`) for the season, if present
     team: Option<SimpleTeam>,
 }
 
@@ -90,7 +93,9 @@ impl SimplePlayer {
 /// slashes._
 ///
 /// _**Note:** Once a player account has been merged or deleted, it cannot be restored with the same ID._
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::player)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Player {
     /// [Limit: 36 Char] A player's ID
     pub id: Uuid,
@@ -111,8 +116,7 @@ pub struct Player {
     // from `playing_for`
     #[serde(skip_deserializing)]
     pub active_team: Option<SimpleTeam>,
-    /// The star ratings [1<=x<=5] for a player
-    pub ratings: Rating,
+    // The star ratings [1<=x<=5] for a player
     /// The statistics for a player
     pub stats: Stat,
     /// Whether a player has been flagged globally as an alt
@@ -137,7 +141,36 @@ pub struct Player {
     #[serde(skip_serializing)]
     pub main_team: Option<i32>,
     #[serde(skip_serializing)]
-    pub playing_for: Option<i32>,
+    pub playing_for: Option<i32>
+}
+
+
+#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::player)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct PlayerWithRatings {
+    #[serde(flatten)]
+    pub player: Player,
+    /// The star ratings [1<=x<=5] for a player
+    pub ratings: Rating
+}
+
+impl PlayerWithRatings {
+    fn by_id(id: Uuid, conn: &mut PgConnection) -> Result<PlayerWithRatings> {
+        let (playing_for_team, main_team_team) = diesel::alias!(schema::team as team1, schema::team as team2);
+        use crate::schema::player::{dsl::player, id, name, overall, turns, game_turns, mvps, streak, is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for};
+        use crate::schema::team;
+        let player_data: Player = player
+            .left_join(main_team_team.on(main_team.eq(main_team_team.field(team::id).nullable())))
+            .left_join(playing_for_team.on(playing_for.eq(playing_for_team.field(team::id).nullable())))
+            .select((id, name, (main_team_team.field(team::id), main_team_team.field(team::name)).nullable(), (playing_for_team.field(team::id), playing_for_team.field(team::name)).nullable(), (turns, game_turns, mvps, streak), is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for))
+            .first(conn).map_rre()?;
+        let ratings: Rating = Rating::from(player_data.stats);
+        Ok(PlayerWithRatings {
+            player: player_data,
+            ratings: ratings
+        })
+    }
 }
 
 /// # Move
@@ -227,7 +260,7 @@ impl Team {
 // TODO: Add star rating mappings here
 /// # Player Star Rating
 /// A set of ratings (1-5) for a player
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
 pub struct Rating {
     /// [Limit: 1<=x<=5] The overall star rating of the player, which is the up-rounded median of the other ratings
     overall: i32,
@@ -242,9 +275,23 @@ pub struct Rating {
     streak: i32,
 }
 
+impl From<Stat> for Rating {
+    fn from(input: Stat) -> Rating {
+        Rating {
+            overall: 1,
+            turns: 1,
+            game_turns: 1,
+            mvps: 1,
+            streak: 1
+        }
+    }
+}
+
 /// # Player Statistic
 /// A set of statistics about a player
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Copy, Clone, Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[diesel(table_name = crate::schema::player)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Stat {
     /// The total number of turns made by the player in all games
     turns: i32,
@@ -317,8 +364,8 @@ pub(crate) async fn get_player_search(
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>")]
-pub(crate) async fn get_player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<Player>> {
-    todo!()
+pub(crate) async fn get_player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<PlayerWithRatings>> {
+    conn.run(move |c| PlayerWithRatings::by_id(player_id, c)).await.map(Json)
 }
 
 /// # Retrieve available moves for a player for a given turn
@@ -637,13 +684,13 @@ pub(crate) async fn get_team_search(
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/players")]
-pub(crate) async fn get_team_players(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
+pub(crate) async fn get_team_players(team_id: i32, conn: DbConn) -> Result<Json<Vec<PlayerWithRatings>>> {
     todo!()
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/mercs")]
-pub(crate) async fn get_team_mercs(team_id: i32, conn: DbConn) -> Result<Json<Vec<Player>>> {
+pub(crate) async fn get_team_mercs(team_id: i32, conn: DbConn) -> Result<Json<Vec<PlayerWithRatings>>> {
     todo!()
 }
 
