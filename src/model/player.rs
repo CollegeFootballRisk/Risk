@@ -33,6 +33,43 @@ pub struct SimplePlayer {
     team: SimpleTeam,
 }
 
+impl SimplePlayer {
+    fn all(active_only: bool, conn: &PgConnection) -> Result<Vec<SimplePlayer>> {
+        use crate::schema::player::{dsl::player, name};
+        let query = player
+            .select(Self::as_select())
+            .order_by(name.asc())
+            .into_boxed();
+
+        // If a season was specified, then return only the items in that season
+        if let Some(season_filter) = season_filter {
+            query = query.filter(season.eq(season_filter));
+        }
+
+        query.load(conn).map_rre()
+    }
+
+    fn search(
+        search_string: String,
+        limit: Option<i32>,
+        conn: &PgConnection,
+    ) -> Result<Vec<SimplePlayer>> {
+        use crate::schema::player::{dsl::player, name};
+        use diesel::expression_methods::ilike;
+        let query = player
+            .select(Self::as_select())
+            .order_by(name.asc())
+            .filter(name.ilike(search_string))
+            .into_boxed();
+
+        if let Some(limit) = limit {
+            query = query.limit(limit);
+        }
+
+        query.load(conn).map_rre()
+    }
+}
+
 /// # Player Metadata
 /// Full metadata of a player
 ///
@@ -157,6 +194,23 @@ pub struct Team {
     updated: NaiveDateTime,
 }
 
+impl Team {
+    fn all(conn: &PgConnection) -> Result<Vec<Self>> {
+        use crate::schema::team::{dsl::team, id};
+        let mut query = team
+            .select(Self::as_select())
+            .order_by(id.asc())
+            .into_boxed();
+
+        // If a season was specified, then return only the items in that season
+        if let Some(season_filter) = season_filter {
+            query = query.filter(season.eq(season_filter));
+        }
+
+        query.load(conn).map_rre()
+    }
+}
+
 // TODO: Add star rating mappings here
 /// # Player Star Rating
 /// A set of ratings (1-5) for a player
@@ -215,7 +269,9 @@ pub struct AwardInfo {
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players")]
 pub(crate) async fn players(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
-    todo!()
+    conn.run(move |c| SimplePlayer::all(false, c))
+        .await
+        .map(Json)
 }
 
 /// # List of all active players, including id, team, and name for all teams
@@ -223,7 +279,9 @@ pub(crate) async fn players(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players/active")]
 pub(crate) async fn players_active(conn: DbConn) -> Result<Json<Vec<SimplePlayer>>> {
-    todo!()
+    conn.run(move |c| SimplePlayer::all(true, c))
+        .await
+        .map(Json)
 }
 
 /// # Search for player(s) by partial name
@@ -235,7 +293,9 @@ pub(crate) async fn player_search(
     limit: Option<i32>,
     conn: DbConn,
 ) -> Result<Json<Vec<SimplePlayer>>> {
-    todo!()
+    conn.run(move |c| SimplePlayer::search(query, limit, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve metadata for a player
@@ -415,6 +475,26 @@ pub struct Turn360 {
     events: Event,
 }
 
+impl Turn360 {
+    /// Retrieve the Turn and Event details (retrieves _all_ event details)
+    fn get_turn_events(&self, turn_id: i32, conn: &PgConnection) -> Result<Turn360> {
+        use schema::event;
+        use schema::turn;
+        Turn360 {
+            turn: turn::table
+                .select(Turn::as_select())
+                .filter(turn::turn_id.eq(turn_id))
+                .load(conn)
+                .map_rre()?,
+            events: event::table
+                .select(Event::as_select())
+                .belongs_to(turn::id.eq(turn_id))
+                .load(conn)
+                .map_rre()?,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, JsonSchema, FromFormField)]
 pub enum EventType {
     /// A player has been updated
@@ -495,7 +575,9 @@ pub(crate) async fn turns(season: Option<i32>, conn: DbConn) -> Result<Json<Vec<
 #[openapi(tag = "Turn", ignore = "conn")]
 #[get("/turn/<turn_id>")]
 pub(crate) async fn turn_log(turn_id: i32, conn: DbConn) -> Result<Json<Vec<Turn360>>> {
-    todo!()
+    conn.run(move |c| Turn360::get_turn_events(turn_id, c))
+        .await
+        .map(Json)
 }
 
 /// # List of all teams
@@ -504,7 +586,7 @@ pub(crate) async fn turn_log(turn_id: i32, conn: DbConn) -> Result<Json<Vec<Turn
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/teams")]
 pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<Team>>> {
-    todo!()
+    conn.run(move |c| Team::all(c)).await.map(Json)
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
