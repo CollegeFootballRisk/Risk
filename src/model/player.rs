@@ -305,23 +305,54 @@ pub struct Stat {
 
 /// # Player Linked Accounts
 /// The usernames on connected platforms the user has made publicly available
-#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Debug, JsonSchema)]
 #[diesel(belongs_to(User))]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = crate::schema::authentication_method)]
 pub struct Link {
     /// [Limit: 10 Char] The name of the platform
     platform: String,
     /// [Limit: 256 Char] The name of the user
-    username: String,
+    #[diesel(column_name = "foreign_name")]
+    username: Option<String>,
+}
+
+impl Link {
+    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> Result<Vec<Self>> {
+        use crate::schema::authentication_method::{dsl::authentication_method, published, player_id as pid};
+        authentication_method
+        .select(Self::as_select())
+        .filter(published.eq(true))
+        .filter(pid.eq(player_id))
+        .load(conn)
+        .map_rre()
+    }
 }
 
 /// # Award
 /// Information pertaining to an award given to a user
-#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Debug, JsonSchema)]
 #[diesel(belongs_to(User))]
+#[diesel(table_name = crate::schema::award_info)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct AwardInfo {
     id: i32,
     name: String,
     info: String,
+}
+
+impl AwardInfo {
+    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> crate::error::Result<Vec<Self>> {
+        use crate::schema::award_info::{dsl::award_info, id, name, info};
+        use crate::schema::{award};
+        award_info
+        .inner_join(award::dsl::award)
+        .filter(award::player_id.eq(player_id))
+        .select(Self::as_select())
+        .order_by(award::created.desc())
+        .load(conn)
+        .map_rre()
+    }
 }
 
 /// # List of all players, including id, team, and name for all time
@@ -402,7 +433,7 @@ pub(crate) async fn get_player_moves(player_id: Uuid, conn: DbConn) -> Result<Js
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/awards")]
 pub(crate) async fn get_player_awards(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<AwardInfo>>> {
-    todo!()
+    conn.run(move |c| AwardInfo::by_player_id(player_id, c)).await.map(Json)
 }
 
 /// # Retrieve roles for a player
@@ -413,7 +444,7 @@ pub(crate) async fn get_player_awards(player_id: Uuid, conn: DbConn) -> Result<J
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/roles")]
 pub(crate) async fn get_player_roles(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Role>>> {
-    todo!()
+    conn.run(move |c| Role::by_player_id(player_id, c)).await.map(Json)
 }
 
 /// # Retrieve publicly linked accounts for a player

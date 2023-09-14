@@ -1,9 +1,10 @@
 use uuid::Uuid;
 use chrono::NaiveDateTime;
+use crate::error::Result;
 use diesel::prelude::*;
 
 
-#[derive(default,debug,queryable,identifiable,insertable,serialize,deserialize)]
+#[derive(default,selectable,debug,queryable,identifiable,insertable,serialize,deserialize)]
 #[diesel(primary_key(id))]
 #[diesel(table_name = role)]
 pub struct Role {
@@ -43,10 +44,11 @@ impl Role {
     pub fn get_permissions(&self, &mut PgConnection) -> Vec<Permission> {
         
     }
+
 }
 
 impl Permission {
     pub fn get_roles(&self, &mut PgConnection) -> Vec<Role> {
-
+        
     }
 }

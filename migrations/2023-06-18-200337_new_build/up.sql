@@ -32,8 +32,8 @@ CREATE TABLE IF NOT EXISTS public.audit_log
 CREATE TABLE IF NOT EXISTS public.award_info
 (
     id integer NOT NULL DEFAULT nextval('public.award_info_id_seq'::regclass),
-    name text COLLATE pg_catalog."default",
-    info text COLLATE pg_catalog."default",
+    name text NOT NULL COLLATE pg_catalog."default",
+    info text NOT NULL COLLATE pg_catalog."default",
     PRIMARY KEY (id)
 );
 

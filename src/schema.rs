@@ -34,6 +34,7 @@ diesel::table! {
         foreign_id -> Varchar,
         #[max_length = 128]
         foreign_name -> Nullable<Varchar>,
+        published -> Bool,
         created -> Timestamp,
         updated -> Timestamp,
         createdby -> Uuid,
@@ -60,8 +61,8 @@ diesel::table! {
 
     award_info (id) {
         id -> Int4,
-        name -> Nullable<Text>,
-        info -> Nullable<Text>,
+        name -> Text,
+        info -> Text,
     }
 }
 

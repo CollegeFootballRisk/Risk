@@ -1,6 +1,7 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+use crate::error::{MapRre, Result};
 use crate::model::player::Player;
 use crate::schema::{authentication_method, permission, player, player_role, role};
 use crate::sys::SysInfo;
@@ -34,6 +35,7 @@ pub(crate) struct AuthenticationMethod {
     pub(crate) foreign_id: String,
     // Limited to 128 char
     pub(crate) foreign_name: Option<String>,
+    pub(crate) published: bool,
     pub(crate) created: NaiveDateTime,
     pub(crate) updated: NaiveDateTime,
     pub(crate) createdby: Uuid,
@@ -48,7 +50,7 @@ impl AuthenticationMethod {
         _foreign_name: Option<String>,
         _createdby: Uuid,
         conn: &mut PgConnection,
-    ) -> Result<Self, crate::Error> {
+    ) -> Result<Self> {
         let _createdby: Uuid = _createdby;
         use crate::schema::authentication_method::dsl::*;
         Ok(insert_into(authentication_method)
@@ -68,7 +70,7 @@ impl AuthenticationMethod {
         _platform: String,
         _foreign_id: String,
         conn: &mut PgConnection,
-    ) -> Result<Self, crate::Error> {
+    ) -> Result<Self> {
         use crate::schema::authentication_method::dsl::*;
         Ok(authentication_method
             .filter(platform.eq(_platform))
@@ -77,7 +79,7 @@ impl AuthenticationMethod {
             .get_result(conn)?)
     }
 
-    pub(crate) fn get_by_id(_id: Uuid, conn: &mut PgConnection) -> Result<Self, crate::Error> {
+    pub(crate) fn get_by_id(_id: Uuid, conn: &mut PgConnection) -> Result<Self> {
         use crate::schema::authentication_method::dsl::*;
         Ok(authentication_method
             .filter(id.eq(_id))
@@ -126,7 +128,7 @@ impl Session {
         _player_agent: String,
         _ip_address: Option<IpNetwork>,
         conn: &mut PgConnection,
-    ) -> Result<Self, crate::Error> {
+    ) -> Result<Self> {
         use crate::schema::session::dsl::*;
         // Ok(..) coerces this into a Session
         Ok(insert_into(session)
@@ -140,12 +142,12 @@ impl Session {
             .get_result(conn)?)
     }
 
-    pub(crate) fn put(&self, key: &[u8]) -> Result<String, crate::Error> {
+    pub(crate) fn put(&self, key: &[u8]) -> Result<String> {
         encode(&Header::default(), &self, &EncodingKey::from_secret(key))
             .map_err(|_| crate::Error::InternalServerError {})
     }
 
-    pub(crate) fn interpret(key: &[u8], token: String) -> Result<(Session, Header), String> {
+    pub(crate) fn interpret(key: &[u8], token: String) -> std::result::Result<(Session, Header), String> {
         let validation = Validation::default();
         match decode::<Session>(&token, &DecodingKey::from_secret(key), &validation) {
             Ok(c) => Ok((c.claims, c.header)),
@@ -156,7 +158,7 @@ impl Session {
     pub(crate) fn from_private_cookie(
         cookies: &CookieJar<'_>,
         config: &State<SysInfo>,
-    ) -> Result<(Session, Header), crate::Error> {
+    ) -> Result<(Session, Header)> {
         let cookie = cookies
             .get_private("jwt")
             .ok_or(crate::Error::Unauthorized {})?;
@@ -267,13 +269,25 @@ pub trait AuthProvider {
     fn foreign_name(&self) -> Option<String>;
 }
 
+impl Role {
+    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> crate::error::Result<Vec<Role>> {
+        use crate::schema::{role, player_role};
+        role::table
+        .inner_join(player_role::dsl::player_role)
+        .filter(player_role::player_id.eq(player_id))
+        .select(Self::as_select())
+        .load(conn)
+        .map_rre()
+    }
+}
+
 impl InternalPlayer {
     pub fn login_player(
         login: impl AuthProvider,
         player_agent: UA,
         ip_address: Cip,
         conn: &mut PgConnection,
-    ) -> Result<Session, crate::Error> {
+    ) -> Result<Session> {
         // Get AuthenticationMethod
         let authentication_method =
             match AuthenticationMethod::get(login.platform(), login.foreign_id(), conn) {
@@ -314,7 +328,7 @@ impl InternalPlayer {
         )
     }
 
-    pub fn new(_name: String, conn: &mut PgConnection) -> Result<Self, crate::Error> {
+    pub fn new(_name: String, conn: &mut PgConnection) -> Result<Self> {
         use crate::schema::player::dsl::*;
         Ok(insert_into(player)
             .values(name.eq(_name))
