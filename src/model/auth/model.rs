@@ -35,11 +35,11 @@ pub(crate) struct AuthenticationMethod {
     pub(crate) foreign_id: String,
     // Limited to 128 char
     pub(crate) foreign_name: Option<String>,
-    pub(crate) published: bool,
     pub(crate) created: NaiveDateTime,
     pub(crate) updated: NaiveDateTime,
     pub(crate) createdby: Uuid,
     pub(crate) updatedby: Uuid,
+    pub(crate) published: bool,
 }
 
 impl AuthenticationMethod {

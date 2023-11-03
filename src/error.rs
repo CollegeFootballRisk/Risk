@@ -45,6 +45,12 @@ pub enum Error {
 
     #[error("Teapot")]
     Teapot,
+
+    #[error(transparent)]
+    Uuid {
+        #[from]
+        source: uuid::Error,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, crate::Error>;

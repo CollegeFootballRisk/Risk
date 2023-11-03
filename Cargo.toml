@@ -10,7 +10,7 @@ captcha = {version = "0.0.9", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
 git-version = "0.3.4"
 time = { version = "0.3", features = ["serde","macros", "parsing"] }
-diesel = { version = "2.1.0", features = ["postgres", "postgres_backend", "r2d2", "uuid", "chrono", "numeric", "serde_json", "network-address"] }
+diesel = { version = "2.1.0", features = ["postgres", "postgres_backend", "r2d2", "uuid", "chrono", "numeric", "serde_json", "time", "network-address"] }
 diesel-derive-enum = { version = "2.1.0", features = ["postgres"] }
 hyper = { version = "0.14.16", features = ["full"] }
 image = {version = "0.24.1", optional=true}

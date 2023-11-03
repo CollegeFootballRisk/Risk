@@ -1,9 +1,17 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType, diesel::query_builder::QueryId)]
-    #[diesel(postgres_type(name = "EventType"))]
-    pub struct EventType;
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "casestatus"))]
+    pub struct Casestatus;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "casetype"))]
+    pub struct Casetype;
+
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "eventtype"))]
+    pub struct Eventtype;
 }
 
 diesel::table! {
@@ -34,11 +42,11 @@ diesel::table! {
         foreign_id -> Varchar,
         #[max_length = 128]
         foreign_name -> Nullable<Varchar>,
-        published -> Bool,
         created -> Timestamp,
         updated -> Timestamp,
         createdby -> Uuid,
         updatedby -> Uuid,
+        published -> Bool,
     }
 }
 
@@ -91,11 +99,29 @@ diesel::table! {
 
 diesel::table! {
     use diesel::sql_types::*;
-    use super::sql_types::EventType;
+    use super::sql_types::Casestatus;
+    use super::sql_types::Casetype;
+
+    case (id) {
+        id -> Uuid,
+        status -> Casestatus,
+        case_type -> Casetype,
+        #[max_length = 1024]
+        description -> Varchar,
+        created -> Timestamp,
+        updated -> Timestamp,
+        createdby -> Uuid,
+        updatedby -> Uuid,
+    }
+}
+
+diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Eventtype;
 
     event (id) {
         id -> Uuid,
-        event_type -> EventType,
+        event_type -> Eventtype,
         #[max_length = 256]
         before -> Nullable<Varchar>,
         #[max_length = 256]
@@ -381,6 +407,7 @@ diesel::table! {
 diesel::joinable!(audit_log -> session (session_id));
 diesel::joinable!(authentication_method -> player (player_id));
 diesel::joinable!(award -> award_info (award_id));
+diesel::joinable!(event -> turn (turn_id));
 diesel::joinable!(move_ -> session (session_id));
 diesel::joinable!(move_ -> team (team_id));
 diesel::joinable!(move_ -> territory (territory_id));
@@ -405,6 +432,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     award,
     award_info,
     ban,
+    case,
+    event,
     log,
     move_,
     permission,

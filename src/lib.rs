@@ -7,7 +7,8 @@
     non_snake_case,
     clippy::type_complexity,
     clippy::too_many_arguments,
-    clippy::self_named_constructors
+    clippy::self_named_constructors,
+    unused_imports
 )]
 #![warn(non_snake_case)]
 extern crate diesel;
