@@ -6,6 +6,8 @@ use crate::error::{MapRre, Result};
 use crate::model::Role;
 use crate::schema;
 use chrono::NaiveDateTime;
+use core::cmp::max;
+use core::cmp::min;
 use diesel::prelude::*;
 use okapi::openapi3::SchemaObject;
 use rocket::form::Form;
@@ -49,7 +51,7 @@ impl<'r> FromParam<'r> for PlayerIdString {
 
 /// # Lite Team
 /// Simple rendition of a team, with minimal information
-#[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Selectable, Queryable, Serialize, Deserialize, Debug, JsonSchema)]
 #[diesel(table_name = crate::schema::team)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct SimpleTeam {
@@ -57,6 +59,50 @@ pub struct SimpleTeam {
     id: i32,
     /// A team's name
     name: String,
+}
+
+#[derive(Debug, Queryable, Serialize, Deserialize, JsonSchema, Clone)]
+#[allow(unreachable_pub)]
+pub struct Latest {
+    pub(crate) season: i32,
+    pub(crate) day: i32,
+    pub(crate) id: i32,
+}
+
+impl Latest {
+    pub(crate) fn latest(conn: &mut PgConnection) -> Result<Latest> {
+        use crate::schema::turn;
+        turn::table
+            .select((turn::season, turn::day, turn::id))
+            .order(turn::id.desc())
+            .first::<Latest>(conn)
+            .map_rre()
+    }
+
+    pub(crate) fn limit_to_unfinished(&self, turn_id_to_check: i32) -> Result<bool> {
+        if turn_id_to_check >= self.id {
+            return Err(crate::error::Error::BadRequest {});
+        }
+
+        Ok(true)
+    }
+}
+
+impl SimpleTeam {
+    fn search(
+        search_string: String,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<SimpleTeam>> {
+        use crate::schema::team::{dsl::team, name};
+        Ok(team
+            .select(Self::as_select())
+            .order_by(name.nullable().asc())
+            .filter(name.ilike(format!("%{}%", search_string)))
+            .limit(limit)
+            .load(conn)
+            .map_rre()?)
+    }
 }
 
 /// # Lite Player
@@ -74,6 +120,22 @@ pub struct SimplePlayer {
 }
 
 impl SimplePlayer {
+    fn by_player_id(player_id: PlayerIdString, conn: &mut PgConnection) -> Result<SimplePlayer> {
+        use crate::schema::player;
+        use crate::schema::team;
+        let mut query = player::table
+            .left_join(team::table.on(player::main_team.eq(team::id.nullable())))
+            .select((player::id, player::name, (team::id, team::name).nullable()))
+            .order_by(player::name.asc())
+            .into_boxed();
+
+        query = match player_id {
+            PlayerIdString::Name(p_name) => query.filter(player::name.ilike(p_name)),
+            PlayerIdString::Uuid(p_uuid) => query.filter(player::id.eq(p_uuid)),
+        };
+
+        query.first(conn).map_rre()
+    }
     fn all(active_only: bool, conn: &mut PgConnection) -> Result<Vec<SimplePlayer>> {
         diesel::joinable!(crate::schema::player -> crate::schema::team (main_team));
         use crate::schema::player;
@@ -94,23 +156,19 @@ impl SimplePlayer {
 
     fn search(
         search_string: String,
-        limit: Option<i64>,
+        limit: i64,
         conn: &mut PgConnection,
     ) -> Result<Vec<SimplePlayer>> {
         use crate::schema::player;
         use crate::schema::team;
-        let mut query = player::table
+        player::table
             .left_join(team::table.on(player::main_team.eq(team::id.nullable())))
             .select((player::id, player::name, (team::id, team::name).nullable()))
             .order_by(player::name.nullable().asc())
             .filter(player::name.ilike(format!("%{}%", search_string)))
-            .into_boxed();
-
-        if let Some(limit) = limit {
-            query = query.limit(limit);
-        }
-
-        query.load(conn).map_rre()
+            .limit(limit)
+            .load(conn)
+            .map_rre()
     }
 }
 
@@ -334,6 +392,21 @@ impl Move {
             PlayerIdString::Name(name) => query.filter(player::name.ilike(name)),
         };
         query.load(conn).map_rre()
+    }
+
+    fn by_territory_id_by_turn_id(
+        territory_id: i32,
+        turn_id: i32,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Move>> {
+        use crate::schema::move_::{dsl::move_, territory_id as trr_id, turn_id as trn_id};
+        // TODO: Exclude latest
+        move_
+            .select(Self::as_select())
+            .filter(trr_id.eq(territory_id))
+            .filter(trn_id.eq(turn_id))
+            .load(conn)
+            .map_rre()
     }
 }
 
@@ -568,7 +641,12 @@ pub(crate) async fn get_player_search(
     limit: Option<i64>,
     conn: DbConn,
 ) -> Result<Json<Vec<SimplePlayer>>> {
-    conn.run(move |c| SimplePlayer::search(query, limit, c))
+    let limited_limit = if let Some(ilimit) = limit {
+        min(max(ilimit, 1), 100)
+    } else {
+        100
+    };
+    conn.run(move |c| SimplePlayer::search(query, limited_limit, c))
         .await
         .map(Json)
 }
@@ -596,15 +674,31 @@ pub(crate) async fn get_player_meta(
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/available_moves?<turn_id>")]
 pub(crate) async fn get_available_player_moves(
-    player_id: Uuid,
+    player_id: PlayerIdString,
     turn_id: Option<i32>,
     conn: DbConn,
-) -> Result<Json<Vec<Territory>>> {
+) -> Result<Json<Action>> {
     // Get all territories owned by user's playing_for
     // Get all adjacent territories
     // For each territory which is adjacent and not owned by that player's playing_for, add to attack
     // For each territory which is owned by player's playing_for and has 1+ adjacent not owned by that player's playing_for, add to defend
-    todo!()
+    let turn_id_int = match turn_id {
+        Some(turn_id) => turn_id,
+        None => conn.run(move |c| Latest::latest(c)).await?.id,
+    };
+
+    if let Some(team) = conn
+        .run(move |c| SimplePlayer::by_player_id(player_id, c))
+        .await?
+        .team
+    {
+        return conn
+            .run(move |c| Action::available_move_to_team(turn_id_int, team.id, c))
+            .await
+            .map(Json);
+    } else {
+        return Err(crate::error::Error::BadRequest {});
+    }
 }
 
 /// # Retrieve moves for a player
@@ -1020,13 +1114,20 @@ pub(crate) async fn get_team_leaderboard(
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
-#[get("/teams/search/<query>")]
+#[get("/teams/search/<query>?<limit>")]
 pub(crate) async fn get_team_search(
     mut query: String,
-    // TODO: Limit the length of this
+    limit: Option<i64>,
     conn: DbConn,
 ) -> Result<Json<Vec<SimpleTeam>>> {
-    todo!()
+    let limited_limit = if let Some(ilimit) = limit {
+        min(max(ilimit, 1), 100)
+    } else {
+        100
+    };
+    conn.run(move |c| SimpleTeam::search(query, limited_limit, c))
+        .await
+        .map(Json)
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
@@ -1052,32 +1153,63 @@ pub(crate) async fn get_team_mercs(
 }
 
 /// # Territory
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Serialize, Deserialize, Debug, JsonSchema, Queryable, QueryableByName)]
+#[diesel(table_name = crate::schema::territory)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Territory {
-    id: Uuid,
+    id: i32,
     name: String,
-    region: Region,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    action: Option<String>,
+    region: Option<i32>,
+}
+
+#[derive(Serialize, Deserialize, Debug, JsonSchema, Queryable)]
+pub struct Action {
+    defend: Vec<Territory>,
+    attack: Vec<Territory>,
 }
 
 impl Territory {
+    pub fn search(
+        search_string: String,
+        limit: i64,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Territory>> {
+        use crate::schema::territory::{dsl::territory, id, name, region};
+        Ok(territory
+            .select((id, name, region))
+            .order_by(name.nullable().asc())
+            .filter(name.ilike(format!("%{}%", search_string)))
+            .limit(limit)
+            .load(conn)
+            .map_rre()?)
+    }
+
+    pub fn all(conn: &mut PgConnection) -> Result<Vec<Territory>> {
+        use crate::schema::territory::{dsl::territory, id, name, region};
+        Ok(territory
+            .select((id, name, region))
+            .order_by(name.nullable().asc())
+            .load(conn)
+            .map_rre()?)
+    }
+}
+
+impl Action {
     pub fn available_move_to_team(
         turn_id: i32,
         team_id: i32,
         conn: &mut PgConnection,
-    ) -> Result<Vec<Self>> {
+    ) -> Result<Self> {
         use diesel::sql_query;
         use diesel::sql_types::Integer;
         // TODO: Select latest and do not allow it to leak!
-        let query = sql_query(" 
+        let defendable = sql_query(" 
         --- defendable
         select 
         name, 
         name_2, 
         owner_id, 
         owner_id_2, 
-        defatt 
         from 
         (
             select 
@@ -1087,15 +1219,14 @@ impl Territory {
             ) = count(*) over (
                 partition by to2.turn_id, territory_adjacency.territory_id
             ) as surrounded, 
-            territories.name as name, 
+            territory.name as name, 
             t2.name as name_2, 
             territory_ownership.owner_id as owner_id, 
-            to2.owner_id as owner_id_2, 
-            case when territory_ownership.owner_id = to2.owner_id then 'Defend' else 'Attack' end as defatt 
+            to2.owner_id as owner_id_2,  
             from 
             territory_adjacency 
-            inner join territories on territories.id = territory_adjacency.territory_id 
-            inner join territories t2 on t2.id = territory_adjacency.adjacent_id 
+            inner join territory on territories.id = territory_adjacency.territory_id 
+            inner join territory t2 on t2.id = territory_adjacency.adjacent_id 
             inner join territory_ownership on territory_ownership.territory_id = territory_adjacency.territory_id 
             inner join territory_ownership to2 on to2.territory_id = territory_adjacency.adjacent_id 
             and to2.turn_id = territory_ownership.turn_id 
@@ -1109,8 +1240,11 @@ impl Territory {
         ) v 
         where 
         v.surrounded = false 
-        union
-        --- attackable
+        ").bind::<Integer, _>(turn_id)
+        .bind::<Integer, _>(team_id)
+        .load(conn)?;
+
+        let attackable = sql_query("        --- attackable
         select 
         territories.name, 
         t2.name, 
@@ -1129,19 +1263,22 @@ impl Territory {
         and max_turn >= $1
         and territory_ownership.turn_id = $1 
         and to2.owner_id = $2
-        and to2.owner_id != territory_ownership.owner_id;
-        ")
+        and to2.owner_id != territory_ownership.owner_id;")
         // stat_query (min_turn, max_turn, turn_id, team_id) AS
         .bind::<Integer, _>(turn_id)
-        .bind::<Integer, _>(team_id);
-        todo!()
+        .bind::<Integer, _>(team_id)
+        .load(conn)?;
+        Ok(Self {
+            attack: attackable,
+            defend: defendable,
+        })
     }
 }
 
 /// # Region
-#[derive(Serialize, Deserialize, Debug, JsonSchema)]
+#[derive(Serialize, Deserialize, Debug, JsonSchema, Queryable)]
 pub struct Region {
-    id: Uuid,
+    id: i32,
     name: String,
 }
 
@@ -1201,17 +1338,25 @@ pub(crate) async fn get_territories_visited(
 #[openapi(tag = "Territory", ignore = "conn")]
 #[get("/territories")]
 pub(crate) async fn get_territories(conn: DbConn) -> Result<Json<Vec<Territory>>> {
-    todo!()
+    conn.run(move |c| Territory::all(c)).await.map(Json)
 }
 // /territories/search/<query>
 #[openapi(tag = "Territory", ignore = "conn")]
-#[get("/territories/search/<query>")]
+#[get("/territories/search/<query>?<limit>")]
 pub(crate) async fn get_territory_search(
     mut query: String,
     // TODO: Limit the length of this
+    limit: Option<i64>,
     conn: DbConn,
 ) -> Result<Json<Vec<Territory>>> {
-    todo!()
+    let limited_limit = if let Some(ilimit) = limit {
+        min(max(ilimit, 1), 100)
+    } else {
+        100
+    };
+    conn.run(move |c| Territory::search(query, limited_limit, c))
+        .await
+        .map(Json)
 }
 // /territories/heat/<turn_id>
 // /territories/ownership/<turn_id>
@@ -1226,7 +1371,13 @@ pub(crate) async fn get_territory_moves_by_turn(
     // TODO: Limit the length of this
     conn: DbConn,
 ) -> Result<Json<Vec<Move>>> {
-    todo!()
+    conn.run(move |c| Latest::latest(c))
+        .await?
+        .limit_to_unfinished(turn_id)?;
+
+    conn.run(move |c| Move::by_territory_id_by_turn_id(territory_id, turn_id, c))
+        .await
+        .map(Json)
 }
 // /territory/<territory_id>
 // /territory/<territory_id>/neighbors
