@@ -1,15 +1,15 @@
 // @generated automatically by Diesel CLI.
 
 pub mod sql_types {
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "casestatus"))]
     pub struct Casestatus;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "casetype"))]
     pub struct Casetype;
 
-    #[derive(diesel::sql_types::SqlType)]
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "eventtype"))]
     pub struct Eventtype;
 }

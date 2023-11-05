@@ -9,11 +9,44 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use okapi::openapi3::SchemaObject;
 use rocket::form::Form;
+use rocket::http::RawStr;
+use rocket::request::FromParam;
 use rocket::serde::json::Json;
 use rocket_okapi::JsonSchema;
 use schemars::gen::SchemaGenerator;
 use schemars::schema::InstanceType;
 use uuid::Uuid;
+
+#[derive(JsonSchema, Debug, Clone)]
+pub enum PlayerIdString {
+    Uuid(Uuid),
+    Name(String),
+}
+
+impl From<String> for PlayerIdString {
+    fn from(value: String) -> Self {
+        match Uuid::parse_str(&value) {
+            Ok(uuid) => Self::Uuid(uuid),
+            Err(e) => Self::Name(value.clone()),
+        }
+    }
+}
+
+pub fn is_valid_char(val: char) -> bool {
+    char::is_alphanumeric(val) || val == '_' || val == '-'
+}
+impl<'r> FromParam<'r> for PlayerIdString {
+    type Error = &'r str;
+
+    fn from_param(param: &'r str) -> std::result::Result<Self, Self::Error> {
+        let val: String = param.to_string();
+        if val.chars().count() < 1 || val.chars().count() > 36 || !val.chars().all(is_valid_char) {
+            return Err(param);
+        }
+        Ok(Self::from(val))
+    }
+}
+
 /// # Lite Team
 /// Simple rendition of a team, with minimal information
 #[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
@@ -70,7 +103,7 @@ impl SimplePlayer {
             .left_join(team::table.on(player::main_team.eq(team::id.nullable())))
             .select((player::id, player::name, (team::id, team::name).nullable()))
             .order_by(player::name.nullable().asc())
-            .filter(player::name.ilike(format!("%{}%",search_string)))
+            .filter(player::name.ilike(format!("%{}%", search_string)))
             .into_boxed();
 
         if let Some(limit) = limit {
@@ -140,14 +173,7 @@ pub struct Player {
     #[serde(skip_serializing)]
     pub main_team: Option<i32>,
     #[serde(skip_serializing)]
-    pub playing_for: Option<i32>
-}
-
-
-impl Player {
-    fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> Result<Self> {
-        todo!()
-    }
+    pub playing_for: Option<i32>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, Debug, JsonSchema)]
@@ -157,55 +183,123 @@ pub struct PlayerWithRatings {
     #[serde(flatten)]
     pub player: Player,
     /// The star ratings [1<=x<=5] for a player
-    pub ratings: Rating
+    pub ratings: Rating,
 }
 
 impl PlayerWithRatings {
-    fn by_id(player_id: Uuid, conn: &mut PgConnection) -> Result<PlayerWithRatings> {
-        let (playing_for_team, main_team_team) = diesel::alias!(schema::team as team1, schema::team as team2);
-        use crate::schema::player::{dsl::player, id, name, overall, turns, game_turns, mvps, streak, is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for};
-        use crate::schema::team;
-        let player_data: Player = player
-            .left_join(main_team_team.on(main_team.eq(main_team_team.field(team::id).nullable())))
-            .left_join(playing_for_team.on(playing_for.eq(playing_for_team.field(team::id).nullable())))
-            .select((id, name, (main_team_team.field(team::id), main_team_team.field(team::name)).nullable(), (playing_for_team.field(team::id), playing_for_team.field(team::name)).nullable(), (turns, game_turns, mvps, streak), is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for))
-            .filter(id.eq(player_id))
-            .first(conn).map_rre()?;
-        let ratings: Rating = Rating::from(player_data.stats);
-        Ok(PlayerWithRatings {
-            player: player_data,
-            ratings: ratings
-        })
-    }
-
-    fn by_team_id(team_id: i32, is_main: bool, conn: &mut PgConnection) -> Result<Vec<PlayerWithRatings>> {
-        let (playing_for_team, main_team_team) = diesel::alias!(schema::team as team1, schema::team as team2);
-        use crate::schema::player::{dsl::player, id, name, overall, turns, game_turns, mvps, streak, is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for};
+    fn by_player_id(
+        player_id: &PlayerIdString,
+        conn: &mut PgConnection,
+    ) -> Result<PlayerWithRatings> {
+        let (playing_for_team, main_team_team) =
+            diesel::alias!(schema::team as team1, schema::team as team2);
+        use crate::schema::player::{
+            created, createdby, dsl::player, game_turns, id, is_alt, main_team, must_captcha, mvps,
+            name, overall, playing_for, streak, turns, updated, updatedby,
+        };
         use crate::schema::team;
         let mut query = player
             .left_join(main_team_team.on(main_team.eq(main_team_team.field(team::id).nullable())))
-            .left_join(playing_for_team.on(playing_for.eq(playing_for_team.field(team::id).nullable())))
-            .select((id, name, (main_team_team.field(team::id), main_team_team.field(team::name)).nullable(), (playing_for_team.field(team::id), playing_for_team.field(team::name)).nullable(), (turns, game_turns, mvps, streak), is_alt, created, updated, createdby, updatedby, must_captcha, main_team, playing_for))
+            .left_join(
+                playing_for_team.on(playing_for.eq(playing_for_team.field(team::id).nullable())),
+            )
+            .select((
+                id,
+                name,
+                (
+                    main_team_team.field(team::id),
+                    main_team_team.field(team::name),
+                )
+                    .nullable(),
+                (
+                    playing_for_team.field(team::id),
+                    playing_for_team.field(team::name),
+                )
+                    .nullable(),
+                (turns, game_turns, mvps, streak),
+                is_alt,
+                created,
+                updated,
+                createdby,
+                updatedby,
+                must_captcha,
+                main_team,
+                playing_for,
+            ))
             .into_boxed();
-            if is_main {
-                query = query.filter(main_team.eq(team_id));
-            } else {
-                query = query.filter(playing_for.eq(team_id));
-            }
+        query = match player_id {
+            PlayerIdString::Name(p_name) => query.filter(name.ilike(p_name)),
+            PlayerIdString::Uuid(p_uuid) => query.filter(id.eq(p_uuid)),
+        };
+
+        let player_data: Player = query.first(conn).map_rre()?;
+        let ratings: Rating = Rating::from(player_data.stats);
+        Ok(PlayerWithRatings {
+            player: player_data,
+            ratings: ratings,
+        })
+    }
+
+    fn by_team_id(
+        team_id: i32,
+        is_main: bool,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<PlayerWithRatings>> {
+        let (playing_for_team, main_team_team) =
+            diesel::alias!(schema::team as team1, schema::team as team2);
+        use crate::schema::player::{
+            created, createdby, dsl::player, game_turns, id, is_alt, main_team, must_captcha, mvps,
+            name, overall, playing_for, streak, turns, updated, updatedby,
+        };
+        use crate::schema::team;
+        let mut query = player
+            .left_join(main_team_team.on(main_team.eq(main_team_team.field(team::id).nullable())))
+            .left_join(
+                playing_for_team.on(playing_for.eq(playing_for_team.field(team::id).nullable())),
+            )
+            .select((
+                id,
+                name,
+                (
+                    main_team_team.field(team::id),
+                    main_team_team.field(team::name),
+                )
+                    .nullable(),
+                (
+                    playing_for_team.field(team::id),
+                    playing_for_team.field(team::name),
+                )
+                    .nullable(),
+                (turns, game_turns, mvps, streak),
+                is_alt,
+                created,
+                updated,
+                createdby,
+                updatedby,
+                must_captcha,
+                main_team,
+                playing_for,
+            ))
+            .into_boxed();
+        if is_main {
+            query = query.filter(main_team.eq(team_id));
+        } else {
+            query = query.filter(playing_for.eq(team_id));
+        }
         let player_data: Vec<Player> = query.load(conn).map_rre()?;
         let mut players: Vec<PlayerWithRatings> = Vec::new();
         for one_player in player_data {
             let rating = Rating::from(one_player.stats);
             players.push(PlayerWithRatings {
                 player: one_player,
-                ratings: rating
+                ratings: rating,
             })
         }
         Ok(players)
     }
 }
 
-/// # Moveq
+/// # Move
 /// Gather metadata and related objects for a player
 #[derive(Selectable, Queryable, Serialize, Deserialize, Debug, JsonSchema)]
 #[diesel(table_name = schema::move_)]
@@ -226,10 +320,20 @@ pub struct Move {
 }
 
 impl Move {
-    fn by_player_id(player: Uuid, conn: &mut PgConnection) -> Result<Vec<Move>> {
+    fn by_player_id(player: &PlayerIdString, conn: &mut PgConnection) -> Result<Vec<Move>> {
         use crate::schema::move_::{dsl::move_, player_id};
+        use crate::schema::player;
         // TODO: Exclude latest
-        move_.select(Self::as_select()).filter(player_id.eq(player)).load(conn).map_rre()
+        let mut query = move_
+            .select(Self::as_select())
+            .inner_join(player::dsl::player.on(player::id.eq(player_id)))
+            .into_boxed();
+
+        query = match player {
+            PlayerIdString::Uuid(uuid) => query.filter(player_id.eq(uuid)),
+            PlayerIdString::Name(name) => query.filter(player::name.ilike(name)),
+        };
+        query.load(conn).map_rre()
     }
 }
 
@@ -238,7 +342,7 @@ impl Move {
 #[derive(Serialize, Deserialize, Debug, JsonSchema)]
 pub struct Player360 {
     /// Metadata for a player
-    player: Player,
+    player: PlayerWithRatings,
     /// A list of moves made by the player over all season
     moves: Vec<Move>,
     /// A list of awards bequeathed to the player
@@ -248,16 +352,22 @@ pub struct Player360 {
 }
 
 impl Player360 {
-    pub fn get_by_id(player_id: Uuid, conn: &mut PgConnection) -> Result<Self>{
+    pub fn get_by_id(player_id: &PlayerIdString, conn: &mut PgConnection) -> Result<Self> {
         Ok(Self {
-            player: Player::by_player_id(player_id, conn)?,
+            player: PlayerWithRatings::by_player_id(player_id, conn)?,
             moves: Move::by_player_id(player_id, conn)?,
             awards: AwardInfo::by_player_id(player_id, conn)?,
-            links: Link::by_player_id(player_id, conn)?
+            links: Link::by_player_id(player_id, conn)?,
         })
     }
-    pub fn get_by_id_batch(player_ids: Vec<Uuid>, conn: &mut PgConnection) -> Result<Vec<Self>>{
-        player_ids.iter().map(|x| Player360::get_by_id(*x, conn)).collect()
+    pub fn get_by_id_batch(
+        player_ids: Vec<PlayerIdString>,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Self>> {
+        player_ids
+            .iter()
+            .map(|x| Player360::get_by_id(&x, conn))
+            .collect()
     }
 }
 
@@ -296,11 +406,21 @@ pub struct Team {
 
 impl Team {
     fn all(conn: &mut PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::team::{dsl::team, id, name, logo, seasons, created, updated, primary_color, secondary_color};
-        team
-            .select((id, name, (primary_color, secondary_color), logo, seasons, created, updated))
-            .order_by(id.asc())
-            .load(conn).map_rre()
+        use crate::schema::team::{
+            created, dsl::team, id, logo, name, primary_color, seasons, secondary_color, updated,
+        };
+        team.select((
+            id,
+            name,
+            (primary_color, secondary_color),
+            logo,
+            seasons,
+            created,
+            updated,
+        ))
+        .order_by(id.asc())
+        .load(conn)
+        .map_rre()
     }
 }
 
@@ -329,7 +449,7 @@ impl From<Stat> for Rating {
             turns: 1,
             game_turns: 1,
             mvps: 1,
-            streak: 1
+            streak: 1,
         }
     }
 }
@@ -365,14 +485,19 @@ pub struct Link {
 }
 
 impl Link {
-    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::authentication_method::{dsl::authentication_method, published, player_id as pid};
-        authentication_method
-        .select(Self::as_select())
-        .filter(published.eq(true))
-        .filter(pid.eq(player_id))
-        .load(conn)
-        .map_rre()
+    pub fn by_player_id(player_id: &PlayerIdString, conn: &mut PgConnection) -> Result<Vec<Self>> {
+        use crate::schema::authentication_method::{player_id as pid, published, table};
+        use crate::schema::{authentication_method, player};
+        let mut query = authentication_method::table
+            .inner_join(player::table.on(player::id.eq(pid)))
+            .select(Self::as_select())
+            .filter(published.eq(true))
+            .into_boxed();
+        query = match player_id {
+            PlayerIdString::Uuid(uuid) => query.filter(pid.eq(uuid)),
+            PlayerIdString::Name(name) => query.filter(player::name.ilike(name)),
+        };
+        query.load(conn).map_rre()
     }
 }
 
@@ -389,16 +514,28 @@ pub struct AwardInfo {
 }
 
 impl AwardInfo {
-    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> crate::error::Result<Vec<Self>> {
-        use crate::schema::award_info::{dsl::award_info, id, name, info};
-        use crate::schema::{award};
-        award_info
-        .inner_join(award::dsl::award)
-        .filter(award::player_id.eq(player_id))
-        .select(Self::as_select())
-        .order_by(award::created.desc())
-        .load(conn)
-        .map_rre()
+    pub fn by_player_id(
+        player_id: &PlayerIdString,
+        conn: &mut PgConnection,
+    ) -> crate::error::Result<Vec<Self>> {
+        use crate::schema::award;
+        use crate::schema::award_info::{dsl::award_info, id, info, name};
+        use crate::schema::player;
+        let mut query = award_info
+            .inner_join(award::dsl::award)
+            .inner_join(player::dsl::player.on(player::id.eq(award::player_id)))
+            .into_boxed();
+
+        query = match player_id {
+            PlayerIdString::Uuid(p_uuid) => query.filter(award::player_id.eq(p_uuid)),
+            PlayerIdString::Name(p_name) => query.filter(player::name.ilike(p_name)),
+        };
+
+        query
+            .select(Self::as_select())
+            .order_by(award::created.desc())
+            .load(conn)
+            .map_rre()
     }
 }
 
@@ -442,8 +579,13 @@ pub(crate) async fn get_player_search(
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>")]
-pub(crate) async fn get_player_meta(player_id: Uuid, conn: DbConn) -> Result<Json<PlayerWithRatings>> {
-    conn.run(move |c| PlayerWithRatings::by_id(player_id, c)).await.map(Json)
+pub(crate) async fn get_player_meta(
+    player_id: PlayerIdString,
+    conn: DbConn,
+) -> Result<Json<PlayerWithRatings>> {
+    conn.run(move |c| PlayerWithRatings::by_player_id(&player_id, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve available moves for a player for a given turn
@@ -472,8 +614,13 @@ pub(crate) async fn get_available_player_moves(
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/moves")]
-pub(crate) async fn get_player_moves(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Move>>> {
-    conn.run(move |c| Move::by_player_id(player_id, c)).await.map(Json)
+pub(crate) async fn get_player_moves(
+    player_id: PlayerIdString,
+    conn: DbConn,
+) -> Result<Json<Vec<Move>>> {
+    conn.run(move |c| Move::by_player_id(&player_id, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve awards for a player
@@ -483,8 +630,13 @@ pub(crate) async fn get_player_moves(player_id: Uuid, conn: DbConn) -> Result<Js
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/awards")]
-pub(crate) async fn get_player_awards(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<AwardInfo>>> {
-    conn.run(move |c| AwardInfo::by_player_id(player_id, c)).await.map(Json)
+pub(crate) async fn get_player_awards(
+    player_id: PlayerIdString,
+    conn: DbConn,
+) -> Result<Json<Vec<AwardInfo>>> {
+    conn.run(move |c| AwardInfo::by_player_id(&player_id, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve roles for a player
@@ -494,8 +646,13 @@ pub(crate) async fn get_player_awards(player_id: Uuid, conn: DbConn) -> Result<J
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/roles")]
-pub(crate) async fn get_player_roles(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Role>>> {
-    conn.run(move |c| Role::by_player_id(player_id, c)).await.map(Json)
+pub(crate) async fn get_player_roles(
+    player_id: PlayerIdString,
+    conn: DbConn,
+) -> Result<Json<Vec<Role>>> {
+    conn.run(move |c| Role::by_player_id(&player_id, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve publicly linked accounts for a player
@@ -505,8 +662,13 @@ pub(crate) async fn get_player_roles(player_id: Uuid, conn: DbConn) -> Result<Js
 /// `/players` or `/team/{team.id}/players` or `/team/{team.id}/mercs`_
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/player/<player_id>/links")]
-pub(crate) async fn get_player_links(player_id: Uuid, conn: DbConn) -> Result<Json<Vec<Link>>> {
-    conn.run(move |c| Link::by_player_id(player_id, c)).await.map(Json)
+pub(crate) async fn get_player_links(
+    player_id: PlayerIdString,
+    conn: DbConn,
+) -> Result<Json<Vec<Link>>> {
+    conn.run(move |c| Link::by_player_id(&player_id, c))
+        .await
+        .map(Json)
 }
 
 /// # Retrieve player info, moves, awards for 1-100 players at once
@@ -514,11 +676,19 @@ pub(crate) async fn get_player_links(player_id: Uuid, conn: DbConn) -> Result<Js
 /// Batch retrieval of `players` - `players` should be a comma-separated list of up to and including 100 player.id without spaces.
 #[openapi(tag = "Player", ignore = "conn")]
 #[get("/players/batch?<players>")]
-pub(crate) async fn get_player_batch(players: String, conn: DbConn) -> Result<Json<Vec<Player360>>> {
+pub(crate) async fn get_player_batch(
+    players: String,
+    conn: DbConn,
+) -> Result<Json<Vec<Player360>>> {
     let player_list = players.split(",").collect::<Vec<&str>>();
-    let player_list_uuid  = player_list.iter().map(|x| Uuid::try_parse(x)).collect::<std::result::Result<Vec<Uuid>, uuid::Error>>().map_rre()?;
+    let player_list_uuid = player_list
+        .iter()
+        .map(|x| PlayerIdString::from(String::from(*x)))
+        .collect::<Vec<PlayerIdString>>();
 
-    conn.run(move |c| Player360::get_by_id_batch(player_list_uuid, c)).await.map(Json)
+    conn.run(move |c| Player360::get_by_id_batch(player_list_uuid, c))
+        .await
+        .map(Json)
 }
 
 // Todo: Region
@@ -547,12 +717,12 @@ impl Into<time::PrimitiveDateTime> for PrimitiveDateTime {
     }
 }
 
-use diesel::pg::Pg;
-use diesel::serialize::ToSql;
-use diesel::deserialize;
 use diesel::backend::Backend;
-use diesel::serialize::Output;
+use diesel::deserialize;
+use diesel::pg::Pg;
 use diesel::serialize;
+use diesel::serialize::Output;
+use diesel::serialize::ToSql;
 
 impl Queryable<diesel::sql_types::Timestamp, Pg> for PrimitiveDateTime {
     type Row = time::PrimitiveDateTime;
@@ -572,7 +742,6 @@ where
     }
 }
 
-
 // use diesel::deserialize::FromSql;
 // use diesel::backend::Backend;
 // use diesel::backend;
@@ -585,22 +754,21 @@ where
 //     }
 // }
 
-
 // Event log
 /// # Retrieve a list of events
 ///
 /// Parameters:
 ///
-/// - **since (DateTime String; "2023-01-01T13:41:00")**: Get data after this UTC timestamp
+/// - **since (DateTime String; "2023-01-01T13:41:00")**: Get data created after this UTC timestamp (if specified, cannot supply an `after`)
 ///
-/// - **after (Uuid)**: Get data created after this Event id
+/// - **after (Uuid)**: Get data created after this Event id (if specified, cannot supply a `since`)
 ///
-/// - **event_type (Array of EventType; `["PlayerCreate", "PlayerMerge"]`)**: Only get events matching these
+/// - **event_type (Array of EventType; `["PlayerCreate", "PlayerMerge", ...]`)**: Only get events matching these
 /// event types
 ///
 /// - **count (i32; 1<=x<=250)**: How many Events to retrieve (defaults to 100, can be no more than 250)
 ///
-/// - **page (i32)**: Which page to grab (used with Count)
+/// - **page (i32)**: Which page to grab (used with `count``)
 ///
 #[openapi(tag = "Event", ignore = "conn")]
 #[get("/events?<since>&<after>&<event_type>&<count>&<page>")]
@@ -608,11 +776,19 @@ pub(crate) async fn get_events(
     since: Option<PrimitiveDateTime>,
     after: Option<Uuid>,
     event_type: Option<Vec<EventType>>,
-    count: i32,
-    page: i32,
+    count: Option<i64>,
+    page: Option<i64>,
     conn: DbConn,
-) -> Result<Json<Vec<Player360>>> {
-    todo!()
+) -> Result<Json<Vec<Event>>> {
+    let count = std::cmp::min(count.unwrap_or(100), 250);
+    let page = page.unwrap_or(0);
+    if (count <= 0 || page < 0) || (since.is_some() && after.is_some()) {
+        return Err(crate::error::Error::BadRequest {});
+    } else {
+        conn.run(move |c| Event::get_filtered(since, after, event_type, count, page, c))
+            .await
+            .map(Json)
+    }
 }
 
 /// # Turn
@@ -690,6 +866,7 @@ impl Turn360 {
 #[ExistingTypePath = "crate::schema::sql_types::Eventtype"]
 pub enum EventType {
     /// A player has been updated
+    #[db_rename = "PlayerCreate"]
     PlayerCreate,
     /// A player has been updated
     PlayerNameUpdate,
@@ -755,6 +932,45 @@ pub struct Event {
     updatedby: Uuid,
 }
 
+impl Event {
+    pub fn get_filtered(
+        since: Option<PrimitiveDateTime>,
+        after: Option<Uuid>,
+        event_type_ext: Option<Vec<EventType>>,
+        count: i64,
+        page: i64,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Event>> {
+        use diesel::dsl::Offset;
+        use schema::event;
+        use schema::event::{event_type, id};
+        let mut query = event::table
+            .select(Self::as_select())
+            .order_by(event::created.desc())
+            .into_boxed();
+
+        if let Some(since_ts) = since {
+            query = query.filter(event::created.ge(since_ts))
+        }
+
+        if let Some(after_id) = after {
+            let event_after: PrimitiveDateTime = event::table
+                .select(event::created)
+                .filter(id.eq(after_id))
+                .first(conn)?;
+            query = query.filter(event::created.ge(event_after))
+        }
+
+        if let Some(event_types) = event_type_ext {
+            query = query.filter(event_type.eq_any(event_types))
+        }
+
+        let v = query.limit(count).offset(page * count).load(conn).map_rre();
+        dbg!(&v);
+        v
+    }
+}
+
 /// # List of all rolls, either for all seasons or just one.
 ///
 /// Returns information about all turns, or just the turns specified in `season if it is provided
@@ -815,14 +1031,24 @@ pub(crate) async fn get_team_search(
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/players")]
-pub(crate) async fn get_team_players(team_id: i32, conn: DbConn) -> Result<Json<Vec<PlayerWithRatings>>> {
-    conn.run(move |c| PlayerWithRatings::by_team_id(team_id, true, c)).await.map(Json)
+pub(crate) async fn get_team_players(
+    team_id: i32,
+    conn: DbConn,
+) -> Result<Json<Vec<PlayerWithRatings>>> {
+    conn.run(move |c| PlayerWithRatings::by_team_id(team_id, true, c))
+        .await
+        .map(Json)
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
 #[get("/team/<team_id>/mercs")]
-pub(crate) async fn get_team_mercs(team_id: i32, conn: DbConn) -> Result<Json<Vec<PlayerWithRatings>>> {
-    conn.run(move |c| PlayerWithRatings::by_team_id(team_id, false, c)).await.map(Json)
+pub(crate) async fn get_team_mercs(
+    team_id: i32,
+    conn: DbConn,
+) -> Result<Json<Vec<PlayerWithRatings>>> {
+    conn.run(move |c| PlayerWithRatings::by_team_id(team_id, false, c))
+        .await
+        .map(Json)
 }
 
 /// # Territory
@@ -831,15 +1057,83 @@ pub struct Territory {
     id: Uuid,
     name: String,
     region: Region,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    action: Option<String>,
 }
 
 impl Territory {
-    pub fn available_move_to_team(conn: &mut PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::territory_ownership::{dsl::territory_ownership,territory_id, turn_id};
-        use crate::schema::territory_adjacency;
-        let (original_territory, adjacent_territory) = diesel::alias!(schema::territory as territory1, schema::territory as territory2);
-        let defendable: Vec<Territory> = territory_ownership
-            .inner_join(territory_adjacency.on(territory_ownership::))
+    pub fn available_move_to_team(
+        turn_id: i32,
+        team_id: i32,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Self>> {
+        use diesel::sql_query;
+        use diesel::sql_types::Integer;
+        // TODO: Select latest and do not allow it to leak!
+        let query = sql_query(" 
+        --- defendable
+        select 
+        name, 
+        name_2, 
+        owner_id, 
+        owner_id_2, 
+        defatt 
+        from 
+        (
+            select 
+            count(*) over (
+                partition by to2.owner_id, to2.turn_id, 
+                territory_adjacency.territory_id
+            ) = count(*) over (
+                partition by to2.turn_id, territory_adjacency.territory_id
+            ) as surrounded, 
+            territories.name as name, 
+            t2.name as name_2, 
+            territory_ownership.owner_id as owner_id, 
+            to2.owner_id as owner_id_2, 
+            case when territory_ownership.owner_id = to2.owner_id then 'Defend' else 'Attack' end as defatt 
+            from 
+            territory_adjacency 
+            inner join territories on territories.id = territory_adjacency.territory_id 
+            inner join territories t2 on t2.id = territory_adjacency.adjacent_id 
+            inner join territory_ownership on territory_ownership.territory_id = territory_adjacency.territory_id 
+            inner join territory_ownership to2 on to2.territory_id = territory_adjacency.adjacent_id 
+            and to2.turn_id = territory_ownership.turn_id 
+            where 
+            min_turn < $1
+            and max_turn >= $1
+            and territory_ownership.turn_id = $1
+            and territory_ownership.owner_id = $2 
+            order by 
+            territories.id
+        ) v 
+        where 
+        v.surrounded = false 
+        union
+        --- attackable
+        select 
+        territories.name, 
+        t2.name, 
+        territory_ownership.owner_id, 
+        to2.owner_id, 
+        case when territory_ownership.owner_id = to2.owner_id then 'Defend' else 'Attack' end as defatt 
+        from 
+        territory_adjacency 
+        inner join territories on territories.id = territory_adjacency.territory_id 
+        inner join territories t2 on t2.id = territory_adjacency.adjacent_id 
+        inner join territory_ownership on territory_ownership.territory_id = territory_adjacency.territory_id 
+        inner join territory_ownership to2 on to2.territory_id = territory_adjacency.adjacent_id 
+        and to2.turn_id = territory_ownership.turn_id 
+        where 
+        min_turn < $1 
+        and max_turn >= $1
+        and territory_ownership.turn_id = $1 
+        and to2.owner_id = $2
+        and to2.owner_id != territory_ownership.owner_id;
+        ")
+        // stat_query (min_turn, max_turn, turn_id, team_id) AS
+        .bind::<Integer, _>(turn_id)
+        .bind::<Integer, _>(team_id);
         todo!()
     }
 }
@@ -870,16 +1164,16 @@ pub struct TeamOdd {
 }
 
 impl TeamOdd {
-//     use crate::schema::move_::{dsl::move_,territory_id};
-//     use crate::schema::{player, team, territory, territory_ownership};
-//     pub fn by_turn_by_team(turn_id: i32, team_id: i32, conn: &mut PgConnection) -> Self {
-//         move_
-//         .inner_join(territory::table.on(territory_id.eq(territory::id)))
-//         .inner_join(territory_ownership::table.on(territory_id.eq(territory_ownership::territory_id.eq(move_::territory_id))).and(territory_ownership::turn_id.eq(move_::turn_id)))
-//         .inner_join(team::table.on(territory_ownership::team_id.eq(team::id)))
-//         .inner_join(player::table.on(player::team_id.eq(territory_ownership::id)))
-//         .select(((territory::id, territory::name, territory::region), (team::)))
-//     }
+    //     use crate::schema::move_::{dsl::move_,territory_id};
+    //     use crate::schema::{player, team, territory, territory_ownership};
+    //     pub fn by_turn_by_team(turn_id: i32, team_id: i32, conn: &mut PgConnection) -> Self {
+    //         move_
+    //         .inner_join(territory::table.on(territory_id.eq(territory::id)))
+    //         .inner_join(territory_ownership::table.on(territory_id.eq(territory_ownership::territory_id.eq(move_::territory_id))).and(territory_ownership::turn_id.eq(move_::turn_id)))
+    //         .inner_join(team::table.on(territory_ownership::team_id.eq(team::id)))
+    //         .inner_join(player::table.on(player::team_id.eq(territory_ownership::id)))
+    //         .select(((territory::id, territory::name, territory::region), (team::)))
+    //     }
 }
 
 #[openapi(tag = "Team", ignore = "conn")]
@@ -947,7 +1241,16 @@ pub(crate) async fn get_territory_neighbors(
 }
 
 // Case
-#[derive(diesel_derive_enum::DbEnum, Serialize, Deserialize, Debug, JsonSchema, FromFormField, Clone, Copy)]
+#[derive(
+    diesel_derive_enum::DbEnum,
+    Serialize,
+    Deserialize,
+    Debug,
+    JsonSchema,
+    FromFormField,
+    Clone,
+    Copy,
+)]
 #[ExistingTypePath = "crate::schema::sql_types::Casestatus"]
 pub enum CaseStatus {
     /// Case has been created, but has not yet been acted upon
@@ -962,7 +1265,17 @@ pub enum CaseStatus {
     ClosedRejected,
 }
 
-#[derive(diesel_derive_enum::DbEnum, Serialize, Deserialize, PartialEq, Debug, JsonSchema, FromFormField, Clone, Copy)]
+#[derive(
+    diesel_derive_enum::DbEnum,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Debug,
+    JsonSchema,
+    FromFormField,
+    Clone,
+    Copy,
+)]
 #[ExistingTypePath = "crate::schema::sql_types::Casetype"]
 pub enum CaseType {
     /// Update team (home)
@@ -983,7 +1296,9 @@ pub enum CaseType {
     Other,
 }
 
-#[derive(Serialize, Selectable, Insertable, Deserialize, Debug, JsonSchema, FromForm, Queryable)]
+#[derive(
+    Serialize, Selectable, Insertable, Deserialize, Debug, JsonSchema, FromForm, Queryable,
+)]
 #[diesel(primary_key(id))]
 #[diesel(table_name = crate::schema::case)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
@@ -1010,30 +1325,45 @@ pub struct Case {
 
 impl Case {
     pub fn insert(&self, conn: &mut PgConnection) -> Result<Vec<Self>> {
+        use crate::schema::case::{case_type, createdby, dsl::case, id, status};
         use diesel::insert_into;
-        use crate::schema::case::{dsl::case, case_type, status, id, createdby};
         insert_into(case)
-        .values(vec![self])
-        .get_results(conn)
-        .map_rre()
+            .values(vec![self])
+            .get_results(conn)
+            .map_rre()
     }
 
     pub fn insert_safe(&self, r#override: bool, conn: &mut PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::case::{dsl::case, case_type, status, id, createdby};
+        use crate::schema::case::{case_type, createdby, dsl::case, id, status};
         // Check to see if the player has any open cases of the same type
-        let case_len = Case::get_by_attribute(self.createdby, Some(CaseStatus::Open), Some(self.case_type), conn)?.len();
-        if r#override || case_len == 0 || (case_len < 20 && self.case_type == AccountReport) || (case_len < 5 && self.case_type == CaseType::Other) {
+        let case_len = Case::get_by_attribute(
+            self.createdby,
+            Some(CaseStatus::Open),
+            Some(self.case_type),
+            conn,
+        )?
+        .len();
+        if r#override
+            || case_len == 0
+            || (case_len < 20 && self.case_type == CaseType::AccountReport)
+            || (case_len < 5 && self.case_type == CaseType::Other)
+        {
             Ok(self.insert(conn)?)
         } else {
             // Throw an error, user shall not be allowed to create a case
-            Err(crate::error::Error::BadRequest{})
+            Err(crate::error::Error::BadRequest {})
         }
     }
 
-    pub fn get_by_attribute(fgn_player_id: Option<Uuid>, fgn_case_status: Option<CaseStatus>, fgn_case_type: Option<CaseType>, conn: &mut PgConnection) -> Result<Vec<Self>> {
-        use crate::schema::case::{dsl::case, case_type, status, id, createdby};
+    pub fn get_by_attribute(
+        fgn_player_id: Option<Uuid>,
+        fgn_case_status: Option<CaseStatus>,
+        fgn_case_type: Option<CaseType>,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<Self>> {
+        use crate::schema::case::{case_type, createdby, dsl::case, id, status};
         let mut query = case.select(Self::as_select()).into_boxed();
-        
+
         if let Some(fgn_player_id) = fgn_player_id {
             query = query.filter(createdby.eq(fgn_player_id));
         }
@@ -1096,9 +1426,15 @@ pub struct NotificationReceipt {
 
 #[openapi(tag = "Case", ignore = "conn")]
 #[get("/cases?<case_status>&<case_type>")]
-pub(crate) async fn get_cases(case_status: Option<CaseStatus>, case_type: Option<CaseType>, conn: DbConn) -> Result<Json<Vec<Case>>> {
+pub(crate) async fn get_cases(
+    case_status: Option<CaseStatus>,
+    case_type: Option<CaseType>,
+    conn: DbConn,
+) -> Result<Json<Vec<Case>>> {
     // TODO: Add guard to only get _logged in user's_ cases
-    conn.run(move |c| Case::get_by_attribute(None, case_status, case_type, c)).await.map(Json)
+    conn.run(move |c| Case::get_by_attribute(None, case_status, case_type, c))
+        .await
+        .map(Json)
 }
 
 #[openapi(tag = "Case", ignore = "conn")]
@@ -1136,7 +1472,7 @@ pub(crate) async fn post_case_notification(
 }
 
 // Notification
-// Todo: restrict who can create what types of notifications and two whom
+// Todo: restrict who can create what types of notifications and to whom
 #[openapi(tag = "Notification", ignore = "conn")]
 #[post("/notification", data = "<notification>")]
 pub(crate) async fn post_notification(

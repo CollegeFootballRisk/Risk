@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::error::{MapRre, Result};
 use crate::model::player::Player;
+use crate::model::player::PlayerIdString;
 use crate::schema::{authentication_method, permission, player, player_role, role};
 use crate::sys::SysInfo;
 use chrono::{Duration, NaiveDateTime, Utc};
@@ -147,7 +148,10 @@ impl Session {
             .map_err(|_| crate::Error::InternalServerError {})
     }
 
-    pub(crate) fn interpret(key: &[u8], token: String) -> std::result::Result<(Session, Header), String> {
+    pub(crate) fn interpret(
+        key: &[u8],
+        token: String,
+    ) -> std::result::Result<(Session, Header), String> {
         let validation = Validation::default();
         match decode::<Session>(&token, &DecodingKey::from_secret(key), &validation) {
             Ok(c) => Ok((c.claims, c.header)),
@@ -270,14 +274,22 @@ pub trait AuthProvider {
 }
 
 impl Role {
-    pub fn by_player_id(player_id: Uuid, conn: &mut PgConnection) -> crate::error::Result<Vec<Role>> {
-        use crate::schema::{role, player_role};
-        role::table
-        .inner_join(player_role::dsl::player_role)
-        .filter(player_role::player_id.eq(player_id))
-        .select(Self::as_select())
-        .load(conn)
-        .map_rre()
+    pub fn by_player_id(
+        player_id: &PlayerIdString,
+        conn: &mut PgConnection,
+    ) -> crate::error::Result<Vec<Role>> {
+        use crate::schema::player;
+        use crate::schema::{player_role, role};
+        let mut query = role::table
+            .inner_join(player_role::dsl::player_role)
+            .inner_join(player::dsl::player.on(player_role::player_id.eq(player::id)))
+            .select(Self::as_select())
+            .into_boxed();
+        query = match player_id {
+            PlayerIdString::Uuid(uuid) => query.filter(player_role::player_id.eq(uuid)),
+            PlayerIdString::Name(name) => query.filter(player::name.ilike(name)),
+        };
+        query.load(conn).map_rre()
     }
 }
 
