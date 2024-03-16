@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#![feature(drain_filter)]
+#![feature(extract_if)]
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -137,7 +137,7 @@ fn process_territories(
 
         // We collect all the players that placed a move on this territory
         let territory_players = players
-            .drain_filter(|player| {
+            .extract_if(|player| {
                 player.territory == territory.territory_id && player.alt_score < ALT_CUTOFF
             })
             .collect::<Vec<_>>();
@@ -441,7 +441,7 @@ fn process_territories(
                 // We collect the players that are on the winning team for MVPing.
                 let territory_victors = territory_players
                     .clone()
-                    .drain_filter(|player| player.team == victor && player.alt_score < ALT_CUTOFF)
+                    .extract_if(|player| player.team == victor && player.alt_score < ALT_CUTOFF)
                     .collect::<Vec<_>>();
 
                 // We now determine the MVP from the players on the winning team.
