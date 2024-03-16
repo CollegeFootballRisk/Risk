@@ -69,9 +69,10 @@ pub struct TerritoryOwners {
     pub previous_owner_id: i32,
     pub random_number: f64,
     pub mvp: Option<i32>,
+    pub is_respawn: bool,
 }
 
-#[derive(Deserialize, Insertable, Queryable, Debug, PartialEq)]
+#[derive(Clone, Default, Deserialize, Insertable, Queryable, Debug, PartialEq)]
 #[diesel(table_name = territory_ownership)]
 pub struct TerritoryOwnersInsert {
     pub territory_id: i32,
@@ -80,6 +81,7 @@ pub struct TerritoryOwnersInsert {
     pub previous_owner_id: i32,
     pub random_number: f64,
     pub mvp: Option<i32>,
+    pub is_respawn: bool,
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
@@ -320,19 +322,31 @@ impl Default for TerritoryStats {
 }
 
 impl TerritoryOwners {
-    pub fn load(turn_id: &i32, conn: &mut PgConnection) -> Result<Vec<TerritoryOwners>, Error> {
-        territory_ownership::table
+    // Loads the TerritoryOwnersfor a given turn; if respawn is enabled,
+    // then optionally filters on territories if territory_ids is Some
+    pub fn load(
+        turn_id: &i32,
+        territory_ids: Option<&Vec<i32>>,
+        conn: &mut PgConnection,
+    ) -> Result<Vec<TerritoryOwners>, Error> {
+        let mut query = territory_ownership::table
             .filter(territory_ownership::turn_id.eq(turn_id))
-            .load::<TerritoryOwners>(conn)
+            .into_boxed();
+        if let Some(territory_ids) = territory_ids {
+            query = query.filter(territory_ownership::territory_id.eq_any(territory_ids));
+        }
+        query.load::<TerritoryOwners>(conn)
     }
 }
 
 impl TerritoryOwnersInsert {
-    #[must_use] pub fn new(
+    #[must_use]
+    pub fn new(
         territory: &TerritoryOwners,
         owner: i32,
         random_number: Option<f64>,
         mvp: Option<i32>,
+        is_respawn: bool,
     ) -> Self {
         TerritoryOwnersInsert {
             territory_id: territory.territory_id,
@@ -341,6 +355,7 @@ impl TerritoryOwnersInsert {
             previous_owner_id: territory.owner_id,
             random_number: random_number.unwrap_or(0_f64),
             mvp,
+            is_respawn: is_respawn,
         }
     }
 

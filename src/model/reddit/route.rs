@@ -29,8 +29,8 @@ pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> 
 
 #[get("/logout")]
 pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    cookies.remove_private(Cookie::named("jwt"));
-    cookies.remove_private(Cookie::named("username"));
+    cookies.remove_private(Cookie::build("jwt"));
+    cookies.remove_private(Cookie::build("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
     //TODO: Implement a deletion call to reddit.
 }
@@ -160,7 +160,7 @@ pub(crate) async fn callback(
     // Now we build a private `Cookie` to return to the user
     // that contains the user's username (which is used in some low-sec processes)
     cookies.add_private(
-        Cookie::build("username", uname)
+        Cookie::build(("username", uname))
             .same_site(SameSite::Lax)
             .domain(config.settings.base_url.clone())
             .path("/")
@@ -173,7 +173,7 @@ pub(crate) async fn callback(
     match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
         Ok(s) => {
             cookies.add_private(
-                Cookie::build("jwt", s)
+                Cookie::build(("jwt", s))
                     .same_site(SameSite::Lax)
                     .domain(config.settings.base_url.clone())
                     .path("/")
