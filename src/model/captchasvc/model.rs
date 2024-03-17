@@ -44,10 +44,10 @@ impl Captchas {
             .select((captchas::title, captchas::content, captchas::creation))
             .first::<Captchas>(conn)?;
         true_content.delete(conn)?;
-        Ok(
-            true_content.creation.timestamp() - Utc::now().naive_utc().timestamp() < 600
-                && content == true_content.content,
-        )
+        Ok(true_content.creation.and_utc().timestamp()
+            - Utc::now().naive_utc().and_utc().timestamp()
+            < 600
+            && content == true_content.content)
     }
 
     pub fn delete(&self, conn: &mut PgConnection) -> Result<usize, diesel::result::Error> {

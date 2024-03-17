@@ -19,8 +19,8 @@ pub(crate) fn login(oauth2: OAuth2<DiscordUserInfo>, cookies: &CookieJar<'_>) ->
 #[allow(dead_code)]
 #[get("/logout")]
 pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    cookies.remove_private(Cookie::named("jwt"));
-    cookies.remove_private(Cookie::named("username"));
+    cookies.remove_private(Cookie::build("jwt"));
+    cookies.remove_private(Cookie::build("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
     //TODO: Implement a deletion call to reddit.
 }
@@ -54,10 +54,13 @@ pub(crate) async fn callback(
     match userinfo {
         Ok(user_info) => {
             let new_user = UpsertableUser {
-                uname: String::from(user_info.name()),
+                uname: user_info.name(),
                 platform: String::from("discord"),
             };
-            match conn.run(move |c| UpsertableUser::upsert(new_user, c)).await {
+            match conn
+                .run(move |c| UpsertableUser::upsert(&new_user, c))
+                .await
+            {
                 Ok(_n) => {
                     let name = user_info.name();
                     match conn
@@ -76,22 +79,20 @@ pub(crate) async fn callback(
                                 exp: timestamp,
                             };
                             cookies.add_private(
-                                Cookie::build("username", user_info.name())
+                                Cookie::build(("username", user_info.name()))
                                     .same_site(SameSite::Lax)
                                     .domain(config.settings.base_url.clone())
                                     .path("/")
-                                    .max_age(Duration::hours(168))
-                                    .finish(),
+                                    .max_age(Duration::hours(168)),
                             );
                             match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
                                 Ok(s) => {
                                     cookies.add_private(
-                                        Cookie::build("jwt", s)
+                                        Cookie::build(("jwt", s))
                                             .same_site(SameSite::Lax)
                                             .domain(config.settings.base_url.clone())
                                             .path("/")
-                                            .max_age(Duration::hours(720))
-                                            .finish(),
+                                            .max_age(Duration::hours(720)),
                                     );
                                     std::result::Result::Ok(Redirect::to("/"))
                                 }

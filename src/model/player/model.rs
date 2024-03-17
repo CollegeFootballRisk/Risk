@@ -3,7 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
-use crate::model::{Colors, Ratings, Stats, Team, Turn, UserId};
+use crate::model::{Colors, Ratings, Stats, Team, UserId};
 use crate::schema::{award_info, awards, moves, past_turns, teams, territories, turninfo, users};
 use diesel::prelude::*;
 use diesel::result::Error;
@@ -20,15 +20,15 @@ pub struct Award {
     info: String,
 }
 
-#[derive(Serialize)]
-pub(crate) struct Player {
-    pub(crate) id: i32,
-    pub(crate) name: String,
-    pub(crate) team: Team,
-    pub(crate) ratings: Ratings,
-    pub(crate) stats: Stats,
-    pub(crate) turns: Vec<Turn>,
-}
+// #[derive(Serialize)]
+// pub(crate) struct Player {
+//     pub(crate) id: i32,
+//     pub(crate) name: String,
+//     pub(crate) team: Team,
+//     pub(crate) ratings: Ratings,
+//     pub(crate) stats: Stats,
+//     pub(crate) turns: Vec<Turn>,
+// }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 /// A brief summary of a Player on a Team to display on the Team's page

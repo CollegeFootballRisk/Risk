@@ -29,8 +29,8 @@ pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> 
 
 #[get("/logout")]
 pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    cookies.remove_private(Cookie::named("jwt"));
-    cookies.remove_private(Cookie::named("username"));
+    cookies.remove_private(Cookie::build("jwt"));
+    cookies.remove_private(Cookie::build("username"));
     Flash::success(Redirect::to("/"), "Successfully logged out.")
     //TODO: Implement a deletion call to reddit.
 }
@@ -75,14 +75,15 @@ pub(crate) async fn callback(
 
     let uname_ban_chk = uname.clone();
     // We also want to ensure the user has a validated email with Reddit:
-    if !user_info
+    let has_verified_email = user_info
         .get("has_verified_email")
         .unwrap_or_else(|| {
             dbg!("Error serializing user email check");
             &serde_json::json!(false)
         })
         .as_bool()
-        .unwrap_or(false)
+        .unwrap_or(false);
+    if !has_verified_email
         && conn
             .run(move |c| {
                 bans::table
@@ -115,15 +116,16 @@ pub(crate) async fn callback(
 
     dbg!(user_info.get("is_suspended"));
 
-    if user_info
+    let is_suspended = user_info
         .get("is_suspended")
         .unwrap_or_else(|| {
             dbg!("Error: unable to know if user was suspended");
             &serde_json::json!(false)
         })
         .as_bool()
-        .unwrap_or(false)
-    {
+        .unwrap_or(false);
+
+    if is_suspended {
         conn.run(move |c| UpsertableUser::flag(uname_2_int, c))
             .await
             .map_err(|e| {
@@ -160,12 +162,11 @@ pub(crate) async fn callback(
     // Now we build a private `Cookie` to return to the user
     // that contains the user's username (which is used in some low-sec processes)
     cookies.add_private(
-        Cookie::build("username", uname)
+        Cookie::build(("username", uname))
             .same_site(SameSite::Lax)
             .domain(config.settings.base_url.clone())
             .path("/")
-            .max_age(Duration::hours(720))
-            .finish(),
+            .max_age(Duration::hours(720)),
     );
 
     // Now we build the private JWT `Cookie` to return to the user
@@ -173,12 +174,11 @@ pub(crate) async fn callback(
     match Claims::put(config.settings.cookie_key.as_bytes(), new_claims) {
         Ok(s) => {
             cookies.add_private(
-                Cookie::build("jwt", s)
+                Cookie::build(("jwt", s))
                     .same_site(SameSite::Lax)
                     .domain(config.settings.base_url.clone())
                     .path("/")
-                    .max_age(Duration::hours(720))
-                    .finish(),
+                    .max_age(Duration::hours(720)),
             );
             std::result::Result::Ok(Redirect::to("/"))
         }

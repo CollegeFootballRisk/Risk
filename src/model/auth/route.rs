@@ -4,8 +4,8 @@
 use crate::db::DbConn;
 use crate::model::reddit::route::{audit_trail, Cip, UA};
 use crate::model::{
-    Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
-    Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
+    Claims, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam, Poll, PollResponse,
+    Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
 };
 use crate::schema::{
     cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,
@@ -71,6 +71,20 @@ pub(crate) async fn me(
     }
 }
 
+pub(crate) fn has_territories(
+    turn_id: &i32,
+    team_id: &i32,
+    conn: &mut PgConnection,
+) -> Result<bool, diesel::result::Error> {
+    use diesel::dsl::count;
+    Ok(territory_ownership::table
+        .select(count(territory_ownership::id))
+        .filter(territory_ownership::turn_id.eq(turn_id))
+        .filter(territory_ownership::owner_id.eq(team_id))
+        .first::<i64>(conn)?
+        > 0)
+}
+
 #[get("/join?<team>", rank = 1)]
 pub(crate) async fn join_team(
     team: i32,
@@ -100,12 +114,14 @@ pub(crate) async fn join_team(
 
     // Does the team they want to join have territories?
     // check that team has territories
-    let has_territories: bool = conn
-        .run(move |connection| CurrentStrength::load_id(team, connection))
+    let latest = conn
+        .run(Latest::latest)
         .await
-        .map_err(|_| crate::Error::BadRequest {})?
-        .territories
-        > 0;
+        .map_err(|_| crate::Error::InternalServerError {})?;
+
+    let has_territories: bool = conn
+        .run(move |c| has_territories(&latest.id, &team, c))
+        .await?;
     // If user has no team (and thus no active_team), then allow them to join anything
     if users.active_team.unwrap_or_default().name.is_some() {
         return std::result::Result::Err(crate::Error::BadRequest {});
@@ -284,7 +300,7 @@ pub(crate) async fn make_move<'v>(
         let v2_verif = match &movesub.token_v2 {
             None => false,
             Some(mv_tv2) => {
-                if mv_tv2 == "" {
+                if mv_tv2.is_empty() {
                     return std::result::Result::Ok(Json(StatusWrapper {
                         code: 4004,
                         message: "Captcha required.".to_string(),
@@ -306,11 +322,7 @@ pub(crate) async fn make_move<'v>(
                         dbg!(e);
                         crate::Error::InternalServerError {}
                     })?;
-                if r_v2_result.score > 0.5 {
-                    true
-                } else {
-                    false
-                }
+                r_v2_result.score > 0.5
             }
         };
 

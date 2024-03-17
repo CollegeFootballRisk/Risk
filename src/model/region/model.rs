@@ -6,7 +6,6 @@ use crate::schema::regions;
 use diesel::prelude::*;
 
 use schemars::JsonSchema;
-use std::result::Result;
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub(crate) struct Region {

@@ -29,6 +29,7 @@ table! {
         color_1 -> Text,
         color_2 -> Text,
         seasons -> Array<Int4>,
+        respawn_count -> Int4,
     }
 }
 
@@ -81,6 +82,7 @@ table! {
     regions (id){
         id -> Int4,
         name -> Text,
+        submap  -> Int4,
     }
 }
 
@@ -174,6 +176,7 @@ table! {
         previous_owner_id -> Int4,
         random_number -> Double,
         mvp -> Nullable<Int4>,
+        is_respawn -> Bool,
     }
 }
 
@@ -392,6 +395,7 @@ allow_tables_to_appear_in_same_query!(users, awards, award_info);
 diesel::joinable!(awards -> users (user_id));
 diesel::joinable!(awards -> award_info (award_id));
 diesel::joinable!(statistics -> turninfo (turn_id));
+diesel::joinable!(territories -> regions (region));
 
 allow_tables_to_appear_in_same_query!(
     past_turns,
