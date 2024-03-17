@@ -164,8 +164,7 @@ pub(crate) async fn callback(
             .same_site(SameSite::Lax)
             .domain(config.settings.base_url.clone())
             .path("/")
-            .max_age(Duration::hours(720))
-            .finish(),
+            .max_age(Duration::hours(720)),
     );
 
     // Now we build the private JWT `Cookie` to return to the user
@@ -177,8 +176,7 @@ pub(crate) async fn callback(
                     .same_site(SameSite::Lax)
                     .domain(config.settings.base_url.clone())
                     .path("/")
-                    .max_age(Duration::hours(720))
-                    .finish(),
+                    .max_age(Duration::hours(720)),
             );
             std::result::Result::Ok(Redirect::to("/"))
         }

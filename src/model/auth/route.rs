@@ -4,8 +4,8 @@
 use crate::db::DbConn;
 use crate::model::reddit::route::{audit_trail, Cip, UA};
 use crate::model::{
-    Claims, CurrentStrength, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam,
-    Poll, PollResponse, Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
+    Claims, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam, Poll, PollResponse,
+    Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
 };
 use crate::schema::{
     cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,

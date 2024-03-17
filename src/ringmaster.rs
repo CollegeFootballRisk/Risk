@@ -131,6 +131,7 @@ fn shuffle_array<T>(items: &mut Vec<T>) {
 fn gather_reprocessable_territories(
     territories: Vec<TerritoryOwnersInsert>,
 ) -> (Vec<TerritoryOwnersInsert>, Vec<TerritoryOwnersInsert>) {
+    dbg!(territories.len());
     // We'll populate this first with NCAA's territories, then randomly the pre-owned territories
     let mut reprocessable: Vec<TerritoryOwnersInsert> = Vec::new();
     // This holds pre-owned territories
@@ -202,6 +203,7 @@ fn reassign_processed_territories(
 ) -> Vec<i32> {
     let mut saved_teams: Vec<i32> = vec![];
     let mut territory_pointer = 0;
+    dbg!(&eligible_teams);
     for team in eligible_teams {
         if territory_pool.len() > territory_pointer {
             // Remove territory from existing owner's stats
@@ -785,7 +787,7 @@ fn chaos_update(
     // Goes 0, 1, 2, 3, num-1; excludes num just like normal languages
     let mut new_stuff = Vec::new();
     #[derive(Insertable)]
-    #[diesel(table_name = "territory_adjacency")]
+    #[diesel(table_name = territory_adjacency)]
     struct TerritoryAdjacent<'a> {
         territory_id: i32,
         adjacent_id: i32,
@@ -971,6 +973,8 @@ fn runtime() -> Result<(), diesel::result::Error> {
             let (unreprocessable, mut reprocessable) =
                 gather_reprocessable_territories(secondary_owners.clone());
 
+            dbg!(unreprocessable.len(), reprocessable.len());
+
             secondary_owners = unreprocessable;
             // Assign eliminated teams territories from the reprocessable pool, if eligible
             let saved_teams = reassign_processed_territories(
@@ -980,6 +984,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
                 &mut secondary_territory_stats,
                 turninfoblock.id,
             );
+            secondary_owners.append(&mut reprocessable);
             // Update the statistics and whatnot
             assert_eq!(
                 add_one_to_team_respawns(&saved_teams, &mut conn)?,
@@ -1015,8 +1020,8 @@ fn runtime() -> Result<(), diesel::result::Error> {
         Ok(_ok) => {
             println!("Update turninfo success.")
         }
-        Err(_e) => {
-            println!("Error updating turninfo.")
+        Err(e) => {
+            println!("Error updating turninfo. {e:?}")
         }
     }
     let aone = (turninfoblock.allornothingenabled == Some(true)
