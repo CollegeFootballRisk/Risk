@@ -10,7 +10,6 @@ use diesel::prelude::*;
 
 use schemars::JsonSchema;
 use serde_json::Value;
-use std::result::Result;
 
 #[derive(Serialize, Queryable, Deserialize, JsonSchema)]
 pub(crate) struct Territory {
