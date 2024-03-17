@@ -14,7 +14,6 @@ pub mod schema;
 pub mod structs;
 
 use chrono::{DateTime, Datelike, Duration, NaiveDateTime, NaiveTime, Timelike, Utc};
-use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::sql_query;
 use rand::prelude::*;
@@ -1080,7 +1079,7 @@ fn main() {
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
-    use chrono::{NaiveDate, NaiveTime};
+    use chrono::NaiveDate;
 
     #[test]
     fn test_next_day_in_seq() {

@@ -5,7 +5,6 @@
 use crate::schema::{stats, teams, territory_ownership, territory_stats, turninfo, turns};
 use crate::Utc;
 use chrono::NaiveDateTime;
-use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::sql_types::Bool;
