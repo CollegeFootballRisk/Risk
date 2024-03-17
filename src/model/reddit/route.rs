@@ -75,14 +75,15 @@ pub(crate) async fn callback(
 
     let uname_ban_chk = uname.clone();
     // We also want to ensure the user has a validated email with Reddit:
-    if !user_info
+    let has_verified_email = user_info
         .get("has_verified_email")
         .unwrap_or_else(|| {
             dbg!("Error serializing user email check");
             &serde_json::json!(false)
         })
         .as_bool()
-        .unwrap_or(false)
+        .unwrap_or(false);
+    if !has_verified_email
         && conn
             .run(move |c| {
                 bans::table
@@ -115,15 +116,16 @@ pub(crate) async fn callback(
 
     dbg!(user_info.get("is_suspended"));
 
-    if user_info
+    let is_suspended = user_info
         .get("is_suspended")
         .unwrap_or_else(|| {
             dbg!("Error: unable to know if user was suspended");
             &serde_json::json!(false)
         })
         .as_bool()
-        .unwrap_or(false)
-    {
+        .unwrap_or(false);
+
+    if is_suspended {
         conn.run(move |c| UpsertableUser::flag(uname_2_int, c))
             .await
             .map_err(|e| {

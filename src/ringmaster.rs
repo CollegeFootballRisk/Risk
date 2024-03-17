@@ -47,7 +47,7 @@ where
     fn unique(self: &mut Vec<T>) -> Self {
         let mut seen: HashSet<T> = HashSet::new();
         self.retain(|item| seen.insert(item.clone()));
-        return self.to_vec();
+        self.to_vec()
     }
 }
 
@@ -195,7 +195,7 @@ fn get_territories_by_submaps(
 
 fn reassign_processed_territories(
     eligible_teams: &Vec<i32>,
-    territory_pool: &mut Vec<TerritoryOwnersInsert>,
+    territory_pool: &mut [TerritoryOwnersInsert],
     secondary_stats: &mut BTreeMap<i32, Stats>,
     secondary_territory_stats: &mut Vec<TerritoryStats>,
     turn_id: i32,
@@ -224,7 +224,7 @@ fn reassign_processed_territories(
             // Update territory stats to include this new team
             secondary_territory_stats.push(TerritoryStats {
                 team: *team,
-                turn_id: turn_id,
+                turn_id,
                 territory: territory_pool[territory_pointer].territory_id,
                 ..TerritoryStats::default()
             });
@@ -276,7 +276,7 @@ fn process_territories(
     // If this is for the respawn map and a team has moved to main map, then we vacate
     // their territories; we do this by discarding their moves and on territories w/ 0 moves
     // reassigning to NCAA (id 0)
-    if must_vacate.len() > 0 {
+    if !must_vacate.is_empty() {
         players.retain(|x| !must_vacate.contains(&x.team));
     }
 
@@ -314,7 +314,7 @@ fn process_territories(
                 dbg!("Zero Team");
 
                 // In the case that respawn = true and the owning team
-                let territory_owner_id = if must_vacate.len() > 0 {
+                let territory_owner_id = if !must_vacate.is_empty() {
                     0
                 } else {
                     territory.owner_id
@@ -944,7 +944,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
             .unique()
             .iter()
             .filter(|v| !alive_teams.contains(*v))
-            .map(|v| v.clone())
+            .copied()
             .collect();
         // Now that we know which teams died, query to see which are eligible for respawn
         let mut eligible_eliminated_teams =
@@ -965,7 +965,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
             alive_teams,
         );
 
-        if eligible_eliminated_teams.len() > 0 {
+        if !eligible_eliminated_teams.is_empty() {
             // Shuffle the pool of eliminated teams
             shuffle_array(&mut eligible_eliminated_teams);
             // Gather a pool of available reassignable territories

@@ -354,7 +354,7 @@ impl TerritoryOwnersInsert {
             previous_owner_id: territory.owner_id,
             random_number: random_number.unwrap_or(0_f64),
             mvp,
-            is_respawn: is_respawn,
+            is_respawn,
         }
     }
 

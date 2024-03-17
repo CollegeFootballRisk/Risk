@@ -300,7 +300,7 @@ pub(crate) async fn make_move<'v>(
         let v2_verif = match &movesub.token_v2 {
             None => false,
             Some(mv_tv2) => {
-                if mv_tv2 == "" {
+                if mv_tv2.is_empty() {
                     return std::result::Result::Ok(Json(StatusWrapper {
                         code: 4004,
                         message: "Captcha required.".to_string(),
@@ -322,11 +322,7 @@ pub(crate) async fn make_move<'v>(
                         dbg!(e);
                         crate::Error::InternalServerError {}
                     })?;
-                if r_v2_result.score > 0.5 {
-                    true
-                } else {
-                    false
-                }
+                r_v2_result.score > 0.5
             }
         };
 

@@ -54,7 +54,7 @@ pub(crate) async fn callback(
     match userinfo {
         Ok(user_info) => {
             let new_user = UpsertableUser {
-                uname: String::from(user_info.name()),
+                uname: user_info.name(),
                 platform: String::from("discord"),
             };
             match conn
