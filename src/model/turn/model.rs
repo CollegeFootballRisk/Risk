@@ -8,15 +8,15 @@ use diesel::result::Error;
 use schemars::JsonSchema;
 use serde_json::Value;
 
-#[derive(Serialize)]
-pub(crate) struct Turn {
-    pub(crate) season: i32,
-    pub(crate) day: i32,
-    pub(crate) stars: i32,
-    pub(crate) mvp: bool,
-    pub(crate) territory: String,
-    pub(crate) team: String,
-}
+// #[derive(Serialize)]
+// pub(crate) struct Turn {
+//     pub(crate) season: i32,
+//     pub(crate) day: i32,
+//     pub(crate) stars: i32,
+//     pub(crate) mvp: bool,
+//     pub(crate) territory: String,
+//     pub(crate) team: String,
+// }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
 pub(crate) struct LastTurn {

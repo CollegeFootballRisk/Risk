@@ -171,19 +171,19 @@ impl CurrentStrength {
             .first::<CurrentStrength>(conn)
     }
 
-    pub(crate) fn load_id(team: i32, conn: &mut PgConnection) -> Result<CurrentStrength, Error> {
-        statistics::table
-            .select((
-                statistics::tname,
-                statistics::playercount,
-                statistics::merccount,
-                statistics::starpower,
-                statistics::territorycount,
-            ))
-            .filter(statistics::team.eq(team))
-            .order(statistics::turn_id.desc())
-            .first::<CurrentStrength>(conn)
-    }
+    // pub(crate) fn load_id(team: i32, conn: &mut PgConnection) -> Result<CurrentStrength, Error> {
+    //     statistics::table
+    //         .select((
+    //             statistics::tname,
+    //             statistics::playercount,
+    //             statistics::merccount,
+    //             statistics::starpower,
+    //             statistics::territorycount,
+    //         ))
+    //         .filter(statistics::team.eq(team))
+    //         .order(statistics::turn_id.desc())
+    //         .first::<CurrentStrength>(conn)
+    // }
     /*        statistics::table
             .select((
                 statistics::tname,
