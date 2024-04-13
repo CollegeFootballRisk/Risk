@@ -12,6 +12,6 @@ pub(crate) struct DiscordUserInfo {
 
 impl DiscordUserInfo {
     pub(crate) fn name(&self) -> String {
-        self.username.clone() + &String::from("#") + &self.discriminator
+        self.username.clone() + &String::from("$") + &self.discriminator
     }
 }

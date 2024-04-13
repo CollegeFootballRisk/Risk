@@ -28,9 +28,19 @@ pub(crate) fn login(oauth2: OAuth2<RedditUserInfo>, cookies: &CookieJar<'_>) -> 
 }
 
 #[get("/logout")]
-pub(crate) async fn logout(cookies: &CookieJar<'_>) -> Flash<Redirect> {
-    cookies.remove_private(Cookie::build("jwt"));
-    cookies.remove_private(Cookie::build("username"));
+pub(crate) async fn logout(cookies: &CookieJar<'_>, config: &State<SysInfo>) -> Flash<Redirect> {
+    cookies.remove_private(
+        Cookie::build("jwt")
+            .same_site(SameSite::Lax)
+            .domain(config.settings.base_url.clone())
+            .path("/"),
+    );
+    cookies.remove_private(
+        Cookie::build("username")
+            .same_site(SameSite::Lax)
+            .domain(config.settings.base_url.clone())
+            .path("/"),
+    );
     Flash::success(Redirect::to("/"), "Successfully logged out.")
     //TODO: Implement a deletion call to reddit.
 }

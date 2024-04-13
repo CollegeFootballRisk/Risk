@@ -936,7 +936,11 @@ fn runtime() -> Result<(), diesel::result::Error> {
             .iter()
             .map(|v| v.owner_id)
             .collect::<Vec<i32>>()
-            .unique();
+            .unique()
+            .iter()
+            .filter(|v| **v != 131)
+            .copied()
+            .collect::<Vec<i32>>();
         let eliminated_teams = owners
             .iter()
             .map(|v| v.previous_owner_id)
