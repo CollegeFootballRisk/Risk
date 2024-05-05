@@ -124,7 +124,7 @@ fn rocket() -> _ {
         .mount(
             "/docs/",
             make_swagger_ui(&SwaggerUIConfig {
-                url: "/openapi.json".to_owned(),
+                url: "/api/openapi.json".to_owned(),
                 ..Default::default()
             }),
         );
