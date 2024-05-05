@@ -34,6 +34,7 @@ use crate::model::{auth, player, region, stats, sys, team, territory, turn};
 use rocket::fs::FileServer;
 //use rocket_governor::rocket_governor_catcher;
 use rocket_oauth2::OAuth2;
+use rocket_okapi::settings::OpenApiSettings;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use rocket_recaptcha_v3::ReCaptcha;
 
@@ -61,7 +62,7 @@ fn rocket() -> _ {
     ];
 
     // The paths on the /api endpoint. Defined up here for cleanliness
-    let api_paths = openapi_get_routes![
+    let mut api_paths = openapi_get_routes_spec![
         player::route::player,
         player::route::search,
         player::route::player_full,
@@ -116,17 +117,24 @@ fn rocket() -> _ {
                 catchers::not_authorized
             ], // Add rocket_governer_catcher here
         )
-        .mount("/api", api_paths)
+        //.mount("/api", api_paths)
         .mount("/", FileServer::from(static_dir).rank(2))
         .mount("/", root_paths)
         .mount("/auth", auth_paths)
         .mount(
             "/docs/",
             make_swagger_ui(&SwaggerUIConfig {
-                url: "../api/openapi.json".to_owned(),
+                url: "/openapi.json".to_owned(),
                 ..Default::default()
             }),
         );
+
+    let openapi_settings = OpenApiSettings::default();
+    //let let custom_route_spec = (vec![], custom_spec());
+    api_paths.1.info = custom_openapi_spec();
+    mount_endpoints_and_merged_docs! {
+        saturn_v, "/api".to_owned(), openapi_settings, "/" => api_paths
+    };
 
     global_info_private.settings = saturn_v
         .figment()
@@ -166,6 +174,43 @@ fn rocket() -> _ {
     saturn_v = saturn_v.attach(ReCaptcha::fairing_v2());
 
     saturn_v
+}
+
+fn custom_openapi_spec() -> rocket_okapi::okapi::openapi3::Info {
+    use rocket_okapi::okapi::openapi3::*;
+    /*OpenApi {
+    openapi: OpenApi::default_version(),
+    info: */
+    Info {
+            title: "College Football Risk".to_owned(),
+            description: Some("A public API open to all, powered by Rust Risk.".to_owned()),
+            terms_of_service: Some(
+                "This is a public API; please avoid high-velocity requests as this is detrimental to other API users.".to_owned(),
+            ),
+            contact: Some(Contact {
+                name: Some("Submit Bug".to_owned()),
+                url: Some("https://github.com/CollegeFootballRisk/Risk/issues/new/choose".to_owned()),
+                email: None,
+                ..Default::default()
+            }),
+            license: Some(License {
+                name: "MPLv2".to_owned(),
+                url: Some("https://github.com/CollegeFootballRisk/Risk".to_owned()),
+                ..Default::default()
+            }),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+            ..Default::default()
+    }
+    /*servers: vec![
+            Server {
+                url: "/api".to_owned(),
+                description: Some("Main CFBR Api".to_owned()),
+                ..Default::default()
+            },
+        ],
+        // Add paths that do not exist in Rocket (or add extra info to existing paths)
+        ..Default::default()
+    }*/
 }
 
 /* use serde_derive::Deserialize;
