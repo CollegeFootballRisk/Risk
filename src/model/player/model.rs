@@ -400,13 +400,14 @@ impl TeamPlayer {
     }
 }
 
+allow_tables_to_appear_in_same_query!(users, moves);
+
 impl TeamMerc {
     pub(crate) fn load_mercs(
         tname: Vec<String>,
         conn: &mut PgConnection,
     ) -> Result<Vec<TeamMerc>, diesel::result::Error> {
         let ciTname: Vec<String> = tname;
-        allow_tables_to_appear_in_same_query!(users, moves);
         let teamIds = teams::table
             .filter(teams::tname.eq_any(ciTname))
             .select(teams::id)
