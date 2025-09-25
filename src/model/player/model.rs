@@ -400,6 +400,8 @@ impl TeamPlayer {
     }
 }
 
+allow_tables_to_appear_in_same_query!(users, moves);
+
 impl TeamMerc {
     pub(crate) fn load_mercs(
         tname: Vec<String>,
