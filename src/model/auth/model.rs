@@ -146,12 +146,7 @@ impl MoveInfo {
             .inner_join(territories::table.on(turns::territory.eq(territories::id)))
             .select(territories::name)
             .first(conn);
-        MoveInfo {
-            territory: match r {
-                Ok(n) => Some(n),
-                Err(_E) => None,
-            },
-        }
+        MoveInfo { territory: r.ok() }
     }
 }
 

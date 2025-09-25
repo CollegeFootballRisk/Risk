@@ -2,7 +2,6 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#![feature(extract_if)]
 #[macro_use]
 extern crate diesel;
 #[macro_use]
@@ -119,7 +118,7 @@ fn get_mvp(mut territory_players: Vec<PlayerMoves>, test: bool) -> Option<Player
 //    shuffle_teams(&mut teams);
 //    // teams is now shuffled
 //  ```
-fn shuffle_array<T>(items: &mut Vec<T>) {
+fn shuffle_array<T>(items: &mut [T]) {
     let mut rng = thread_rng();
 
     items.shuffle(&mut rng);
@@ -242,11 +241,11 @@ fn reassign_processed_territories(
 /// Mautamu has added lots of documentation here to understand what's going on.
 /// Inputs:
 /// - territories: Vec<TerritoryOwners>: These are the _current_ territory owner information
-///     e.g. territory id, owner id (current team who owns the territory), turn id (the current turn), and mvp (who won it)
+///   e.g. territory id, owner id (current team who owns the territory), turn id (the current turn), and mvp (who won it)
 /// - players: Vec<PlayerMoves>: These are the Moves made by the players today that we need to process.
-///     e.g. user's id, turn id, territory id, whether they're mvp (it comes in as false but we later tell the DB to set it to true if they're the MVP)
-///     the power, multiplier, and weight of the user, by the relationship power = multiplier * weight where weight is a function of starcount (see /src/model/auth/route.rs).
-/// Outputs:
+///   e.g. user's id, turn id, territory id, whether they're mvp (it comes in as false but we later tell the DB to set it to true if they're the MVP)
+///   the power, multiplier, and weight of the user, by the relationship power = multiplier * weight where weight is a function of starcount (see /src/model/auth/route.rs).
+///   Outputs:
 /// - Vec<TerritoryOwnersInsert>: The new territory ownership for tomorrow.
 /// - Vec<PlayerMoves>: The moves, with MVPs populated
 /// - BTreeMap<i32, Stats>: the statistics of the turn for each team
@@ -289,7 +288,7 @@ fn process_territories(
 
         // We collect all the players that placed a move on this territory
         let territory_players = players
-            .extract_if(|player| {
+            .extract_if(.., |player: &mut PlayerMoves| {
                 player.territory == territory.territory_id && player.alt_score < ALT_CUTOFF
             })
             .collect::<Vec<_>>();
@@ -603,7 +602,9 @@ fn process_territories(
                 // We collect the players that are on the winning team for MVPing.
                 let territory_victors = territory_players
                     .clone()
-                    .extract_if(|player| player.team == victor && player.alt_score < ALT_CUTOFF)
+                    .extract_if(.., |player: &mut PlayerMoves| {
+                        player.team == victor && player.alt_score < ALT_CUTOFF
+                    })
                     .collect::<Vec<_>>();
 
                 // We now determine the MVP from the players on the winning team.
@@ -1049,7 +1050,7 @@ fn runtime() -> Result<(), diesel::result::Error> {
     {
         match chaos_update(&owners, turninfoblock.id + 1, settings, &mut conn) {
             Ok(_) => println!("Chaos bridges updated."),
-            Err(e) => println!("Chaos bridges couldn't update. \n Error: {:?}", e),
+            Err(e) => println!("Chaos bridges couldn't update. \n Error: {e:?}"),
         }
     }
     Ok(())

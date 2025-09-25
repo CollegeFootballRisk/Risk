@@ -19,16 +19,12 @@ pub(crate) use player::*;
 pub(crate) use ratings::*;
 pub(crate) use stats::*;
 
+#[cfg(feature = "risk_discord")]
+pub(crate) use discord::*;
+#[cfg(feature = "risk_reddit")]
+pub(crate) use reddit::*;
 pub(crate) use region::*;
 pub(crate) use team::*;
 pub(crate) use territory::*;
 pub(crate) use turn::*;
 pub(crate) use user::*;
-#[cfg(feature = "risk_captcha")]
-pub(crate) mod captchasvc;
-#[cfg(feature = "risk_captcha")]
-pub(crate) use captchasvc::*;
-#[cfg(feature = "risk_discord")]
-pub(crate) use discord::*;
-#[cfg(feature = "risk_reddit")]
-pub(crate) use reddit::*;

@@ -191,7 +191,7 @@ pub(crate) async fn my_move(
 /// 4004: Captcha is required, but was not provided
 #[allow(unused_variables)]
 #[post("/move", rank = 1, format = "application/json", data = "<movesub>")]
-pub(crate) async fn make_move<'v>(
+pub(crate) async fn make_move(
     movesub: Json<MoveSub>,
     cookies: &CookieJar<'_>,
     cip: Cip,
@@ -306,7 +306,7 @@ pub(crate) async fn make_move<'v>(
                         message: "Captcha required.".to_string(),
                     }));
                 }
-                let rv_v2: String = format!("token={}", mv_tv2);
+                let rv_v2: String = format!("token={mv_tv2}");
                 let r_v2 = rocket::form::ValueField::parse(&rv_v2);
                 let recaptcha_token_v2 = ReCaptchaToken::from_value(r_v2)
                     .as_ref()
