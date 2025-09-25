@@ -588,7 +588,7 @@ fn process_territories(
                 }
 
                 // We now calculate the total power that was expended by ALL teams on the territory.
-                let totalpower: f64 = map.values().map(|x| (x.power)).sum();
+                let totalpower: f64 = map.values().map(|x| x.power).sum();
 
                 // We now generate the random number from 0 to the total power on the territory.
                 // We pass this in so we can run tests
