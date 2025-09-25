@@ -21,17 +21,11 @@ pub(crate) struct Claims {
     pub(crate) exp: usize,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct ClientInfo {
-    pub(crate) claims: Claims,
-    pub(crate) ip: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub(crate) struct Move {
-    pub(crate) attack: Option<i32>,
-    pub(crate) defend: Option<i32>,
-}
+//#[derive(Debug, Serialize, Deserialize)]
+//pub(crate) struct ClientInfo {
+//    pub(crate) claims: Claims,
+//    pub(crate) ip: String,
+//}
 
 #[derive(Serialize, Deserialize)]
 pub(crate) struct MoveInfo {

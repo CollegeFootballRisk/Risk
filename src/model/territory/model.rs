@@ -11,15 +11,6 @@ use diesel::prelude::*;
 use schemars::JsonSchema;
 use serde_json::Value;
 
-#[derive(Serialize, Queryable, Deserialize, JsonSchema)]
-pub(crate) struct Territory {
-    id: i32,
-    name: String,
-    owner: String,
-    region: i32,
-    region_name: i32,
-}
-
 #[derive(Debug, Serialize, Queryable, Deserialize, JsonSchema)]
 pub(crate) struct TerritoryWithNeighbors {
     pub(crate) id: i32,
