@@ -5,8 +5,6 @@ authors = ["Mautamu <mautamu@protonmail.com>"]
 edition = "2021"
 
 [dependencies]
-base64 = {version = "0.20.0", optional=true}
-captcha = {version = "0.0.9", optional=true}
 chrono = {version = "0.4.19", features = ["serde"]}
 git-version = "0.3.4"
 time = "0.3"

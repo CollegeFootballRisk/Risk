@@ -39,7 +39,6 @@ use rocket::fs::FileServer;
 use rocket_oauth2::OAuth2;
 use rocket_oauth2::OAuthConfig;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
-use rocket_recaptcha_v3::ReCaptcha;
 
 #[openapi(skip)]
 #[get("/my_move", rank = 0)]
@@ -178,12 +177,9 @@ fn rocket() -> _ {
     // Attach Captcha routes
     #[cfg(feature = "captcha")]
     {
-        use crate::model::captchasvc;
-        saturn_v = saturn_v.mount("/auth", routes![captchasvc::route::captchaServe]);
+        use rocket_recaptcha_v3::ReCaptcha;
+        saturn_v = saturn_v.attach(ReCaptcha::fairing());
+        saturn_v = saturn_v.attach(ReCaptcha::fairing_v2());
     }
-
-    saturn_v = saturn_v.attach(ReCaptcha::fairing());
-    saturn_v = saturn_v.attach(ReCaptcha::fairing_v2());
-
     saturn_v
 }
