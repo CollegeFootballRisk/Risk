@@ -70,7 +70,7 @@ pub(crate) async fn callback(
                         Ok(user) => {
                             let datetime = Utc::now();
                             let timestamp: usize = 2_529_000 + datetime.timestamp() as usize;
-                            dbg!(&token);
+                            //dbg!(&token);
                             let new_claims = Claims {
                                 id: user.id,
                                 user: user.uname.to_string(),
