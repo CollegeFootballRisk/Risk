@@ -44,6 +44,7 @@ pub struct MoveSub {
     pub target: i32,
     pub aon: Option<bool>,
     pub token: Option<String>,
+    #[allow(dead_code)]
     pub token_v2: Option<String>,
 }
 
