@@ -43,7 +43,7 @@ impl Default for SystemInformation {
             discord: cfg!(feature = "risk_discord"),
             reddit: cfg!(feature = "risk_reddit"),
             groupme: cfg!(feature = "risk_groupme"),
-            image: cfg!(feature = "risk_image"),
+            image: false,
             chaos: cfg!(feature = "chaos"),
             captcha: cfg!(feature = "risk_captcha"),
         }

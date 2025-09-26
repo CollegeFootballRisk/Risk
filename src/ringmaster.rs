@@ -8,7 +8,6 @@ extern crate diesel;
 extern crate serde_derive;
 extern crate rand;
 extern crate rand_chacha;
-pub mod optional;
 pub mod schema;
 pub mod structs;
 
@@ -1042,9 +1041,6 @@ fn runtime() -> Result<(), diesel::result::Error> {
         }
         Err(e) => println!("Failed to make new turn {e:?}"),
     }
-
-    #[cfg(feature = "risk_image")]
-    optional::image::make_image(&owners, &mut conn);
 
     #[cfg(feature = "chaos")]
     {
