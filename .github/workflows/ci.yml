@@ -34,13 +34,13 @@ jobs:
     - name: Cache Dependencies
       uses: Swatinem/rust-cache@ce325b60658c1b38465c06cc965b79baf32c1e72
     - name: Build
-      run: cargo test --release --no-run --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
+      run: cargo test --release --no-run --all-targets --features default,risk_discord,risk_groupme,risk_reddit,risk_captcha
     - name: Run tests
-      run: cargo test --release --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha
+      run: cargo test --release --all-targets --features default,risk_discord,risk_groupme,risk_reddit,risk_captcha
     - name: Install Clippy
       run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
     - name: Clippy
-      run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_image,risk_reddit,risk_captcha -- -A unreachable_pub
+      run: cargo +nightly clippy --all-targets --features default,risk_discord,risk_groupme,risk_reddit,risk_captcha -- -A unreachable_pub
     - name: Generate release tag
       id: tag
       run: |
