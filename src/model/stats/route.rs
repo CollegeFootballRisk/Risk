@@ -1,8 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::catchers::Status;
 use crate::db::DbConn;
+use crate::error::{Error, Result};
 use crate::model::{CurrentStrength, Heat, Latest, Odds, StatHistory, StatLeaderboard};
 use rocket::serde::json::Json;
 
@@ -10,14 +10,11 @@ use rocket::serde::json::Json;
 /// Gives current team strength (from prior day's move).
 #[openapi(tag = "Stats", ignore = "conn")]
 #[get("/stats/team?<team>")]
-pub(crate) async fn currentstrength(
-    team: String,
-    conn: DbConn,
-) -> Result<Json<CurrentStrength>, Status> {
+pub(crate) async fn currentstrength(team: String, conn: DbConn) -> Result<Json<CurrentStrength>> {
     let strength = conn.run(|c| CurrentStrength::load(team, c)).await;
     match strength {
-        Ok(strength) => std::result::Result::Ok(Json(strength)),
-        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+        Ok(strength) => Ok(Json(strength)),
+        _ => Err(Error::BadRequest {}),
     }
 }
 
@@ -29,15 +26,15 @@ pub(crate) async fn leaderboard(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
-) -> Result<Json<Vec<StatLeaderboard>>, Status> {
+) -> Result<Json<Vec<StatLeaderboard>>> {
     match (season, day) {
         (Some(season), Some(day)) => {
             let leaderboard = conn
                 .run(move |c| StatLeaderboard::load(season, day, c))
                 .await;
             match leaderboard {
-                Ok(strength) => std::result::Result::Ok(Json(strength)),
-                _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+                Ok(strength) => Ok(Json(strength)),
+                _ => Err(Error::BadRequest {}),
             }
         }
         _ => {
@@ -48,11 +45,11 @@ pub(crate) async fn leaderboard(
                         .run(move |c| StatLeaderboard::load(current.season, current.day - 1, c))
                         .await;
                     match leaderboard {
-                        Ok(strength) => std::result::Result::Ok(Json(strength)),
-                        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+                        Ok(strength) => Ok(Json(strength)),
+                        _ => Err(Error::BadRequest {}),
                     }
                 }
-                _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+                _ => Err(Error::BadRequest {}),
             }
         }
     }
@@ -67,7 +64,7 @@ pub(crate) async fn heat(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
-) -> Result<Json<Vec<Heat>>, Status> {
+) -> Result<Json<Vec<Heat>>> {
     match conn.run(Latest::latest).await {
         Ok(current) => {
             let heat = conn
@@ -80,12 +77,12 @@ pub(crate) async fn heat(
                 })
                 .await;
             if heat.len() as i32 >= 1 {
-                std::result::Result::Ok(Json(heat))
+                Ok(Json(heat))
             } else {
-                std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+                Err(Error::BadRequest {})
             }
         }
-        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+        _ => Err(Error::BadRequest {}),
     }
 }
 
@@ -93,15 +90,12 @@ pub(crate) async fn heat(
 /// Gives historical team statistics for a given team.
 #[openapi(tag = "Stats", ignore = "conn")]
 #[get("/stats/team/history?<team>")]
-pub(crate) async fn stathistory(
-    team: String,
-    conn: DbConn,
-) -> Result<Json<Vec<StatHistory>>, Status> {
+pub(crate) async fn stathistory(team: String, conn: DbConn) -> Result<Json<Vec<StatHistory>>> {
     let history = conn.run(|c| StatHistory::load(team, c)).await;
     if history.len() as i32 >= 1 {
-        std::result::Result::Ok(Json(history))
+        Ok(Json(history))
     } else {
-        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+        Err(Error::NotFound {})
     }
 }
 
@@ -114,19 +108,19 @@ pub(crate) async fn odds(
     day: i32,
     team: String,
     conn: DbConn,
-) -> Result<Json<Vec<Odds>>, Status> {
+) -> Result<Json<Vec<Odds>>> {
     let odds = conn.run(move |c| Odds::load(season, day, team, c)).await;
     match odds {
         Ok(odds) => {
             if odds.len() as i32 >= 1 {
-                std::result::Result::Ok(Json(odds))
+                Ok(Json(odds))
             } else {
-                std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+                Err(Error::BadRequest {})
             }
         }
         Err(e) => {
             dbg!(e);
-            std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+            Err(Error::BadRequest {})
         }
     }
 }

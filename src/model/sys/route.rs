@@ -1,15 +1,15 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
-use crate::catchers::Status;
+use crate::error::Result;
 use rocket::serde::json::Json;
 
 /// # System Information
 /// Information about the configuration of the backend.
 #[openapi(tag = "System")]
 #[get("/sys/info")]
-pub(crate) async fn sysinfo() -> Result<Json<SystemInformation>, Status> {
-    std::result::Result::Ok(Json(SystemInformation::default()))
+pub(crate) async fn sysinfo() -> Result<Json<SystemInformation>> {
+    Ok(Json(SystemInformation::default()))
 }
 
 #[allow(clippy::struct_excessive_bools, unreachable_pub)]

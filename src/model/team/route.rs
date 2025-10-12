@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::catchers::Status;
 use crate::db::DbConn;
+use crate::error::{Error, Result};
 use crate::model::{TeamInfo, TeamPlayerMoves, TerritoryHistory};
 use rocket::serde::json::Json;
 
@@ -11,12 +11,12 @@ use rocket::serde::json::Json;
 /// Lists all teams, including those from past seasons.
 #[openapi(tag = "Teams", ignore = "conn")]
 #[get("/teams")]
-pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>, Status> {
+pub(crate) async fn teams(conn: DbConn) -> Result<Json<Vec<TeamInfo>>> {
     let teams = conn.run(TeamInfo::load).await;
     if teams.len() as i32 >= 1 {
-        std::result::Result::Ok(Json(teams))
+        Ok(Json(teams))
     } else {
-        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+        Err(Error::NotFound {})
     }
 }
 
@@ -29,14 +29,14 @@ pub(crate) async fn teamplayersbymoves(
     day: i32,
     team: Option<String>,
     conn: DbConn,
-) -> Result<Json<Vec<TeamPlayerMoves>>, Status> {
+) -> Result<Json<Vec<TeamPlayerMoves>>> {
     if let Ok(moves) = conn
         .run(move |c| TeamPlayerMoves::load(season, day, team, c))
         .await
     {
-        std::result::Result::Ok(Json(moves))
+        Ok(Json(moves))
     } else {
-        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+        Err(Error::NotFound {})
     }
 }
 
@@ -48,13 +48,13 @@ pub(crate) async fn team_territories_visited_by_season(
     season: i32,
     team: String,
     conn: DbConn,
-) -> Result<Json<Vec<TerritoryHistory>>, Status> {
+) -> Result<Json<Vec<TerritoryHistory>>> {
     if let Ok(moves) = conn
         .run(move |c| TerritoryHistory::load_by_team_in_season(team, season, c))
         .await
     {
-        std::result::Result::Ok(Json(moves))
+        Ok(Json(moves))
     } else {
-        std::result::Result::Err(Status(rocket::http::Status::NotFound))
+        Err(Error::NotFound {})
     }
 }

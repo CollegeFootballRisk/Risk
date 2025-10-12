@@ -47,7 +47,7 @@ pub enum Error {
     Teapot,
 }
 
-//pub type Result<T> = std::result::Result<T, crate::Error>;
+pub type Result<T> = std::result::Result<T, crate::Error>;
 
 impl<'r, 'o: 'r> Responder<'r, 'o> for Error {
     fn respond_to(self, req: &'r Request<'_>) -> response::Result<'o> {
