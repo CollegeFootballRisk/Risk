@@ -2,8 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::catchers::Status;
 use crate::db::DbConn;
+use crate::error::{Error, Result};
 use crate::model::{Latest, TerritoryHistory, TerritoryTurn, TerritoryWithNeighbors};
 use rocket::serde::json::Json;
 
@@ -15,7 +15,7 @@ pub(crate) async fn territories(
     season: Option<i32>,
     day: Option<i32>,
     conn: DbConn,
-) -> Result<Json<Vec<TerritoryWithNeighbors>>, Status> {
+) -> Result<Json<Vec<TerritoryWithNeighbors>>> {
     match conn.run(Latest::latest).await {
         Ok(current) => {
             let territories = conn
@@ -28,14 +28,14 @@ pub(crate) async fn territories(
                 })
                 .await;
             if territories.len() as i32 >= 1 {
-                std::result::Result::Ok(Json(territories))
+                Ok(Json(territories))
             } else {
-                std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+                Err(Error::BadRequest {})
             }
         }
         Err(e) => {
             dbg!(e);
-            std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+            Err(Error::BadRequest {})
         }
     }
 }
@@ -48,14 +48,14 @@ pub(crate) async fn territoryhistory(
     territory: String,
     season: i32,
     conn: DbConn,
-) -> Result<Json<Vec<TerritoryHistory>>, Status> {
+) -> Result<Json<Vec<TerritoryHistory>>> {
     let territories = conn
         .run(move |c| TerritoryHistory::load(territory, season, c))
         .await;
     if territories.len() as i32 >= 1 {
-        std::result::Result::Ok(Json(territories))
+        Ok(Json(territories))
     } else {
-        std::result::Result::Err(Status(rocket::http::Status::BadRequest))
+        Err(Error::BadRequest {})
     }
 }
 
@@ -68,12 +68,12 @@ pub(crate) async fn territory_turn(
     season: i32,
     day: i32,
     conn: DbConn,
-) -> Result<Json<TerritoryTurn>, Status> {
+) -> Result<Json<TerritoryTurn>> {
     let turn = conn
         .run(move |c| TerritoryTurn::load(season, day, territory, c))
         .await;
     match turn {
-        Ok(turn) => std::result::Result::Ok(Json(turn)),
-        _ => std::result::Result::Err(Status(rocket::http::Status::BadRequest)),
+        Ok(turn) => Ok(Json(turn)),
+        _ => Err(Error::BadRequest {}),
     }
 }
