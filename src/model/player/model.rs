@@ -154,9 +154,9 @@ impl PlayerWithTurnsAndAdditionalTeam {
             0 => None,
             1 => {
                 use diesel::dsl::not;
-                let status_code: i32 = match team_assigned {
-                    true => 0,
-                    false => -1,
+                let status_code: Option<i32> = match team_assigned {
+                    true => Some(0),
+                    false => None,
                 };
                 let ciName: Vec<String> = name;
                 let award: Vec<Award> = award::table
@@ -219,9 +219,9 @@ impl PlayerWithTurnsAndAdditionalTeam {
         let me = PlayerWithTurns::load(names, true, conn);
         for user in me {
             use diesel::dsl::not;
-            let status_code: i32 = match team_assigned {
-                true => 0,
-                false => -1,
+            let status_code: Option<i32> = match team_assigned {
+                true => Some(0),
+                false => None,
             };
             let ciName: String = user.name.clone();
             let award: Vec<Award> = award::table
@@ -289,9 +289,9 @@ impl PlayerWithTurns {
         conn: &mut PgConnection,
     ) -> Vec<PlayerWithTurns> {
         use diesel::dsl::not;
-        let status_code: i32 = match team_assigned {
-            true => 0,
-            false => -1,
+        let status_code: Option<i32> = match team_assigned {
+            true => Some(0),
+            false => None,
         };
         let ciName: Vec<String> = name;
         let results = user::table
