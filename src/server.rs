@@ -26,6 +26,7 @@ mod error;
 mod hardcode;
 mod model;
 mod schema;
+mod view;
 
 use crate::db::DbConn;
 pub use error::Error;

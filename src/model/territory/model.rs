@@ -1,11 +1,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+* file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::{PlayerInTurns, TeamInTurns};
-use crate::schema::{
-    teams, territories, territory_ownership, territory_ownership_with_neighbors,
-    territory_ownership_without_neighbors, turninfo,
-};
+use crate::schema::{teams, territories, territory_ownership, turninfo};
+use crate::view::{territory_ownership_with_neighbors, territory_ownership_without_neighbors};
 use diesel::prelude::*;
 
 use schemars::JsonSchema;

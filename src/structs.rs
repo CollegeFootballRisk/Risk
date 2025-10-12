@@ -1,8 +1,8 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+* file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use crate::schema::{stats, teams, territory_ownership, territory_stats, turninfo, turns};
+use crate::view::{stats, teams, territory_ownership, territory_stats, turninfo, turns};
 use crate::Utc;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -21,7 +21,6 @@ pub struct Bar {
 pub struct PlayerMoves {
     pub id: i32,
     pub user_id: i32,
-    pub turn_id: i32,
     pub territory: i32,
     pub mvp: bool,
     pub power: f64,
@@ -31,6 +30,7 @@ pub struct PlayerMoves {
     pub team: i32,
     pub alt_score: i32,
     pub merc: bool,
+    pub turn_id: i32,
 }
 
 #[derive(Deserialize, Insertable, Queryable, Debug, PartialEq, Clone)]
@@ -64,10 +64,11 @@ pub struct TerritoryOwners {
     pub id: i32,
     pub territory_id: i32,
     pub owner_id: i32,
-    pub turn_id: i32,
     pub previous_owner_id: i32,
     pub random_number: f64,
+    pub timestamp: Option<NaiveDateTime>,
     pub mvp: Option<i32>,
+    pub turn_id: i32,
     pub is_respawn: bool,
 }
 

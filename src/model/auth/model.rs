@@ -152,7 +152,7 @@ impl Poll {
         conn: &mut PgConnection,
     ) -> Result<Vec<Poll>, diesel::result::Error> {
         continuation_polls::table
-            .inner_join(turninfo::table.on(turninfo::id.eq(continuation_polls::turn_id)))
+            .inner_join(turninfo::table.on(turninfo::id.nullable().eq(continuation_polls::turn_id)))
             .filter(turninfo::season.eq(season))
             .filter(turninfo::day.ge(day))
             .select((

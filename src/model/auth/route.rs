@@ -8,10 +8,10 @@ use crate::model::{
     Claims, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam, Poll, PollResponse,
     Ratings, Stats, TurnInfo, UpdateUser, UserIdFast,
 };
-use crate::schema::{
+use crate::sys::SysInfo;
+use crate::view::{
     cfbr_stats, region_ownership, territory_adjacency, territory_ownership, turns, users,
 };
-use crate::sys::SysInfo;
 use diesel::prelude::*;
 use rocket::http::CookieJar;
 use rocket::State;

@@ -4,7 +4,11 @@
 use crate::model::team::TeamWithColors;
 use crate::model::turn::{LastTurn, PastTurn};
 use crate::model::{Colors, Ratings, Stats, Team, UserId};
-use crate::schema::{award_info, awards, moves, past_turns, teams, territories, turninfo, users};
+use crate::schema::{award_info, awards, teams, users};
+use crate::view::{
+    moves, past_turns, teams as vc_teams, territories as vc_territories, turninfo as vc_turninfo,
+    users as vc_users,
+};
 use diesel::prelude::*;
 use diesel::result::Error;
 
@@ -75,7 +79,7 @@ pub struct User {
     pub(crate) game_turns: Option<i32>,
     pub(crate) mvps: Option<i32>,
     pub(crate) streak: Option<i32>,
-    pub(crate) is_alt: bool, //pub(crate) awards: Option<i32>, //    pub team: Option<String>
+    pub(crate) is_alt: Option<bool>, //pub(crate) awards: Option<i32>, //    pub team: Option<String>
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
@@ -92,7 +96,7 @@ pub(crate) struct PlayerWithTurns {
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
-    pub(crate) is_alt: bool,
+    pub(crate) is_alt: Option<bool>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
@@ -119,7 +123,7 @@ pub struct PlayerWithTurnsAndAdditionalTeam {
     pub stats: Stats,
     pub turns: Vec<PastTurn>,
     pub awards: Vec<Award>,
-    pub is_alt: bool,
+    pub is_alt: Option<bool>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema)]
@@ -137,7 +141,7 @@ impl PlayerSummary {
         conn: &mut PgConnection,
     ) -> Result<Vec<PlayerSummary>, diesel::result::Error> {
         users::table
-            .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+            .left_join(teams::table.on(teams::id.nullable().eq(users::playing_for)))
             .select((users::uname, users::platform, teams::tname.nullable()))
             .load::<PlayerSummary>(conn)
     }
@@ -169,7 +173,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
                 let results = users::table
                     .filter(users::uname.eq_any(ciName))
                     .filter(not(users::current_team.eq(status_code)))
-                    .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+                    .left_join(teams::table.on(teams::id.nullable().eq(users::playing_for)))
                     .select((
                         teams::tname.nullable(),
                         teams::color_1.nullable(),
@@ -234,7 +238,7 @@ impl PlayerWithTurnsAndAdditionalTeam {
             let results = users::table
                 .filter(users::uname.eq(ciName))
                 .filter(not(users::current_team.eq(status_code)))
-                .left_join(teams::table.on(teams::id.eq(users::playing_for)))
+                .left_join(teams::table.on(teams::id.nullable().eq(users::playing_for)))
                 .select((
                     teams::tname.nullable(),
                     teams::color_1.nullable(),
@@ -297,7 +301,7 @@ impl PlayerWithTurns {
         let results = users::table
             .filter(users::uname.eq_any(ciName))
             .filter(not(users::current_team.eq(status_code)))
-            .left_join(teams::table.on(teams::id.eq(users::current_team)))
+            .left_join(teams::table.on(teams::id.nullable().eq(users::current_team)))
             .select((
                 (
                     users::id,
@@ -329,16 +333,16 @@ impl PlayerWithTurns {
             };
             let users_turns = past_turns::table
                 .filter(past_turns::user_id.eq(&user.0.id))
-                .inner_join(teams::table.on(teams::id.eq(past_turns::team)))
-                .inner_join(territories::table.on(territories::id.eq(past_turns::territory)))
-                .inner_join(turninfo::table.on(turninfo::id.eq(past_turns::turn_id)))
+                .inner_join(vc_teams::table.on(vc_teams::id.eq(past_turns::team)))
+                .inner_join(vc_territories::table.on(vc_territories::id.eq(past_turns::territory)))
+                .inner_join(vc_turninfo::table.on(vc_turninfo::id.eq(past_turns::turn_id)))
                 .select((
-                    turninfo::season,
-                    turninfo::day,
+                    vc_turninfo::season,
+                    vc_turninfo::day,
                     past_turns::stars,
                     past_turns::mvp,
-                    territories::name,
-                    teams::tname,
+                    vc_territories::name,
+                    vc_teams::tname,
                     past_turns::weight,
                     past_turns::multiplier,
                     past_turns::power,
@@ -414,7 +418,7 @@ impl TeamMerc {
             .load::<i32>(conn)?;
         use diesel::dsl::not;
         users::table
-            .inner_join(teams::table.on(teams::id.eq(users::current_team)))
+            .inner_join(teams::table.on(teams::id.nullable().eq(users::current_team)))
             .filter(users::playing_for.eq_any(teamIds))
             .filter(not(users::playing_for.eq(users::current_team)))
             .select((
@@ -438,22 +442,22 @@ impl PlayerInTurns {
         let ciTerritory = territory.to_owned();
         dbg!(&season, &day, &ciTerritory);
         past_turns::table
-            .inner_join(territories::table.on(past_turns::territory.eq(territories::id)))
-            .inner_join(teams::table.on(past_turns::team.eq(teams::id)))
-            .inner_join(turninfo::table.on(past_turns::turn_id.eq(turninfo::id)))
-            .inner_join(users::table.on(past_turns::user_id.eq(users::id)))
+            .inner_join(vc_territories::table.on(past_turns::territory.eq(vc_territories::id)))
+            .inner_join(vc_teams::table.on(past_turns::team.eq(vc_teams::id)))
+            .inner_join(vc_turninfo::table.on(past_turns::turn_id.eq(vc_turninfo::id)))
+            .inner_join(vc_users::table.on(past_turns::user_id.eq(vc_users::id)))
             .select((
-                teams::tname,
-                users::uname,
+                vc_teams::tname,
+                vc_users::uname,
                 past_turns::stars,
                 past_turns::weight,
                 past_turns::multiplier,
                 past_turns::mvp,
                 past_turns::power,
             ))
-            .filter(turninfo::day.eq(day))
-            .filter(turninfo::season.eq(season))
-            .filter(territories::name.eq(ciTerritory))
+            .filter(vc_turninfo::day.eq(day))
+            .filter(vc_turninfo::season.eq(season))
+            .filter(vc_territories::name.eq(ciTerritory))
             .load::<PlayerInTurns>(conn)
     }
 }
