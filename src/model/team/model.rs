@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::model::StarBreakdown;
-use crate::schema::{odds, team_player_moves, teams};
+use crate::view::{odds, team_player_moves, teams};
 use diesel::prelude::*;
 
 use schemars::JsonSchema;
@@ -30,7 +30,7 @@ pub(crate) struct TeamInfo {
     pub(crate) name: String,
     pub(crate) logo: Option<String>,
     pub(crate) colors: Colors,
-    pub(crate) seasons: Vec<i32>,
+    pub(crate) seasons: Option<Vec<Option<i32>>>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]

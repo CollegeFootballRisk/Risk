@@ -1,6 +1,6 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+* file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #[macro_use]
 extern crate diesel;
@@ -10,16 +10,15 @@ extern crate rand;
 extern crate rand_chacha;
 pub mod schema;
 pub mod structs;
+pub mod view;
 
 use chrono::{DateTime, Datelike, Duration, NaiveDateTime, NaiveTime, Timelike, Utc};
 use diesel::prelude::*;
 use diesel::sql_query;
 use rand::prelude::*;
 use rand_chacha::ChaCha12Rng;
-use schema::regions;
-use schema::teams;
-use schema::territories;
 use std::collections::{BTreeMap, HashSet};
+use view::{regions, teams, territories};
 
 const ALT_CUTOFF: i32 = 75;
 const AON_END: i32 = 48;
@@ -1416,6 +1415,7 @@ mod tests {
             random_number: 0.0,
             mvp: None,
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = Vec::new();
@@ -1464,6 +1464,7 @@ mod tests {
             random_number: 0.0,
             mvp: None,
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
@@ -1543,6 +1544,7 @@ mod tests {
             random_number: 0.0,
             mvp: None,
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
@@ -1638,6 +1640,7 @@ mod tests {
             random_number: 0.0,
             mvp: None,
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
@@ -1732,6 +1735,7 @@ mod tests {
             random_number: 0.0,
             mvp: None,
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![PlayerMoves {
@@ -1793,6 +1797,7 @@ mod tests {
             random_number: 0.0,
             mvp: Some(12),
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![
@@ -1918,6 +1923,7 @@ mod tests {
             random_number: 0.0,
             mvp: Some(12),
             is_respawn: false,
+            timestamp: None,
         }];
 
         let playermoves: Vec<PlayerMoves> = vec![
