@@ -92,7 +92,7 @@ pub(crate) struct PlayerWithTurns {
     pub(crate) ratings: Ratings,
     pub(crate) stats: Stats,
     pub(crate) turns: Vec<PastTurn>,
-    pub(crate) is_alt: bool,
+    pub(crate) is_alt: Option<bool>,
 }
 
 #[derive(Queryable, Serialize, Deserialize, JsonSchema, Debug)]
