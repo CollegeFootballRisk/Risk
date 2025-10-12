@@ -2,6 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 use crate::db::DbConn;
+use crate::error::{Error, Result};
 use crate::model::reddit::route::{audit_trail, Cip, UA};
 use crate::model::{
     Claims, Latest, Log, MoveInfo, MoveSub, PlayerWithTurnsAndAdditionalTeam, Poll, PollResponse,
@@ -12,8 +13,7 @@ use crate::schema::{
 };
 use crate::sys::SysInfo;
 use diesel::prelude::*;
-use diesel::result::Error;
-use rocket::http::{CookieJar, Status};
+use rocket::http::CookieJar;
 use rocket::State;
 extern crate rand;
 
@@ -45,7 +45,7 @@ pub(crate) async fn me(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<impl serde::ser::Serialize>, crate::Error> {
+) -> Result<Json<impl serde::ser::Serialize>> {
     let c = match Claims::from_private_cookie(cookies, config) {
         Ok(c) => c,
         Err(_) => {
@@ -61,13 +61,13 @@ pub(crate) async fn me(
             PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
         })
         .await
-        .ok_or(crate::Error::NotFound {})?;
+        .ok_or(Error::NotFound {})?;
     if user.name.to_lowercase() == c.0.user.to_lowercase() {
-        std::result::Result::Ok(Json(EitherPorS::PlayerWithTurnsAndAdditionalTeam(
+        Ok(Json(EitherPorS::PlayerWithTurnsAndAdditionalTeam(
             Box::new(user),
         )))
     } else {
-        std::result::Result::Err(crate::Error::NotFound {})
+        Err(Error::NotFound {})
     }
 }
 
@@ -75,7 +75,7 @@ pub(crate) fn has_territories(
     turn_id: &i32,
     team_id: &i32,
     conn: &mut PgConnection,
-) -> Result<bool, diesel::result::Error> {
+) -> std::result::Result<bool, diesel::result::Error> {
     use diesel::dsl::count;
     Ok(territory_ownership::table
         .select(count(territory_ownership::id))
@@ -91,10 +91,10 @@ pub(crate) async fn join_team(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<String>, crate::Error> {
+) -> Result<Json<String>> {
     // Do not allow joining Unjonable Placeholder
     if team <= 0 {
-        return Err(crate::Error::BadRequest {});
+        return Err(Error::BadRequest {});
     }
     // Get user information from cookies
     let c = Claims::from_private_cookie(cookies, config)?;
@@ -105,11 +105,11 @@ pub(crate) async fn join_team(
             PlayerWithTurnsAndAdditionalTeam::load(vec![username], false, connection)
         })
         .await
-        .ok_or(crate::Error::Unauthorized {})?;
+        .ok_or(Error::Unauthorized {})?;
 
     // Check that DB and cookie correspond, if not, yeet!
     if users.name.to_lowercase() != c.0.user.to_lowercase() {
-        return std::result::Result::Err(crate::Error::Unauthorized {});
+        return Err(Error::Unauthorized {});
     }
 
     // Does the team they want to join have territories?
@@ -117,14 +117,14 @@ pub(crate) async fn join_team(
     let latest = conn
         .run(Latest::latest)
         .await
-        .map_err(|_| crate::Error::InternalServerError {})?;
+        .map_err(|_| Error::InternalServerError {})?;
 
     let has_territories: bool = conn
         .run(move |c| has_territories(&latest.id, &team, c))
         .await?;
     // If user has no team (and thus no active_team), then allow them to join anything
     if users.active_team.unwrap_or_default().name.is_some() {
-        return std::result::Result::Err(crate::Error::BadRequest {});
+        return Err(Error::BadRequest {});
     }
 
     // If user just needs new active team, we can do this
@@ -132,9 +132,9 @@ pub(crate) async fn join_team(
         if has_territories {
             conn.run(move |cn| update_user(true, c.0.id, team, cn))
                 .await?; //playing_for
-            std::result::Result::Ok(Json(String::from("Okay")))
+            Ok(Json(String::from("Okay")))
         } else {
-            std::result::Result::Err(crate::Error::BadRequest {})
+            Err(Error::BadRequest {})
         }
     } else {
         // User needs BOTH team and active team. IF
@@ -143,11 +143,11 @@ pub(crate) async fn join_team(
                 .await?; //playing_for
             conn.run(move |cn| update_user(true, c.0.id, team, cn))
                 .await?; //current_team
-            std::result::Result::Ok(Json(String::from("Okay")))
+            Ok(Json(String::from("Okay")))
         } else {
             conn.run(move |cn| update_user(false, c.0.id, team, cn))
                 .await?; //current_team
-            std::result::Result::Ok(Json(String::from("Partial")))
+            Ok(Json(String::from("Partial")))
         }
     }
 }
@@ -157,12 +157,12 @@ pub(crate) async fn my_move(
     cookies: &CookieJar<'_>,
     conn: DbConn,
     config: &State<SysInfo>,
-) -> Result<Json<EitherPorS>, crate::Error> {
+) -> Result<Json<EitherPorS>> {
     // Get latest turn
     let latest = conn
         .run(Latest::latest)
         .await
-        .map_err(|_| crate::Error::InternalServerError {})?;
+        .map_err(|_| Error::InternalServerError {})?;
     // Get user information from cookies
     let c = match Claims::from_private_cookie(cookies, config) {
         Ok(c) => c,
@@ -174,7 +174,7 @@ pub(crate) async fn my_move(
         }
     };
     // Return the territory the user has attacked
-    std::result::Result::Ok(Json(EitherPorS::String(
+    Ok(Json(EitherPorS::String(
         conn.run(move |connection| MoveInfo::get(latest.season, latest.day, c.0.id, connection))
             .await
             .territory
@@ -200,11 +200,11 @@ pub(crate) async fn make_move(
     config: &State<SysInfo>,
     recaptcha: &State<ReCaptcha>,
     recaptcha_v2: &State<ReCaptcha<V2>>,
-) -> Result<Json<StatusWrapper>, crate::Error> {
+) -> Result<Json<StatusWrapper>> {
     let target = movesub.target;
     let rv: String = match movesub.token.as_ref() {
         Some(e) => format!("token={e}"),
-        None => return Err(crate::Error::BadRequest {}),
+        None => return Err(Error::BadRequest {}),
     };
     let r = rocket::form::ValueField::parse(&rv);
     use crate::rocket::form::FromFormField;
@@ -212,7 +212,7 @@ pub(crate) async fn make_move(
         .as_ref()
         .map_err(|e| {
             dbg!(e);
-            crate::Error::BadRequest {}
+            Error::BadRequest {}
         })?
         .clone();
     #[cfg(feature = "risk_captcha")]
@@ -221,11 +221,11 @@ pub(crate) async fn make_move(
         .await
         .map_err(|e| {
             dbg!(e);
-            crate::Error::InternalServerError {}
+            Error::InternalServerError {}
         })?;
     #[cfg(feature = "risk_captcha")]
     if recaptcha_return.action != Some("submit".to_string()) {
-        return Err(crate::Error::BadRequest {});
+        return Err(Error::BadRequest {});
     }
 
     let mut log = Log::begin(String::from("move"), target.to_string());
@@ -233,7 +233,7 @@ pub(crate) async fn make_move(
     // Get latest turn
     let latest = conn.run(TurnInfo::latest).await.map_err(|_| {
         dbg!("Failed at point 1");
-        crate::Error::InternalServerError {}
+        Error::InternalServerError {}
     })?;
 
     log.payload.push_str(&format!("Latest: {}\n", latest.id));
@@ -255,7 +255,7 @@ pub(crate) async fn make_move(
         .await
         .map_err(|_| {
             dbg!("Failed at point 3");
-            crate::Error::BadRequest {}
+            Error::BadRequest {}
         })?;
 
     log.payload.push_str(&format!("User: {user:?}\n"));
@@ -264,7 +264,7 @@ pub(crate) async fn make_move(
         .await
         .map_err(|_| {
             dbg!("Failed at point 3.1");
-            crate::Error::BadRequest {}
+            Error::BadRequest {}
         })?;
 
     //at this point we know the user is authorized to make the action, so let's go ahead and make it
@@ -301,7 +301,7 @@ pub(crate) async fn make_move(
             None => false,
             Some(mv_tv2) => {
                 if mv_tv2.is_empty() {
-                    return std::result::Result::Ok(Json(StatusWrapper {
+                    return Ok(Json(StatusWrapper {
                         code: 4004,
                         message: "Captcha required.".to_string(),
                     }));
@@ -312,7 +312,7 @@ pub(crate) async fn make_move(
                     .as_ref()
                     .map_err(|e| {
                         dbg!(e);
-                        crate::Error::BadRequest {}
+                        Error::BadRequest {}
                     })?
                     .clone();
                 let r_v2_result = recaptcha_v2
@@ -320,14 +320,14 @@ pub(crate) async fn make_move(
                     .await
                     .map_err(|e| {
                         dbg!(e);
-                        crate::Error::InternalServerError {}
+                        Error::InternalServerError {}
                     })?;
                 r_v2_result.score > 0.5
             }
         };
 
         if !v2_verif {
-            return std::result::Result::Ok(Json(StatusWrapper {
+            return Ok(Json(StatusWrapper {
                 code: 4004,
                 message: "Captcha required.".to_string(),
             }));
@@ -351,12 +351,12 @@ pub(crate) async fn make_move(
         .await
         .map_err(|_| {
             dbg!("Failed at point 4");
-            crate::Error::BadRequest {}
+            Error::BadRequest {}
         })?;
 
     if insert_turn.len() != 1 || insert_turn[0] != target {
         dbg!("Failed at point 5");
-        return std::result::Result::Err(crate::Error::InternalServerError {});
+        return Err(Error::InternalServerError {});
     }
 
     log.payload
@@ -380,7 +380,7 @@ pub(crate) async fn make_move(
     .await
     .map_err(|_| {
         dbg!("Failed at point 2");
-        crate::Error::BadRequest {}
+        Error::BadRequest {}
     })?;
 
     log.payload.push_str("User updated");
@@ -388,26 +388,26 @@ pub(crate) async fn make_move(
     conn.run(move |c| log.insert(c)).await?;
 
     // We got to the end!
-    std::result::Result::Ok(Json(StatusWrapper {
+    Ok(Json(StatusWrapper {
         code: 2001,
         message: insert_turn[0].to_string(),
     }))
 }
 
 #[get("/polls", rank = 1)]
-pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>, crate::Error> {
+pub(crate) async fn get_polls(conn: DbConn) -> Result<Json<Vec<Poll>>> {
     // Get latest turn
     let latest = conn
         .run(Latest::latest)
         .await
-        .map_err(|_| crate::Error::InternalServerError {})?;
+        .map_err(|_| Error::InternalServerError {})?;
 
     match conn
         .run(move |c| Poll::get(latest.season, latest.day, c))
         .await
     {
-        Ok(polls) => std::result::Result::Ok(Json(polls)),
-        Err(_E) => std::result::Result::Err(crate::Error::InternalServerError {}),
+        Ok(polls) => Ok(Json(polls)),
+        Err(_E) => Err(Error::InternalServerError {}),
     }
 }
 
@@ -418,7 +418,7 @@ pub(crate) async fn submit_poll(
     config: &State<SysInfo>,
     poll: i32,
     response: bool,
-) -> Result<Json<bool>, Status> {
+) -> Result<Json<bool>> {
     // get user id
     match cookies.get_private("jwt") {
         Some(cookie) => {
@@ -443,16 +443,16 @@ pub(crate) async fn submit_poll(
                         .await
                     {
                         Ok(inner) => match inner {
-                            1 => std::result::Result::Ok(Json(true)),
-                            _ => std::result::Result::Err(Status::InternalServerError),
+                            1 => Ok(Json(true)),
+                            _ => Err(Error::InternalServerError {}),
                         },
-                        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+                        Err(_E) => Err(Error::InternalServerError {}),
                     }
                 }
-                Err(_err) => std::result::Result::Err(Status::Unauthorized),
+                Err(_err) => Err(Error::Unauthorized {}),
             }
         }
-        None => std::result::Result::Err(Status::Unauthorized),
+        None => Err(Error::Unauthorized {}),
     }
 }
 
@@ -462,7 +462,7 @@ pub(crate) async fn view_response(
     conn: DbConn,
     config: &State<SysInfo>,
     poll: i32,
-) -> Result<Json<Vec<PollResponse>>, Status> {
+) -> Result<Json<Vec<PollResponse>>> {
     // get user id
     match cookies.get_private("jwt") {
         Some(cookie) => {
@@ -476,14 +476,14 @@ pub(crate) async fn view_response(
                         .run(move |connection| PollResponse::get(poll, c.0.id, connection))
                         .await
                     {
-                        Ok(responses) => std::result::Result::Ok(Json(responses)),
-                        Err(_E) => std::result::Result::Err(Status::InternalServerError),
+                        Ok(responses) => Ok(Json(responses)),
+                        Err(_E) => Err(Error::InternalServerError {}),
                     }
                 }
-                Err(_err) => std::result::Result::Err(Status::Unauthorized),
+                Err(_err) => Err(Error::Unauthorized {}),
             }
         }
-        None => std::result::Result::Err(Status::Unauthorized),
+        None => Err(Error::Unauthorized {}),
     }
 }
 
@@ -523,7 +523,7 @@ pub(crate) fn handle_territory_info(
     latest: &TurnInfo,
     conn: &mut PgConnection,
     aon: Option<bool>,
-) -> Result<
+) -> std::result::Result<
     (
         (
             i32,
@@ -638,7 +638,7 @@ pub(crate) fn get_adjacent_territory_owners(
     target: i32,
     latest: &TurnInfo,
     conn: &mut PgConnection,
-) -> Result<Vec<(i32, i32)>, Error> {
+) -> std::result::Result<Vec<(i32, i32)>, diesel::result::Error> {
     territory_adjacency::table
         .filter(territory_adjacency::adjacent_id.eq(target))
         .filter(territory_adjacency::min_turn.lt(latest.id))
