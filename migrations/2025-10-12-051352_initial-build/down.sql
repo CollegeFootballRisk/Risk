@@ -1,1 +1,52 @@
 -- This file should undo anything in `up.sql`
+-- Everything here is commented out to prevent dropping a db.
+-- Ideally you should just drop and create a new db rather than down this migration.
+-- But if you must, you can uncomment the below:
+-- DROP AGGREGATE public.median;
+-- DROP FUNCTION public.do_user_update(turn integer, season integer);
+-- DROP FUNCTION public._final_median(numeric []);
+-- DROP TYPE public.rr_event;
+-- DROP SEQUENCE public.users_id_seq;
+-- DROP SEQUENCE public.turns_id_seq;
+-- DROP SEQUENCE public.turninfo_id_seq;
+-- DROP SEQUENCE public.territory_stats_id_seq;
+-- DROP VIEW public.territory_ownership_with_neighbors;
+-- DROP SEQUENCE public.territory_ownership_id_seq;
+-- DROP VIEW public.territory_neighbor_history;
+-- DROP SEQUENCE public.territory_adjacency_id_seq;
+-- DROP TABLE public.territory_adjacency;
+-- DROP SEQUENCE public.teams_id_seq;
+-- DROP VIEW public.team_player_moves;
+-- DROP VIEW public.statistics;
+-- DROP TABLE public.stats;
+-- DROP VIEW VIEW public.rollinfo;
+-- DROP SEQUENCE public.regions_id_seq;
+-- DROP TABLE public.regions;
+-- DROP VIEW public.region_ownership;
+-- DROP VIEW public.players;
+-- DROP VIEW public.odds;
+-- DROP TABLE public.territory_stats;
+-- DROP VIEW public.moves;
+-- DROP SEQUENCE public.logs_id_seq;
+-- DROP TABLE public.logs;
+-- DROP VIEW public.heat_full;
+-- DROP VIEW public.territory_ownership_without_neighbors;
+-- DROP SEQUENCE public.awards_id_seq;
+-- DROP TABLE public.awards;
+-- DROP TABLE public.users;
+-- DROP TABLE public.territory_ownership;
+-- DROP TABLE public.teams;
+-- DROP VIEW public.heat;
+-- DROP TABLE public.territories;
+-- DROP SEQUENCE public.territories_seq: DROP VIEW public.past_turns;
+-- DROP TABLE public.turns;
+-- DROP TABLE public.turninfo;
+-- DROP SEQUENCE public.continuation_responses_id_seq;
+-- DROP TABLE public.continuation_responses;
+-- DROP SEQUENCE public.continuation_polls_id_seq;
+-- DROP TABLE public.continuation_polls;
+-- DROP SEQUENCE public.bans_id_seq: DROP TABLE public.bans;
+-- DROP SEQUENCE public.award_info_id_seq;
+-- DROP TABLE public.award_info;
+-- DROP SEQUENCE public.audit_log_id_seq;
+-- DROP public.audit_log;
