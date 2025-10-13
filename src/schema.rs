@@ -254,9 +254,23 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(audit_log -> users (user_id));
 diesel::joinable!(awards -> award_info (award_id));
 diesel::joinable!(awards -> users (user_id));
+diesel::joinable!(continuation_polls -> turninfo (turn_id));
+diesel::joinable!(continuation_responses -> continuation_polls (poll_id));
+diesel::joinable!(continuation_responses -> users (user_id));
+diesel::joinable!(stats -> teams (team));
+diesel::joinable!(stats -> turninfo (turn_id));
 diesel::joinable!(territories -> regions (region));
+diesel::joinable!(territory_ownership -> territories (territory_id));
+diesel::joinable!(territory_ownership -> turninfo (turn_id));
+diesel::joinable!(territory_ownership -> users (mvp));
+diesel::joinable!(territory_stats -> teams (team));
+diesel::joinable!(territory_stats -> turninfo (turn_id));
+diesel::joinable!(turns -> territories (territory));
+diesel::joinable!(turns -> turninfo (turn_id));
+diesel::joinable!(turns -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     audit_log,

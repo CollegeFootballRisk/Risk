@@ -286,8 +286,8 @@ ALTER TABLE public.users OWNER TO risk;
 
 CREATE TABLE public.awards (
     id integer NOT NULL PRIMARY KEY,
-    user_id integer NOT NULL references users(id),
-    award_id integer NOT NULL references award_info(id),
+    user_id integer NOT NULL references users(id) on delete cascade,
+    award_id integer NOT NULL references award_info(id) on delete cascade,
     award_date timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ALTER TABLE public.awards OWNER TO risk;
@@ -625,7 +625,7 @@ CREATE TABLE public.stats (
     fours integer NOT NULL DEFAULT 0,
     fives integer NOT NULL DEFAULT 0,
     turn_id integer NOT NULL DEFAULT 0,
-    id UUID PRIMARY KEY NOT NULL
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid()
 );
 ALTER TABLE public.stats OWNER TO risk;
 --
